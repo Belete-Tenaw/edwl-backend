@@ -1,0 +1,122 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Swagger Setup
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'EDWL API',
+      version: '1.0.0',
+      description: 'API Documentation for Ethio Domestic Workers Link',
+      contact: {
+        name: 'EDWL Support',
+        email: 'support@edwl.com'
+      }
+    },
+    servers: [
+      {
+        url: `http://localhost:${PORT}`,
+        description: 'Local server'
+      }
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [{
+      bearerAuth: []
+    }],
+  },
+  apis: ['./src/routes/*.js'], // Path to the API docs
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET is not defined.');
+  process.exit(1);
+}
+
+if (!process.env.DATABASE_URL) {
+  console.error('FATAL ERROR: DATABASE_URL is not defined.');
+  process.exit(1);
+}
+
+// Middleware
+app.use(helmet());
+app.use(cors());
+app.use(morgan('dev'));
+app.use(express.json());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+app.use('/api/', limiter);
+
+// Routes
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to EDWL API' });
+});
+
+// Auth Routes
+app.use('/api/auth', require('./routes/auth'));
+
+// Job Seeker Routes
+app.use('/api/seekers', require('./routes/seekers'));
+
+// Employer Routes
+app.use('/api/employers', require('./routes/employers'));
+
+
+// Job Post Routes
+app.use('/api/jobs', require('./routes/jobs'));
+
+// Messaging Routes
+app.use('/api/messages', require('./routes/messages'));
+
+// Admin Routes
+app.use('/api/admin', require('./routes/admin'));
+
+// Payment Routes
+app.use('/api/payments', require('./routes/payment'));
+
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production') {
+  const path = require('path');
+  app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../../frontend/dist/index.html'));
+  });
+}
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

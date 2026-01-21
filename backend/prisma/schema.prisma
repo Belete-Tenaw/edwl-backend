@@ -1,0 +1,439 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum PreferredArrangement {
+  LIVE_IN
+  LIVE_OUT
+  PART_TIME
+}
+
+enum UserTier {
+  FREEMIUM
+  SUBSCRIBER
+}
+
+enum EmployerType {
+  HOUSEHOLD
+  BUSINESS
+}
+
+enum SubscriptionStatus {
+  PENDING
+  UNUSED
+  USED
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum AdminRole {
+  SUPERADMIN
+  MODERATOR
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  TELEBIRR
+  CHAPA
+  CBE
+  MANUAL
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NOT_STARTED
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_SIGNATURE
+  ACTIVE
+  COMPLETED
+  TERMINATED
+  DISPUTED
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  CLOSED
+}
+
+// Models
+
+model JobSeeker {
+  id                 String               @id @default(uuid())
+  fullName           String
+  gender             Gender
+  age                Int
+  religion           String?
+  maritalStatus      MaritalStatus
+  phone              String               @unique
+  email              String               @unique
+  password           String
+  bio                String?
+  skills             String[]
+  experienceYears    Int
+  expectedSalary     Int
+  preferredLocation  String
+  preferredArrangement PreferredArrangement
+  profilePhoto       String?
+  idDocument         String?
+  
+  // Verification & Trust
+  isVerified         Boolean              @default(false)
+  verificationStatus VerificationStatus   @default(NOT_STARTED)
+  rating             Float                @default(0.0)
+  completedJobs      Int                  @default(0)
+  
+  // Location (Detailed)
+  locationRegion     String?
+  locationZone       String?
+  locationWoreda     String?
+  locationKebele     String?
+
+  // Subscription
+  tier               UserTier             @default(FREEMIUM)
+  subscriptionExpiry DateTime?
+  subscriptions      Subscription[]
+  payments           Payment[]
+
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  
+  sentMessages     Message[]            @relation("JobSeekerSender")
+  receivedMessages Message[]            @relation("JobSeekerReceiver")
+  viewLogs         ViewLog[]
+  
+  // Contracts & Safety
+  contracts        Contract[]
+  disputes         Dispute[]
+  reportsFiled     Report[]             @relation("ReporterJS")
+  reportsReceived  Report[]             @relation("ReportedJS")
+  verificationRequests VerificationRequest[]
+}
+
+model Employer {
+  id                 String               @id @default(uuid())
+  employerType       EmployerType
+  contactName        String
+  phone              String               @unique
+  email              String               @unique
+  password           String
+  address            String
+  familySize         Int?
+  
+  // Verification & Trust
+  isVerified         Boolean              @default(false)
+  verificationStatus VerificationStatus   @default(NOT_STARTED)
+  rating             Float                @default(0.0)
+  completedJobs      Int                  @default(0)
+
+  // Location (Detailed)
+  locationRegion     String?
+  locationZone       String?
+  locationWoreda     String?
+  locationKebele     String?
+
+  // Subscription
+  tier               UserTier             @default(FREEMIUM)
+  subscriptionExpiry DateTime?
+  subscriptions      Subscription[]
+  payments           Payment[]
+
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  
+  jobPosts         JobPost[]
+  sentMessages     Message[]            @relation("EmployerSender")
+  receivedMessages Message[]            @relation("EmployerReceiver")
+  viewLogs         ViewLog[]
+
+  // Contracts & Safety
+  contracts        Contract[]
+  disputes         Dispute[]
+  reportsFiled     Report[]             @relation("ReporterEmp")
+  reportsReceived  Report[]             @relation("ReportedEmp")
+  verificationRequests VerificationRequest[]
+}
+
+model JobPost {
+  id                   String               @id @default(uuid())
+  employerId           String
+  employer             Employer             @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  title                String
+  description          String
+  requiredSkills       String[]
+  salaryOffered        Int
+  jobType              String
+  preferredArrangement PreferredArrangement
+  address              String
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  
+  viewLogs             ViewLog[]
+  contracts            Contract[]
+
+  @@index([employerId])
+  @@index([createdAt])
+}
+
+model Message {
+  id               String   @id @default(uuid())
+  content          String
+  timestamp        DateTime @default(now())
+  read             Boolean  @default(false)
+  
+  senderJSId       String?
+  senderJS         JobSeeker? @relation("JobSeekerSender", fields: [senderJSId], references: [id])
+  receiverJSId     String?
+  receiverJS       JobSeeker? @relation("JobSeekerReceiver", fields: [receiverJSId], references: [id])
+  
+  senderEmpId      String?
+  senderEmp        Employer?  @relation("EmployerSender", fields: [senderEmpId], references: [id])
+  receiverEmpId    String?
+  receiverEmp      Employer?  @relation("EmployerReceiver", fields: [receiverEmpId], references: [id])
+
+  @@index([senderJSId])
+  @@index([receiverJSId])
+  @@index([senderEmpId])
+  @@index([receiverEmpId])
+}
+
+model ViewLog {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  
+  jobSeekerId String?
+  jobSeeker   JobSeeker? @relation(fields: [jobSeekerId], references: [id])
+  employerId  String?
+  employer    Employer?  @relation(fields: [employerId], references: [id])
+  
+  targetJobPostId String?
+  targetJobPost   JobPost?   @relation(fields: [targetJobPostId], references: [id])
+  targetJobSeekerId String?
+}
+
+// Payment & Monetization
+
+model SubscriptionTier {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  priceETB    Float
+  durationDays Int
+  features    String[]
+  createdAt   DateTime @default(now())
+  
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id               String           @id @default(uuid())
+  
+  jobSeekerId      String?
+  jobSeeker        JobSeeker?       @relation(fields: [jobSeekerId], references: [id])
+  employerId       String?
+  employer         Employer?        @relation(fields: [employerId], references: [id])
+  
+  tierId           String
+  tier             SubscriptionTier @relation(fields: [tierId], references: [id])
+  
+  startDate        DateTime         @default(now())
+  endDate          DateTime
+  status           SubscriptionStatus @default(ACTIVE)
+  
+  paymentId        String?          @unique
+  payment          Payment?         @relation(fields: [paymentId], references: [id])
+}
+
+model Payment {
+  id               String           @id @default(uuid())
+  amount           Float
+  currency         String           @default("ETB")
+  provider         PaymentProvider
+  transactionReference String       @unique
+  status           PaymentStatus    @default(PENDING)
+  createdAt        DateTime         @default(now())
+  
+  jobSeekerId      String?
+  jobSeeker        JobSeeker?       @relation(fields: [jobSeekerId], references: [id])
+  employerId       String?
+  employer         Employer?        @relation(fields: [employerId], references: [id])
+
+  tierId           String?
+  subscription     Subscription?
+  invoice          Invoice?
+}
+
+model Invoice {
+  id               String           @id @default(uuid())
+  invoiceNumber    String           @unique
+  paymentId        String           @unique
+  payment          Payment          @relation(fields: [paymentId], references: [id])
+  generatedAt      DateTime         @default(now())
+  pdfUrl           String?
+}
+
+model Voucher {
+  id             String           @id @default(uuid())
+  code           String           @unique
+  discountPercent Float
+  maxUses        Int
+  usedCount      Int              @default(0)
+  expiresAt      DateTime
+}
+
+model SubscriptionCode {
+  id         String             @id @default(uuid())
+  code       String             @unique
+  status     SubscriptionStatus @default(UNUSED)
+  assignedTo String?            
+  userType   String?            
+  durationDays Int                @default(30)
+  createdAt  DateTime           @default(now())
+  expiresAt  DateTime
+}
+
+// Verification & Trust
+
+model VerificationRequest {
+  id             String             @id @default(uuid())
+  
+  jobSeekerId    String?
+  jobSeeker      JobSeeker?         @relation(fields: [jobSeekerId], references: [id])
+  employerId     String?
+  employer       Employer?          @relation(fields: [employerId], references: [id])
+  
+  requestType    String
+  status         VerificationStatus @default(PENDING)
+  adminNotes     String?
+  submittedAt    DateTime           @default(now())
+  reviewedAt     DateTime?
+  
+  documents      Document[]
+}
+
+model Document {
+  id             String             @id @default(uuid())
+  url            String
+  documentType   String
+  uploadedAt     DateTime           @default(now())
+  
+  requestId      String
+  request        VerificationRequest @relation(fields: [requestId], references: [id])
+}
+
+// Contracts & Safety
+
+model Contract {
+  id             String             @id @default(uuid())
+  
+  employerId     String
+  employer       Employer           @relation(fields: [employerId], references: [id])
+  jobSeekerId    String
+  jobSeeker      JobSeeker          @relation(fields: [jobSeekerId], references: [id])
+  jobPostId      String?
+  jobPost        JobPost?           @relation(fields: [jobPostId], references: [id])
+  
+  status         ContractStatus     @default(DRAFT)
+  startDate      DateTime
+  endDate        DateTime?
+  salary         Float
+  terms          ContractTerm[]
+  
+  employerSigned Boolean            @default(false)
+  workerSigned   Boolean            @default(false)
+  createdAt      DateTime           @default(now())
+  
+  disputes       Dispute[]
+}
+
+model ContractTerm {
+  id             String             @id @default(uuid())
+  contractId     String
+  contract       Contract           @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  title          String
+  content        String
+}
+
+model Dispute {
+  id             String             @id @default(uuid())
+  contractId     String?
+  contract       Contract?          @relation(fields: [contractId], references: [id])
+  
+  reporterJSId   String?
+  reporterJS     JobSeeker?         @relation(fields: [reporterJSId], references: [id])
+  reporterEmpId  String?
+  reporterEmp    Employer?          @relation(fields: [reporterEmpId], references: [id])
+  
+  reason         String
+  description    String
+  status         DisputeStatus      @default(OPEN)
+  resolution     String?
+  adminId        String?
+  
+  createdAt      DateTime           @default(now())
+}
+
+model Report {
+  id             String             @id @default(uuid())
+  
+  reporterJSId   String?
+  reporterJS     JobSeeker?         @relation("ReporterJS", fields: [reporterJSId], references: [id])
+  reporterEmpId  String?
+  reporterEmp    Employer?          @relation("ReporterEmp", fields: [reporterEmpId], references: [id])
+  
+  reportedJSId   String?
+  reportedJS     JobSeeker?         @relation("ReportedJS", fields: [reportedJSId], references: [id])
+  reportedEmpId  String?
+  reportedEmp    Employer?          @relation("ReportedEmp", fields: [reportedEmpId], references: [id])
+  
+  reason         String
+  timestamp      DateTime           @default(now())
+}
+
+model BlockedUser {
+  id             String             @id @default(uuid())
+  blockerId      String
+  blockedId      String
+  createdAt      DateTime           @default(now())
+}
+
+model Admin {
+  id       String    @id @default(uuid())
+  username String    @unique
+  password String
+  role     AdminRole @default(MODERATOR)
+}
