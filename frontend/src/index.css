@@ -106,3 +106,20 @@ button {
     display: none;
   }
 }
+
+/* Responsive company name in navbar */
+@media (max-width: 600px) {
+
+  nav a>div>div:first-child,
+  nav a>div>div:last-child {
+    font-size: 0.75rem !important;
+  }
+}
+
+@media (max-width: 400px) {
+
+  nav a>div>div:first-child,
+  nav a>div>div:last-child {
+    font-size: 0.65rem !important;
+  }
+}

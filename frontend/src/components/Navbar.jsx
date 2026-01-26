@@ -27,9 +27,23 @@ const Navbar = () => {
 
     return (
         <nav className="navbar" style={{ position: 'sticky', top: 0, zIndex: 1000, padding: '10px 20px', background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <Link to="/" onClick={closeMenu} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-                <img src={logo} alt="EDWL Logo" style={{ height: '40px', width: '40px', objectFit: 'contain' }} />
-                <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--primary)' }}>EDWL</div>
+            <Link to="/" onClick={closeMenu} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+                <div style={{
+                    background: 'white',
+                    padding: '8px',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(255, 69, 0, 0.3)',
+                    border: '2px solid #ff4500'
+                }}>
+                    <img src={logo} alt="EDWL Logo" style={{ height: '45px', width: '45px', objectFit: 'contain' }} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#ff4500', lineHeight: '1.2' }}>Ethio Domestic Workers Link</div>
+                    <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#ff4500', lineHeight: '1.2', fontFamily: 'system-ui' }}>ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ</div>
+                </div>
             </Link>
 
             <div className="mobile-only" onClick={() => setIsMenuOpen(!isMenuOpen)}>

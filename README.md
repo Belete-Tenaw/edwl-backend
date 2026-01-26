@@ -53,10 +53,35 @@ The project is divided into two main folders:
    ```bash
    npm run dev
    ```
-   ```
-   npm run dev
-   ```
    The frontend will run on `http://localhost:3000` (or similar).
+
+## Quick Start with Docker (Recommended)
+
+### Prerequisites
+- Docker and Docker Compose installed
+
+### Steps
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd EDWL-Project
+   ```
+2. Copy environment template:
+   ```bash
+   cp .env.docker.template .env
+   ```
+3. Edit `.env` with your configuration:
+   ```bash
+   nano .env
+   ```
+4. Start all services:
+   ```bash
+   docker-compose up -d
+   ```
+5. Access the application:
+   - Frontend: http://localhost
+   - Backend API: http://localhost:5000
+   - API Documentation: http://localhost:5000/api-docs
 
 ## Production Deployment
 
@@ -73,10 +98,16 @@ The project is divided into two main folders:
    - Run `npx prisma generate` before starting the server.
 
 ## Security & Performance
-- **Rate Limiting**: Protected against brute-force attacks on all `/api` routes.
-- **Security Headers**: Uses `helmet` for secure HTTP headers.
-- **Bilingual**: Fully localized for English and Amharic.
-- **Premium Model**: Quota limits for free users and conversation restrictions.
+- **RBAC**: Role-based access control with strict permission enforcement
+- **Audit Logging**: All critical actions logged (logins, payments, admin actions)
+- **Rate Limiting**: Anti-brute-force protection (10 login attempts/hour)
+- **Data Privacy**: Sensitive data masking for freemium users
+- **Security Headers**: Helmet.js for secure HTTP headers
+- **Bilingual**: Fully localized for English and Amharic
+- **Premium Model**: Quota limits for free users and messaging restrictions
+- **Docker Ready**: Full containerization support
+- **CI/CD Pipeline**: GitHub Actions for automated testing and deployment
+- **Health Checks**: Built-in health monitoring for all services
 
 ## Key Technologies
 - **Frontend**: React (Vite), Lucide (Icons), Axios, i18next

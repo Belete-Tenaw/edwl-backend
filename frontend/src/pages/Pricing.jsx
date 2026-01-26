@@ -37,6 +37,21 @@ const Pricing = () => {
             popular: true
         },
         {
+            name: 'Semi-Annual',
+            icon: <Crown className="text-purple-500" size={32} />,
+            price: '2000',
+            duration: '6 Months',
+            features: [
+                'All Gold Features',
+                'Extended 6-month access',
+                'Priority customer support',
+                'Verified badge eligibility',
+                'Unlimited profile views'
+            ],
+            color: '#A855F7',
+            popular: false
+        },
+        {
             name: 'Platinum',
             icon: <Shield className="text-orange-600" size={32} />,
             price: '3000',

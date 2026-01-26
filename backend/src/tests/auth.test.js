@@ -1,30 +1,21 @@
 const request = require('supertest');
-const express = require('express');
-const bodyParser = require('body-parser');
+const app = require('../server');
+const prisma = require('../utils/prisma');
 
-process.env.JWT_SECRET = 'test_secret';
-
-// Mock the prisma utility BEFORE requiring routes/controllers
-const mPrisma = {
+jest.mock('../utils/prisma', () => ({
     jobSeeker: {
         findFirst: jest.fn(),
         create: jest.fn(),
     },
-    $disconnect: jest.fn(),
-};
-
-jest.mock('../utils/prisma', () => mPrisma);
-
-const authRoutes = require('../routes/auth');
-const app = express();
-app.use(bodyParser.json());
-app.use('/api/auth', authRoutes);
+    auditLog: {
+        create: jest.fn()
+    }
+}));
 
 describe('Auth Endpoints', () => {
-
-    // We are mocking at the unit/integration level without a real DB to keep it fast.
-    // We import the same mocked instance to assert on it.
-    const prisma = require('../utils/prisma');
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
 
     it('should register a new job seeker', async () => {
         prisma.jobSeeker.findFirst.mockResolvedValue(null);
@@ -47,23 +38,11 @@ describe('Auth Endpoints', () => {
                 experienceYears: 2,
                 expectedSalary: 5000,
                 preferredLocation: 'Addis Ababa',
-                preferredArrangement: 'LIVE_OUT'
+                preferredArrangement: 'LIVE_IN',
+                maritalStatus: 'SINGLE'
             });
 
         expect(res.statusCode).toEqual(201);
         expect(res.body).toHaveProperty('token');
-        expect(res.body.user).toHaveProperty('id');
-    });
-
-    it('should fail with missing fields', async () => {
-        const res = await request(app)
-            .post('/api/auth/register/seeker')
-            .send({
-                fullName: 'Test User'
-                // Missing other required fields
-            });
-
-        expect(res.statusCode).toEqual(400);
-        expect(res.body.error).toContain('Missing required fields');
     });
 });

@@ -3,9 +3,10 @@ const router = express.Router();
 const jobController = require('../controllers/jobController');
 const auth = require('../middleware/auth');
 const checkLimits = require('../middleware/checkLimits');
+const { authorize, Roles } = require('../middleware/rbac');
 
 router.get('/', auth, jobController.getAllJobs);
 router.get('/:id', auth, checkLimits, jobController.getJobById);
-router.post('/', auth, jobController.createJobPost);
+router.post('/', auth, authorize([Roles.EMPLOYER]), jobController.createJobPost);
 
 module.exports = router;

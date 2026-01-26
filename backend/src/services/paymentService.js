@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma');
+const { logAction } = require('./auditService');
 
 class PaymentService {
     /**
@@ -100,6 +101,14 @@ class PaymentService {
                 }
             });
 
+            // 6. Audit Log
+            await logAction(
+                'PAYMENT_COMPLETED',
+                payment.jobSeekerId || payment.employerId,
+                payment.jobSeekerId ? 'JOB_SEEKER' : 'EMPLOYER',
+                { paymentId, tierId: tier.id, provider: payment.provider }
+            );
+
             return updatedPayment;
         });
     }
@@ -131,17 +140,28 @@ class PaymentService {
             const expiryDate = new Date();
             expiryDate.setDate(expiryDate.getDate() + subCode.durationDays);
 
+            let updatedUser;
             if (userType === 'seeker') {
-                return await tx.jobSeeker.update({
+                updatedUser = await tx.jobSeeker.update({
                     where: { id: userId },
                     data: { tier: 'SUBSCRIBER', subscriptionExpiry: expiryDate }
                 });
             } else {
-                return await tx.employer.update({
+                updatedUser = await tx.employer.update({
                     where: { id: userId },
                     data: { tier: 'SUBSCRIBER', subscriptionExpiry: expiryDate }
                 });
             }
+
+            // Audit Log
+            await logAction(
+                'SUBSCRIPTION_CODE_REDEEMED',
+                userId,
+                userType === 'seeker' ? 'JOB_SEEKER' : 'EMPLOYER',
+                { code, durationDays: subCode.durationDays }
+            );
+
+            return updatedUser;
         });
     }
 }

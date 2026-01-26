@@ -2,6 +2,7 @@ const prisma = require('../utils/prisma');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { isValidEmail, hasRequiredFields } = require('../utils/validation');
+const { logAction } = require('../services/auditService');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -80,6 +81,10 @@ exports.loginJobSeeker = async (req, res) => {
         }
 
         const token = generateToken({ id: seeker.id, role: 'JOB_SEEKER' });
+
+        // Audit Log
+        await logAction('LOGIN_SUCCESS', seeker.id, 'JOB_SEEKER', { method: identifier.includes('@') ? 'email' : 'phone' });
+
         res.json({ token, user: { id: seeker.id, fullName: seeker.fullName, role: 'JOB_SEEKER', tier: seeker.tier } });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -151,6 +156,10 @@ exports.loginEmployer = async (req, res) => {
         }
 
         const token = generateToken({ id: employer.id, role: 'EMPLOYER' });
+
+        // Audit Log
+        await logAction('LOGIN_SUCCESS', employer.id, 'EMPLOYER', { method: identifier.includes('@') ? 'email' : 'phone' });
+
         res.json({ token, user: { id: employer.id, contactName: employer.contactName, role: 'EMPLOYER', tier: employer.tier } });
     } catch (error) {
         res.status(500).json({ error: error.message });

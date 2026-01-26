@@ -73,6 +73,15 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Strict rate limiting for auth routes
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // Limit each IP to 10 login/register requests per hour
+  message: 'Too many authentication attempts, please try again after an hour'
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/admin/login', authLimiter);
+
 // Routes
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to EDWL API' });
@@ -117,6 +126,10 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

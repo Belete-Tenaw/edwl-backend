@@ -109,7 +109,8 @@ model JobSeeker {
   expectedSalary     Int
   preferredLocation  String
   preferredArrangement PreferredArrangement
-  profilePhoto       String?
+  profilePhoto       String               // Made mandatory - checked in backend validation
+  certificates       String[]             @default([]) // Array of certificate file URLs
   idDocument         String?
   
   // Verification & Trust
@@ -437,3 +438,14 @@ model Admin {
   password String
   role     AdminRole @default(MODERATOR)
 }
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  userId    String?
+  userType  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+

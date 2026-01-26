@@ -21,19 +21,25 @@ async function main() {
             name: 'Silver',
             priceETB: 500,
             durationDays: 30,
-            features: ['Basic visibility', '5 job applications/day']
+            features: ['Basic visibility', 'Unlimited access during subscription', '5 profiles per day view limit after expiry']
         },
         {
             name: 'Gold',
             priceETB: 1200,
             durationDays: 90,
-            features: ['Priority list', 'Unlimited job applications', 'Verified badge']
+            features: ['Priority listing', 'Unlimited access', 'Verified badge eligibility']
+        },
+        {
+            name: 'Semi-Annual',
+            priceETB: 2000,
+            durationDays: 180,
+            features: ['All Gold features', 'Extended 6-month access', 'Priority support']
         },
         {
             name: 'Platinum',
             priceETB: 3000,
             durationDays: 365,
-            features: ['All Gold features', 'Direct matching support', 'Legal contract review']
+            features: ['All features', 'Full year access', 'Direct matching support', 'Legal contract review']
         }
     ];
 

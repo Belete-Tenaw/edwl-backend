@@ -1,29 +1,59 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: edwl_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin123}
+      POSTGRES_DB: edwl_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: edwl_backend
+    restart: unless-stopped
     ports:
       - "5000:5000"
     environment:
-      - PORT=5000
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/edwl?schema=public
-      - JWT_SECRET=supersecretproductionkeychangehis
-      - NODE_ENV=production
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-admin123}@postgres:5432/edwl_db?schema=public
+      JWT_SECRET: ${JWT_SECRET:-d85cd108d9ab5f3b3550a282e8cd8e36a77c2a4a610c334829011c470f9ebe65}
+      PORT: 5000
+      NODE_ENV: production
     depends_on:
-      - db
-    restart: always
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=edwl
+      postgres:
+        condition: service_healthy
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./backend:/app
+      - /app/node_modules
+    command: sh -c "npx prisma db push && npm start"
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: edwl_frontend
+    restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "80:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
+    driver: local

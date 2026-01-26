@@ -13,12 +13,16 @@ module.exports = async (req, res, next) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    // Subscribers have no limits
+    // Active subscribers have unlimited access
     if (user.tier === 'SUBSCRIBER') {
-        return next();
+        // Check if subscription is still valid
+        if (user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date()) {
+            return next(); // Unlimited access during active subscription
+        }
+        // Subscription expired, downgrade to freemium limits
     }
 
-    // Check daily views
+    // Freemium: 5 profiles per day with limited information
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -34,7 +38,8 @@ module.exports = async (req, res, next) => {
     if (viewCount >= 5) {
         return res.status(403).json({
             error: 'Daily limit reached',
-            message: 'Freemium users are limited to 5 views per day. Upgrade to Premium for unlimited access.'
+            message: 'Freemium users are limited to 5 profile views per day. Upgrade to Premium for unlimited access.',
+            upgradeUrl: '/pricing'
         });
     }
 
