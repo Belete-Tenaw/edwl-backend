@@ -25,7 +25,7 @@ const Messages = () => {
 
     useEffect(() => {
         if (location.state?.startChatWith) {
-            handleStartChat(location.state.startChatWith, location.state.context);
+            handleStartChat(location.state.startChatWith, location.state.targetName, location.state.context);
         }
     }, [location.state, conversations]); // Re-run when conversations confirm loaded
 
@@ -35,7 +35,7 @@ const Messages = () => {
         }
     }, [chatHistory, selectedUser]);
 
-    const handleStartChat = (targetUserId, context) => {
+    const handleStartChat = (targetUserId, targetName, context) => {
         // Check if conversation already exists
         const existing = conversations.find(c => c.id === targetUserId);
         if (existing) {
@@ -43,9 +43,9 @@ const Messages = () => {
             setChatHistory(existing.messages);
         } else {
             // Create temp placeholder logic for UI
-            // In a real app, we might need to fetch the user's name first
             const tempConv = {
                 id: targetUserId,
+                fullName: targetName || `User ${targetUserId.substring(0, 8)}`,
                 messages: [],
                 lastMsg: { content: t('start_conversation'), timestamp: new Date() }
             };
@@ -68,18 +68,40 @@ const Messages = () => {
                     (currentUser.role === 'EMPLOYER' && msg.senderEmpId === currentUser.id);
 
                 let otherUserId;
+                let otherName = 'User';
+                let otherPhoto = null;
 
                 if (isSender) {
-                    if (msg.receiverJSId) { otherUserId = msg.receiverJSId; }
-                    else { otherUserId = msg.receiverEmpId; }
+                    if (msg.receiverJSId) {
+                        otherUserId = msg.receiverJSId;
+                        otherName = msg.receiverJS?.fullName;
+                        otherPhoto = msg.receiverJS?.profilePhoto;
+                    } else {
+                        otherUserId = msg.receiverEmpId;
+                        otherName = msg.receiverEmp?.contactName;
+                        otherPhoto = msg.receiverEmp?.profilePhoto;
+                    }
                 } else {
-                    if (msg.senderJSId) { otherUserId = msg.senderJSId; }
-                    else { otherUserId = msg.senderEmpId; }
+                    if (msg.senderJSId) {
+                        otherUserId = msg.senderJSId;
+                        otherName = msg.senderJS?.fullName;
+                        otherPhoto = msg.senderJS?.profilePhoto;
+                    } else {
+                        otherUserId = msg.senderEmpId;
+                        otherName = msg.senderEmp?.contactName;
+                        otherPhoto = msg.senderEmp?.profilePhoto;
+                    }
                 }
 
                 if (otherUserId) {
                     if (!grouped[otherUserId]) {
-                        grouped[otherUserId] = { id: otherUserId, messages: [], lastMsg: msg };
+                        grouped[otherUserId] = {
+                            id: otherUserId,
+                            fullName: otherName || `User ${otherUserId.substring(0, 5)}`,
+                            profilePhoto: otherPhoto,
+                            messages: [],
+                            lastMsg: msg
+                        };
                     }
                     grouped[otherUserId].messages.push(msg);
                     if (new Date(msg.timestamp) > new Date(grouped[otherUserId].lastMsg.timestamp)) {
@@ -172,16 +194,28 @@ const Messages = () => {
                                     key={conv.id}
                                     onClick={() => handleSelectUser(conv)}
                                     style={{
-                                        padding: '15px 20px',
+                                        padding: '12px 15px',
                                         borderBottom: '1px solid #f5f5f5',
                                         cursor: 'pointer',
                                         background: selectedUser?.id === conv.id ? '#fff0e6' : 'white',
-                                        transition: 'background 0.2s'
+                                        transition: 'background 0.2s',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px'
                                     }}
                                 >
-                                    <div style={{ fontWeight: '600', marginBottom: '5px' }}>User {conv.id.substring(0, 8)}...</div>
-                                    <div style={{ fontSize: '0.85rem', color: '#666', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        {conv.lastMsg.content}
+                                    <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#eee', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        {conv.profilePhoto ? (
+                                            <img src={conv.profilePhoto} alt={conv.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <User size={20} color="#666" />
+                                        )}
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ fontWeight: '600', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.fullName}</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#666', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {conv.lastMsg.content}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -195,7 +229,7 @@ const Messages = () => {
                 {selectedUser ? (
                     <>
                         <div style={{ padding: '15px 20px', borderBottom: '1px solid #eee', background: '#fafafa', borderRadius: '12px 12px 0 0' }}>
-                            <h3 style={{ fontSize: '1.1rem' }}>Conversation with User {selectedUser.id.substring(0, 8)}...</h3>
+                            <h3 style={{ fontSize: '1.1rem' }}>{t('conversation_with')} {selectedUser.fullName}</h3>
                         </div>
 
                         <div ref={scrollRef} style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>

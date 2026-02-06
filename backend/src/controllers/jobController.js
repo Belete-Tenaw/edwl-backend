@@ -32,8 +32,8 @@ exports.getAllJobs = async (req, res) => {
                     select: {
                         id: true,
                         contactName: true,
-                        employerType: true
-                        // full address hidden by default for freemium? 
+                        employerType: true,
+                        isVerified: true
                         // The requirement says "Cannot view employer full profile or address" for freemium.
                     }
                 }

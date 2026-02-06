@@ -9,6 +9,14 @@ The project is divided into two main folders:
 - **`backend/`**: A Node.js/Express server using Prisma with PostgreSQL. Handles authentication, data persistence, and business logic.
 - **`frontend/`**: A React application built with Vite. Provides the user interface for Job Seekers, Employers, and Admins.
 
+## Key Features
+- **Bilingual Support**: Full English and Amharic support throughout the app.
+- **Symmetric Verification**: Both workers and employers can be identity-verified by admins.
+- **Secure Messaging**: Context-aware chat system with privacy protection.
+- **Safety Reporting**: Users can report suspicious behavior; admins moderate via a dedicated dashboard.
+- **Premium Model**: Manual subscription activation system via unique codes.
+- **Audit Logging**: Comprehensive tracking of all critical system actions.
+
 ## Prerequisites
 
 - **Node.js** (v16 or higher)

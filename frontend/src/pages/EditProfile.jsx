@@ -30,10 +30,18 @@ const EditProfile = () => {
             const res = await api.get(endpoint);
 
             const data = res.data;
+            let currentSkills = [];
+            let customSkill = '';
             if (data.skills && Array.isArray(data.skills)) {
-                data.skills = data.skills.join(', ');
+                const list = t('skills_list', { returnObjects: true });
+                currentSkills = data.skills.filter(s => Object.keys(list).includes(s));
+                const custom = data.skills.find(s => !Object.keys(list).includes(s));
+                if (custom) {
+                    currentSkills.push('other');
+                    customSkill = custom;
+                }
             }
-            setFormData(data);
+            setFormData({ ...data, skills: currentSkills, customSkill });
         } catch (err) {
             console.error("Failed to fetch profile", err);
             alert("Could not load profile data.");
@@ -46,33 +54,74 @@ const EditProfile = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleFileChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.files[0] });
+    };
+
+    const handleSkillToggle = (skill) => {
+        const currentSkills = [...(formData.skills || [])];
+        const index = currentSkills.indexOf(skill);
+        if (index > -1) {
+            currentSkills.splice(index, 1);
+        } else {
+            currentSkills.push(skill);
+        }
+        setFormData({ ...formData, skills: currentSkills });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         try {
             let endpoint = '';
-            let payload = { ...formData };
+            const dataToSend = new FormData();
 
             if (user.role === 'JOB_SEEKER') {
                 endpoint = '/seekers/profile';
-                payload.age = parseInt(payload.age);
-                payload.experienceYears = parseInt(payload.experienceYears);
-                payload.expectedSalary = parseInt(payload.expectedSalary);
-                if (typeof payload.skills === 'string') {
-                    payload.skills = payload.skills.split(',').map(s => s.trim()).filter(s => s);
+
+                let finalSkills = Array.isArray(formData.skills) ? [...formData.skills] : [];
+                if (finalSkills.includes('other') && formData.customSkill) {
+                    finalSkills = finalSkills.filter(s => s !== 'other');
+                    finalSkills.push(formData.customSkill);
                 }
-                delete payload.id;
-                delete payload.email;
+
+                dataToSend.append('fullName', formData.fullName);
+                dataToSend.append('phone', formData.phone);
+                dataToSend.append('age', formData.age);
+                dataToSend.append('maritalStatus', formData.maritalStatus || 'SINGLE');
+                dataToSend.append('religion', formData.religion || '');
+                dataToSend.append('skills', JSON.stringify(finalSkills));
+                dataToSend.append('experienceYears', formData.experienceYears);
+                dataToSend.append('expectedSalary', formData.expectedSalary);
+                dataToSend.append('preferredArrangement', formData.preferredArrangement || 'LIVE_IN');
+                dataToSend.append('preferredLocation', formData.preferredLocation);
+                dataToSend.append('bio', formData.bio || '');
+
+                if (formData.profilePhoto instanceof File) {
+                    dataToSend.append('profilePhoto', formData.profilePhoto);
+                }
+                if (formData.idDocument instanceof File) {
+                    dataToSend.append('idDocument', formData.idDocument);
+                }
             } else {
                 endpoint = '/employers/profile';
-                if (payload.employerType === 'HOUSEHOLD') {
-                    payload.familySize = parseInt(payload.familySize);
+
+                dataToSend.append('contactName', formData.contactName);
+                dataToSend.append('phone', formData.phone);
+                dataToSend.append('address', formData.address);
+                if (formData.familySize) dataToSend.append('familySize', formData.familySize);
+
+                if (formData.profilePhoto instanceof File) {
+                    dataToSend.append('profilePhoto', formData.profilePhoto);
                 }
-                delete payload.id;
-                delete payload.email;
+                if (formData.idDocument instanceof File) {
+                    dataToSend.append('idDocument', formData.idDocument);
+                }
             }
 
-            const res = await api.put(endpoint, payload);
+            const res = await api.put(endpoint, dataToSend, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
             const updatedUser = { ...user, fullName: res.data.fullName || res.data.contactName };
             localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -128,8 +177,39 @@ const EditProfile = () => {
                                 <input className="input" name="religion" value={formData.religion || ''} onChange={handleChange} />
                             </div>
                             <div style={{ gridColumn: '1 / -1' }}>
-                                <label className="label">{t('skills_comma')}</label>
-                                <input required className="input" name="skills" value={formData.skills || ''} onChange={handleChange} />
+                                <label className="label">{t('skills_required')} (Select multiple)</label>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                                    gap: '10px',
+                                    background: '#f9f9f9',
+                                    padding: '15px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ddd'
+                                }}>
+                                    {Object.entries(t('skills_list', { returnObjects: true })).map(([key, value]) => (
+                                        <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={(formData.skills || []).includes(key)}
+                                                onChange={() => handleSkillToggle(key)}
+                                            />
+                                            {value}
+                                        </label>
+                                    ))}
+                                </div>
+                                {(formData.skills || []).includes('other') && (
+                                    <div style={{ marginTop: '10px' }}>
+                                        <input
+                                            className="input"
+                                            name="customSkill"
+                                            value={formData.customSkill || ''}
+                                            onChange={handleChange}
+                                            placeholder={t('specify_other')}
+                                            required
+                                        />
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className="label">{t('experience_years')}</label>
@@ -155,6 +235,15 @@ const EditProfile = () => {
                                 <label className="label">{t('bio_about_me')}</label>
                                 <textarea className="input" name="bio" value={formData.bio || ''} onChange={handleChange} style={{ minHeight: '100px' }} />
                             </div>
+                            <div>
+                                <label className="label">{t('profile_photo')} (Image)</label>
+                                <input type="file" className="input" name="profilePhoto" accept="image/*" onChange={handleFileChange} />
+                            </div>
+                            <div>
+                                <label className="label">{t('id_document')} (Image)</label>
+                                <input type="file" className="input" name="idDocument" accept="image/*" onChange={handleFileChange} />
+                                <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '5px' }}>{t('re_verify_hint') || "Updating your ID will require re-verification by admin."}</p>
+                            </div>
                         </div>
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
@@ -176,6 +265,15 @@ const EditProfile = () => {
                                     <input required type="number" className="input" name="familySize" value={formData.familySize || ''} onChange={handleChange} />
                                 </div>
                             )}
+                            <div>
+                                <label className="label">{t('profile_photo')} (Image)</label>
+                                <input type="file" className="input" name="profilePhoto" accept="image/*" onChange={handleFileChange} />
+                            </div>
+                            <div>
+                                <label className="label">{t('id_document')} (Image)</label>
+                                <input type="file" className="input" name="idDocument" accept="image/*" onChange={handleFileChange} />
+                                <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '5px' }}>{t('re_verify_hint') || "Updating your ID will require re-verification by admin."}</p>
+                            </div>
                         </div>
                     )}
 

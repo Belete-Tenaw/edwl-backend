@@ -41,9 +41,42 @@ exports.updateProfile = async (req, res) => {
         const id = req.user.id;
         if (req.user.role !== 'JOB_SEEKER') return res.status(403).json({ error: 'Forbidden' });
 
+        const { fullName, bio, skills, experienceYears, expectedSalary, preferredLocation, preferredArrangement } = req.body;
+
+        const updateData = {
+            fullName, bio,
+            experienceYears: experienceYears ? parseInt(experienceYears) : undefined,
+            expectedSalary: expectedSalary ? parseInt(expectedSalary) : undefined,
+            preferredLocation, preferredArrangement
+        };
+
+        if (skills) {
+            let formattedSkills = skills;
+            if (typeof skills === 'string') {
+                try {
+                    formattedSkills = JSON.parse(skills);
+                } catch (e) {
+                    formattedSkills = skills.split(',').map(s => s.trim());
+                }
+            }
+            updateData.skills = Array.isArray(formattedSkills) ? formattedSkills : [];
+        }
+
+        if (req.files) {
+            if (req.files.profilePhoto) {
+                updateData.profilePhoto = `/uploads/profilePhoto/${req.files.profilePhoto[0].filename}`;
+            }
+            if (req.files.idDocument) {
+                updateData.idDocument = `/uploads/idDocument/${req.files.idDocument[0].filename}`;
+                // Reset verification status if ID is updated
+                updateData.isVerified = false;
+                updateData.verificationStatus = 'PENDING';
+            }
+        }
+
         const updated = await prisma.jobSeeker.update({
             where: { id },
-            data: req.body
+            data: updateData
         });
 
         res.json(updated);

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { useTranslation } from 'react-i18next';
 import { Menu, LogOut, User, MessageSquare } from 'lucide-react';
-import logo from '../assets/edwl_logo_high_contrast.png';
+import logo from '../assets/logo_circular.png';
 
 const Navbar = () => {
     const { t, i18n } = useTranslation();
@@ -27,22 +27,28 @@ const Navbar = () => {
 
     return (
         <nav className="navbar" style={{ position: 'sticky', top: 0, zIndex: 1000, padding: '10px 20px', background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <Link to="/" onClick={closeMenu} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                <div style={{
-                    background: 'white',
-                    padding: '8px',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(255, 69, 0, 0.3)',
-                    border: '2px solid #ff4500'
-                }}>
-                    <img src={logo} alt="EDWL Logo" style={{ height: '45px', width: '45px', objectFit: 'contain' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                    <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#ff4500', lineHeight: '1.2' }}>Ethio Domestic Workers Link</div>
-                    <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#ff4500', lineHeight: '1.2', fontFamily: 'system-ui' }}>ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ</div>
+            <Link to="/" onClick={closeMenu} style={{ display: 'flex', alignItems: 'center', gap: '15px', textDecoration: 'none' }}>
+                <img src={logo} alt="EDWL Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <div style={{
+                        fontWeight: '800',
+                        fontSize: '1.1rem',
+                        color: '#ff4500',
+                        lineHeight: '1.1',
+                        letterSpacing: '-0.02em',
+                        fontFamily: "'Inter', sans-serif"
+                    }}>
+                        Ethio Domestic Workers Link
+                    </div>
+                    <div style={{
+                        fontWeight: '700',
+                        fontSize: '0.95rem',
+                        color: '#ff4500',
+                        lineHeight: '1.1',
+                        fontFamily: 'system-ui'
+                    }}>
+                        ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ
+                    </div>
                 </div>
             </Link>
 
@@ -51,9 +57,12 @@ const Navbar = () => {
             </div>
 
             <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <Link to="/pricing" onClick={closeMenu} style={{ textDecoration: 'none', color: '#333', fontWeight: '500' }}>Plans</Link>
+                <Link to="/" onClick={closeMenu} style={{ textDecoration: 'none', color: '#333', fontWeight: '500' }}>{t('home')}</Link>
+                <Link to="/about" onClick={closeMenu} style={{ textDecoration: 'none', color: '#333', fontWeight: '500' }}>{t('about_us')}</Link>
+                <Link to="/contact" onClick={closeMenu} style={{ textDecoration: 'none', color: '#333', fontWeight: '500' }}>{t('contact_us')}</Link>
+                <Link to="/pricing" onClick={closeMenu} style={{ textDecoration: 'none', color: '#333', fontWeight: '500' }}>{t('plans')}</Link>
                 <button onClick={toggleLanguage} style={{ background: 'transparent', border: '1px solid #ddd', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', width: 'fit-content' }}>
-                    {i18n.language === 'en' ? 'AM' : 'EN'}
+                    {i18n.language === 'en' ? 'አማርኛ' : 'English'}
                 </button>
 
                 {user ? (

@@ -25,7 +25,7 @@ const Activate = () => {
                 navigate('/dashboard');
             }, 2000);
         } catch (err) {
-            setError(err.response?.data?.error || 'Invalid or expired code');
+            setError(err.response?.data?.error || t('invalid_code'));
         } finally {
             setLoading(false);
         }

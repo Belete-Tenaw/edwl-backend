@@ -7,13 +7,15 @@ exports.getAllUsers = async (req, res) => {
         const seekers = await prisma.jobSeeker.findMany({
             select: {
                 id: true, fullName: true, phone: true, email: true,
-                isVerified: true, verificationStatus: true, tier: true, createdAt: true
+                isVerified: true, verificationStatus: true, tier: true, createdAt: true,
+                profilePhoto: true, idDocument: true
             }
         });
         const employers = await prisma.employer.findMany({
             select: {
                 id: true, contactName: true, phone: true, email: true,
-                isVerified: true, verificationStatus: true, tier: true, createdAt: true
+                isVerified: true, verificationStatus: true, tier: true, createdAt: true,
+                profilePhoto: true, idDocument: true // Employers might have these later too
             }
         });
         res.json({ seekers, employers });
@@ -76,6 +78,24 @@ exports.updateAccountStatus = async (req, res) => {
             'ADMIN',
             { targetUserId: id, targetUserType: type, action }
         );
+
+        if (type === 'seeker') {
+            await prisma.jobSeeker.update({
+                where: { id },
+                data: {
+                    verificationStatus: action === 'SUSPEND' ? 'REJECTED' : 'APPROVED',
+                    isVerified: action === 'ACTIVATE'
+                }
+            });
+        } else {
+            await prisma.employer.update({
+                where: { id },
+                data: {
+                    verificationStatus: action === 'SUSPEND' ? 'REJECTED' : 'APPROVED',
+                    isVerified: action === 'ACTIVATE'
+                }
+            });
+        }
 
         res.json({ message: `User account ${action}ed` });
     } catch (error) {

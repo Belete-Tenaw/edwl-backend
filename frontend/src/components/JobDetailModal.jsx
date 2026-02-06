@@ -26,7 +26,14 @@ const JobDetailModal = ({ job, onClose }) => {
                     <X size={24} color="#999" />
                 </button>
 
-                <h2 style={{ marginBottom: '10px', color: 'var(--primary)', paddingRight: '30px' }}>{job.title}</h2>
+                <h2 style={{ marginBottom: '10px', color: 'var(--primary)', paddingRight: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {job.title}
+                    {job.employer?.isVerified && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#e0f2fe', color: '#0369a1', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                            <Shield size={14} /> {t('verified')}
+                        </span>
+                    )}
+                </h2>
                 <div style={{ marginBottom: '20px', color: '#666', fontSize: '0.9rem' }}>
                     {t('posted_on')} {new Date(job.createdAt).toLocaleDateString()}
                 </div>
@@ -46,7 +53,13 @@ const JobDetailModal = ({ job, onClose }) => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Clock size={18} color="var(--primary)" />
-                        <span>{job.preferredArrangement}</span>
+                        <span>{
+                            {
+                                'LIVE_IN': t('live_in'),
+                                'LIVE_OUT': t('live_out'),
+                                'PART_TIME': t('part_time')
+                            }[job.preferredArrangement] || job.preferredArrangement
+                        }</span>
                     </div>
                 </div>
 

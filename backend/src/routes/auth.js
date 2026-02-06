@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-
-// Job Seeker
+const upload = require('../middleware/upload');
 
 /**
  * @swagger
@@ -13,7 +12,7 @@ const authController = require('../controllers/authController');
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -21,6 +20,7 @@ const authController = require('../controllers/authController');
  *               - email
  *               - password
  *               - phone
+ *               - profilePhoto
  *             properties:
  *               fullName:
  *                 type: string
@@ -32,6 +32,12 @@ const authController = require('../controllers/authController');
  *                 type: string
  *               gender:
  *                 type: string
+ *               profilePhoto:
+ *                 type: string
+ *                 format: binary
+ *               idDocument:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: User created successfully
@@ -40,7 +46,10 @@ const authController = require('../controllers/authController');
  *       409:
  *         description: User already exists
  */
-router.post('/seeker/register', authController.registerJobSeeker);
+router.post('/seeker/register', upload.fields([
+    { name: 'profilePhoto', maxCount: 1 },
+    { name: 'idDocument', maxCount: 1 }
+]), authController.registerJobSeeker);
 
 /**
  * @swagger
@@ -96,7 +105,10 @@ router.post('/seeker/login', authController.loginJobSeeker);
  *       201:
  *         description: User created successfully
  */
-router.post('/employer/register', authController.registerEmployer);
+router.post('/employer/register', upload.fields([
+    { name: 'profilePhoto', maxCount: 1 },
+    { name: 'idDocument', maxCount: 1 }
+]), authController.registerEmployer);
 
 /**
  * @swagger

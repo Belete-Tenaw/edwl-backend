@@ -79,6 +79,12 @@ exports.getMessages = async (req, res) => {
                     userRole === 'JOB_SEEKER' ? { receiverJSId: userId } : { receiverEmpId: userId }
                 ]
             },
+            include: {
+                senderJS: { select: { fullName: true, profilePhoto: true } },
+                senderEmp: { select: { contactName: true, profilePhoto: true } },
+                receiverJS: { select: { fullName: true, profilePhoto: true } },
+                receiverEmp: { select: { contactName: true, profilePhoto: true } }
+            },
             orderBy: { timestamp: 'asc' }
         });
 

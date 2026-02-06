@@ -9,74 +9,76 @@ const Pricing = () => {
 
     const plans = [
         {
-            name: 'Silver',
-            icon: <Star className="text-gray-400" size={32} />,
+            name: t('silver'),
+            icon: <Star size={32} color="#9CA3AF" />,
             price: '500',
-            duration: '30 Days',
+            duration: t('days_30'),
             features: [
-                'Basic visibility in search',
-                '5 Job Applications per day',
-                'Standard messaging access',
-                'Community support'
+                t('pricing_features.basic_visibility'),
+                t('pricing_features.job_apps_5'),
+                t('pricing_features.std_messaging'),
+                t('pricing_features.community_support')
             ],
             color: '#9CA3AF'
         },
         {
-            name: 'Gold',
-            icon: <Crown className="text-yellow-500" size={32} />,
+            name: t('gold'),
+            icon: <Crown size={32} color="#FBBF24" />,
             price: '1200',
-            duration: '90 Days',
+            duration: t('days_90'),
             features: [
-                'Priority ranking in search',
-                'Unlimited Job Applications',
-                'Verified Worker/Employer Badge',
-                'Direct phone contact access',
-                'Premium Support'
+                t('pricing_features.priority_ranking'),
+                t('pricing_features.unlimited_apps'),
+                t('pricing_features.verified_badge'),
+                t('pricing_features.phone_access'),
+                t('pricing_features.premium_support')
             ],
             color: '#FBBF24',
             popular: true
         },
         {
-            name: 'Semi-Annual',
-            icon: <Crown className="text-purple-500" size={32} />,
+            name: t('semi_annual'),
+            icon: <Crown size={32} color="#A855F7" />,
             price: '2000',
-            duration: '6 Months',
+            duration: t('months_6'),
             features: [
-                'All Gold Features',
-                'Extended 6-month access',
-                'Priority customer support',
-                'Verified badge eligibility',
-                'Unlimited profile views'
+                t('pricing_features.all_gold'),
+                t('pricing_features.extended_6'),
+                t('pricing_features.premium_support'),
+                t('pricing_features.verified_badge'),
+                t('pricing_features.unlimited_views')
             ],
             color: '#A855F7',
             popular: false
         },
         {
-            name: 'Platinum',
-            icon: <Shield className="text-orange-600" size={32} />,
+            name: t('platinum'),
+            icon: <Shield size={32} color="var(--primary)" />,
             price: '3000',
-            duration: '1 Year',
+            duration: t('year_1'),
             features: [
-                'All Gold Features',
-                'Direct matching by EDWL agents',
-                'Legal contract assistance',
-                'Background check verification',
-                'Dedicated account manager'
+                t('pricing_features.all_gold'),
+                t('pricing_features.direct_matching'),
+                t('pricing_features.legal_assistance'),
+                t('pricing_features.background_check'),
+                t('pricing_features.dedicated_manager')
             ],
             color: 'var(--primary)'
         }
     ];
 
     const handleSelect = (planName) => {
-        // In the next step, we'll link this to the Payment service
-        navigate(`/payment?plan=${planName}`);
+        const element = document.getElementById('manual-payment-steps');
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
     };
 
     return (
         <div className="container" style={{ padding: '60px 20px' }}>
             <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-                <h1 style={{ fontSize: '2.5rem', marginBottom: '15px' }}>Choose Your Plan</h1>
-                <p style={{ color: '#666', fontSize: '1.2rem' }}>Get better matches and priority support with EDWL Premium</p>
+                <h1 style={{ fontSize: '2.5rem', marginBottom: '15px' }}>{t('choose_plan')}</h1>
+                <p style={{ color: '#666', fontSize: '1.2rem' }}>{t('choose_plan_msg')}</p>
             </div>
 
             <div style={{
@@ -95,7 +97,8 @@ const Pricing = () => {
                             border: plan.popular ? `2px solid ${plan.color}` : 'none',
                             display: 'flex',
                             flexDirection: 'column',
-                            justifyContent: 'space-between'
+                            justifyContent: 'space-between',
+                            padding: '30px'
                         }}
                     >
                         {plan.popular && (
@@ -110,7 +113,7 @@ const Pricing = () => {
                                 fontSize: '0.8rem',
                                 fontWeight: 'bold'
                             }}>
-                                MOST POPULAR
+                                {t('most_popular')}
                             </div>
                         )}
 
@@ -122,7 +125,7 @@ const Pricing = () => {
 
                             <div style={{ marginBottom: '30px' }}>
                                 <span style={{ fontSize: '2.5rem', fontWeight: 'bold' }}>{plan.price}</span>
-                                <span style={{ color: '#666', marginLeft: '5px' }}>ETB / {plan.duration}</span>
+                                <span style={{ color: '#666', marginLeft: '5px' }}>{t('etb_per')} {plan.duration}</span>
                             </div>
 
                             <ul style={{ listStyle: 'none', padding: 0, marginBottom: '40px' }}>
@@ -136,23 +139,47 @@ const Pricing = () => {
                         </div>
 
                         <button
-                            className={plan.popular ? 'btn-primary' : 'btn-secondary'}
+                            className="btn-primary"
                             style={{
                                 width: '100%',
                                 padding: '15px',
-                                background: plan.popular ? plan.color : '#f3f4f6'
+                                background: plan.popular ? plan.color : '#666'
                             }}
                             onClick={() => handleSelect(plan.name)}
                         >
-                            Select {plan.name}
+                            {t('select_plan_name', { name: plan.name })}
                         </button>
                     </div>
                 ))}
             </div>
 
-            <div style={{ marginTop: '50px', textAlign: 'center', color: '#666' }}>
-                <p>All plans include access to our standard security features.</p>
-                <p>Have a manual activation code? <a href="/activate" style={{ color: 'var(--primary)', fontWeight: '600' }}>Enter it here</a></p>
+            <div id="manual-payment-steps" style={{ marginTop: '60px', padding: '40px', background: '#f8f9fa', borderRadius: '20px', textAlign: 'left', maxWidth: '800px', margin: '60px auto 0' }}>
+                <h2 style={{ fontSize: '1.8rem', marginBottom: '25px', textAlign: 'center', color: 'var(--primary)' }}>{t('manual_payment_title')}</h2>
+                <div style={{ display: 'grid', gap: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 'bold' }}>1</div>
+                        <p style={{ margin: 0, fontSize: '1.1rem' }}>{t('step_1_contact')}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 'bold' }}>2</div>
+                        <p style={{ margin: 0, fontSize: '1.1rem' }}>{t('step_2_bank')}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 'bold' }}>3</div>
+                        <p style={{ margin: 0, fontSize: '1.1rem' }}>{t('step_3_receipt')}</p>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontWeight: 'bold' }}>4</div>
+                        <p style={{ margin: 0, fontSize: '1.1rem' }}>{t('step_4_activate')}</p>
+                    </div>
+                </div>
+
+                <div style={{ marginTop: '30px', textAlign: 'center' }}>
+                    <button className="btn-primary" style={{ padding: '12px 30px' }} onClick={() => navigate('/activate')}>
+                        {t('go_to_activate')}
+                    </button>
+                    <p style={{ marginTop: '15px', color: '#666' }}>{t('contact_telegram')}</p>
+                </div>
             </div>
         </div>
     );

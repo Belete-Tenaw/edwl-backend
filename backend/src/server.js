@@ -1,3 +1,4 @@
+console.log('Starting server.js...');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -13,6 +14,7 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
 const swaggerOptions = {
+  // ... check integrity manually or reuse existing content if possible ...
   definition: {
     openapi: '3.0.0',
     info: {
@@ -60,9 +62,35 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Middleware
-app.use(helmet());
-app.use(cors());
-app.use(morgan('dev'));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"], // unsafe-inline needed for some dev tools/simple scripts, tighten if possible
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https://*"], // Limited to trusted if possible, but allowing all for user uploads/links for now
+      connectSrc: ["'self'"],
+    },
+  },
+}));
+
+// Enforce HTTPS in production
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
+      return res.redirect(`https://${req.header('host')}${req.url}`);
+    }
+    next();
+  });
+}
+
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || '*',
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 
 // Rate Limiting
@@ -109,11 +137,18 @@ app.use('/api/admin', require('./routes/admin'));
 // Payment Routes
 app.use('/api/payments', require('./routes/payment'));
 
+// Report Routes
+app.use('/api/reports', require('./routes/report'));
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(err.stack);
+  }
+  res.status(500).json({
+    error: process.env.NODE_ENV === 'production' ? 'An internal server error occurred' : err.message
+  });
 });
 
 // Serve static assets in production
@@ -125,6 +160,10 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.resolve(__dirname, '../../frontend/dist/index.html'));
   });
 }
+
+// Serve uploads directory - available in all environments
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 if (require.main === module) {
   app.listen(PORT, () => {

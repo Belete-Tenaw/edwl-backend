@@ -32,6 +32,11 @@ exports.registerJobSeeker = async (req, res) => {
             return res.status(400).json({ error: 'Invalid email format' });
         }
 
+        // Check for required profile photo
+        if (!req.files || !req.files.profilePhoto) {
+            return res.status(400).json({ error: 'Profile photo is required' });
+        }
+
         // Check existing
         const existing = await prisma.jobSeeker.findFirst({
             where: { OR: [{ email }, { phone }] }
@@ -43,18 +48,37 @@ exports.registerJobSeeker = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Extract file paths
+        const profilePhotoPath = `/uploads/profilePhoto/${req.files.profilePhoto[0].filename}`;
+        const idDocumentPath = req.files.idDocument ? `/uploads/idDocument/${req.files.idDocument[0].filename}` : null;
+
+        // Parse skills if it's a string (FormData sends arrays as comma-separated or JSON)
+        let formattedSkills = skills;
+        if (typeof skills === 'string') {
+            try {
+                formattedSkills = JSON.parse(skills);
+            } catch (e) {
+                formattedSkills = skills.split(',').map(s => s.trim());
+            }
+        }
+
         const seeker = await prisma.jobSeeker.create({
             data: {
-                fullName, gender, age, religion, maritalStatus, phone, email,
-                password: hashedPassword, bio, skills, experienceYears,
+                fullName, gender, age: parseInt(age), religion, maritalStatus,
+                phone, email, password: hashedPassword, bio,
+                skills: Array.isArray(formattedSkills) ? formattedSkills : [],
+                experienceYears: parseInt(experienceYears),
                 expectedSalary: parseInt(expectedSalary),
-                preferredLocation, preferredArrangement
+                preferredLocation, preferredArrangement,
+                profilePhoto: profilePhotoPath,
+                idDocument: idDocumentPath
             }
         });
 
         const token = generateToken({ id: seeker.id, role: 'JOB_SEEKER' });
         res.status(201).json({ token, user: { id: seeker.id, fullName: seeker.fullName, role: 'JOB_SEEKER' } });
     } catch (error) {
+        console.error("Registration error:", error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -119,17 +143,29 @@ exports.registerEmployer = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Extract file paths
+        const profilePhotoPath = req.files?.profilePhoto ? `/uploads/profilePhoto/${req.files.profilePhoto[0].filename}` : null;
+        const idDocumentPath = req.files?.idDocument ? `/uploads/idDocument/${req.files.idDocument[0].filename}` : null;
+
         const employer = await prisma.employer.create({
             data: {
-                employerType, contactName, phone, email,
-                password: hashedPassword, address,
-                familySize: familySize ? parseInt(familySize) : null
+                employerType,
+                contactName,
+                phone,
+                email,
+                password: hashedPassword,
+                address,
+                familySize: familySize ? parseInt(familySize) : null,
+                profilePhoto: profilePhotoPath,
+                idDocument: idDocumentPath,
+                verificationStatus: (profilePhotoPath || idDocumentPath) ? 'PENDING' : 'NOT_STARTED'
             }
         });
 
         const token = generateToken({ id: employer.id, role: 'EMPLOYER' });
         res.status(201).json({ token, user: { id: employer.id, contactName: employer.contactName, role: 'EMPLOYER' } });
     } catch (error) {
+        console.error("Employer Registration error:", error);
         res.status(500).json({ error: error.message });
     }
 };

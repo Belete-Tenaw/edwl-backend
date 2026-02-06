@@ -27,20 +27,19 @@ describe('Auth Endpoints', () => {
         });
 
         const res = await request(app)
-            .post('/api/auth/register/seeker')
-            .send({
-                fullName: 'Test User',
-                gender: 'MALE',
-                age: 25,
-                phone: '0911234567',
-                email: 'test@example.com',
-                password: 'password123',
-                experienceYears: 2,
-                expectedSalary: 5000,
-                preferredLocation: 'Addis Ababa',
-                preferredArrangement: 'LIVE_IN',
-                maritalStatus: 'SINGLE'
-            });
+            .post('/api/auth/seeker/register')
+            .field('fullName', 'Test User')
+            .field('gender', 'MALE')
+            .field('age', 25)
+            .field('phone', '0911234567')
+            .field('email', 'test@example.com')
+            .field('password', 'password123')
+            .field('experienceYears', 2)
+            .field('expectedSalary', 5000)
+            .field('preferredLocation', 'Addis Ababa')
+            .field('preferredArrangement', 'LIVE_IN')
+            .field('maritalStatus', 'SINGLE')
+            .attach('profilePhoto', Buffer.from('fake image'), 'profile.jpg');
 
         expect(res.statusCode).toEqual(201);
         expect(res.body).toHaveProperty('token');

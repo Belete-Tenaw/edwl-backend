@@ -117,19 +117,18 @@ class PaymentService {
      * Activate a subscription using a code
      */
     async activateWithCode(userId, userType, code) {
-        const subCode = await prisma.subscriptionCode.findUnique({
-            where: { code }
-        });
-
-        if (!subCode || subCode.status !== 'UNUSED') {
-            throw new Error('Invalid or used activation code');
-        }
-
-        if (subCode.expiresAt < new Date()) {
-            throw new Error('Code has expired');
-        }
-
         return await prisma.$transaction(async (tx) => {
+            const subCode = await tx.subscriptionCode.findUnique({
+                where: { code }
+            });
+
+            if (!subCode || subCode.status !== 'UNUSED') {
+                throw new Error('Invalid or used activation code');
+            }
+
+            if (subCode.expiresAt < new Date()) {
+                throw new Error('Code has expired');
+            }
             // Update code status
             await tx.subscriptionCode.update({
                 where: { code },

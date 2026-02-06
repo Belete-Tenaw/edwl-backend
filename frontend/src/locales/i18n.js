@@ -16,7 +16,7 @@ i18n
             am: { translation: am }
         },
         lng: storedLanguage,
-        fallbackLng: 'en',
+        fallbackLng: false,
         detection: {
             order: ['localStorage', 'navigator'],
             caches: ['localStorage']

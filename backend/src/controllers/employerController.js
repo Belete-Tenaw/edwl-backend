@@ -5,9 +5,31 @@ exports.updateProfile = async (req, res) => {
         const id = req.user.id;
         if (req.user.role !== 'EMPLOYER') return res.status(403).json({ error: 'Forbidden' });
 
+        const { contactName, address, familySize } = req.body;
+
+        // Extract file paths
+        const profilePhotoPath = req.files?.profilePhoto ? `/uploads/profilePhoto/${req.files.profilePhoto[0].filename}` : undefined;
+        const idDocumentPath = req.files?.idDocument ? `/uploads/idDocument/${req.files.idDocument[0].filename}` : undefined;
+
+        // If ID document is updated, reset verification status
+        let verificationData = {};
+        if (idDocumentPath) {
+            verificationData = {
+                verificationStatus: 'PENDING',
+                isVerified: false
+            };
+        }
+
         const updated = await prisma.employer.update({
             where: { id },
-            data: req.body
+            data: {
+                contactName,
+                address,
+                familySize: familySize ? parseInt(familySize) : undefined,
+                profilePhoto: profilePhotoPath,
+                idDocument: idDocumentPath,
+                ...verificationData
+            }
         });
 
         res.json(updated);

@@ -31,7 +31,7 @@ services:
       - "5000:5000"
     environment:
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-admin123}@postgres:5432/edwl_db?schema=public
-      JWT_SECRET: ${JWT_SECRET:-d85cd108d9ab5f3b3550a282e8cd8e36a77c2a4a610c334829011c470f9ebe65}
+      JWT_SECRET: ${JWT_SECRET}
       PORT: 5000
       NODE_ENV: production
     depends_on:

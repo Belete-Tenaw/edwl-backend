@@ -74,7 +74,7 @@ const Login = () => {
                             display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '0.9rem'
                         }}
                     >
-                        <User size={16} /> Worker
+                        <User size={16} /> {t('worker')}
                     </button>
                     <button
                         type="button"
@@ -89,7 +89,7 @@ const Login = () => {
                             display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '0.9rem'
                         }}
                     >
-                        <Briefcase size={16} /> Employer
+                        <Briefcase size={16} /> {t('employer')}
                     </button>
                     <button
                         type="button"
@@ -104,7 +104,7 @@ const Login = () => {
                             display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '0.9rem'
                         }}
                     >
-                        <ShieldCheck size={16} /> Admin
+                        <ShieldCheck size={16} /> {t('admin')}
                     </button>
                 </div>
 
@@ -117,7 +117,7 @@ const Login = () => {
                 <form onSubmit={handleSubmit}>
                     {activeTab === 'admin' ? (
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500' }}>Username</label>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500' }}>{t('username')}</label>
                             <div style={{ position: 'relative' }}>
                                 <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
                                 <input
@@ -127,13 +127,13 @@ const Login = () => {
                                     onChange={handleChange}
                                     required
                                     style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                                    placeholder="Enter username"
+                                    placeholder={t('enter_username')}
                                 />
                             </div>
                         </div>
                     ) : (
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500' }}>Email or Phone</label>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500' }}>{t('email_or_phone')}</label>
                             <div style={{ position: 'relative' }}>
                                 <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
                                 <input
@@ -143,14 +143,14 @@ const Login = () => {
                                     onChange={handleChange}
                                     required
                                     style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                                    placeholder="+251... or email@example.com"
+                                    placeholder={t('identifier_placeholder')}
                                 />
                             </div>
                         </div>
                     )}
 
                     <div style={{ marginBottom: '30px' }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500' }}>Password</label>
+                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: '500' }}>{t('password')}</label>
                         <div style={{ position: 'relative' }}>
                             <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
                             <input
@@ -160,7 +160,7 @@ const Login = () => {
                                 onChange={handleChange}
                                 required
                                 style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' }}
-                                placeholder="Password"
+                                placeholder={t('password')}
                             />
                         </div>
                     </div>
@@ -171,7 +171,7 @@ const Login = () => {
                         style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}
                         disabled={loading}
                     >
-                        {loading ? 'Logging in...' : t('login')} <ArrowRight size={18} />
+                        {loading ? t('logging_in') : t('login')} <ArrowRight size={18} />
                     </button>
                 </form>
 

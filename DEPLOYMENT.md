@@ -110,7 +110,11 @@ Place certificates in `/etc/ssl/` and update nginx config.
 ```bash
 cd backend
 npx prisma db push
+npm run seed-admin admin admin123  # format: npm run seed-admin <username> <password>
 ```
+
+### Production Security (CORS)
+Ensure `CORS_ORIGIN` is set in your `.env` to restricted domains (e.g., `https://edwl.com`). Use `*` only for public APIs.
 
 ### Backup Before Migration
 ```bash

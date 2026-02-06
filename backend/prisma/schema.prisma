@@ -3,7 +3,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  engineType = "binary"
 }
 
 datasource db {
@@ -155,6 +154,9 @@ model Employer {
   password           String
   address            String
   familySize         Int?
+  profilePhoto       String?
+  idDocument         String?
+  certificates       String[]             @default([])
   
   // Verification & Trust
   isVerified         Boolean              @default(false)

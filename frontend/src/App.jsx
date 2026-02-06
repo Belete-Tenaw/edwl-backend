@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import authService from './services/authService';
 
 // Lazy Load Pages
@@ -14,6 +15,11 @@ const Messages = lazy(() => import('./pages/Messages'));
 const EditProfile = lazy(() => import('./pages/EditProfile'));
 const Pricing = lazy(() => import('./pages/Pricing'));
 const Activate = lazy(() => import('./pages/Activate'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
+const About = lazy(() => import('./pages/About'));
+const Safety = lazy(() => import('./pages/Safety'));
+const Contact = lazy(() => import('./pages/Contact'));
 
 const Loading = () => (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--primary)' }}>
@@ -41,6 +47,11 @@ function App() {
                             <Route path="/register" element={<Register />} />
                             <Route path="/pricing" element={<Pricing />} />
                             <Route path="/activate" element={<Activate />} />
+                            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                            <Route path="/about" element={<About />} />
+                            <Route path="/safety" element={<Safety />} />
+                            <Route path="/contact" element={<Contact />} />
 
                             <Route path="/messages" element={
                                 <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER']}>
@@ -74,6 +85,7 @@ function App() {
                         </Routes>
                     </Suspense>
                 </main>
+                <Footer />
             </div>
         </Router>
     );

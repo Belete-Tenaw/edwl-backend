@@ -1,30 +1,50 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 import { X, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const JobPostModal = ({ onClose, onJobPosted }) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        requiredSkills: '', // comma separated
+        requiredSkills: [],
+        customSkill: '',
         salaryOffered: '',
         jobType: 'Full-time',
         preferredArrangement: 'LIVE_IN',
         address: ''
     });
 
+    const { t } = useTranslation();
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSkillToggle = (skill) => {
+        const currentSkills = [...formData.requiredSkills];
+        const index = currentSkills.indexOf(skill);
+        if (index > -1) {
+            currentSkills.splice(index, 1);
+        } else {
+            currentSkills.push(skill);
+        }
+        setFormData({ ...formData, requiredSkills: currentSkills });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
+            let finalSkills = [...formData.requiredSkills];
+            if (finalSkills.includes('other') && formData.customSkill) {
+                finalSkills = finalSkills.filter(s => s !== 'other');
+                finalSkills.push(formData.customSkill);
+            }
             const payload = {
                 ...formData,
-                requiredSkills: formData.requiredSkills.split(',').map(s => s.trim()).filter(s => s),
+                requiredSkills: finalSkills,
                 salaryOffered: parseInt(formData.salaryOffered)
             };
 
@@ -45,24 +65,24 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
                     <X size={24} color="#999" />
                 </button>
 
-                <h2 style={{ marginBottom: '20px', color: 'var(--primary)' }}>Post a New Job</h2>
+                <h2 style={{ marginBottom: '20px', color: 'var(--primary)' }}>{t('post_new_job')}</h2>
 
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Job Title</label>
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('job_title')}</label>
                         <input
                             required
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                             name="title"
                             value={formData.title}
                             onChange={handleChange}
-                            placeholder="e.g. Experienced Housemaid Needed"
+                            placeholder={t('job_title_placeholder')}
                         />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Monthly Salary (ETB)</label>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('monthly_salary')}</label>
                             <input
                                 required
                                 type="number"
@@ -74,73 +94,99 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
                             />
                         </div>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Location</label>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('location')}</label>
                             <input
                                 required
                                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                                 name="address"
                                 value={formData.address}
                                 onChange={handleChange}
-                                placeholder="Bole, Addis Ababa"
+                                placeholder={t('location_placeholder')}
                             />
                         </div>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Arrangement</label>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('arrangement')}</label>
                             <select
                                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                                 name="preferredArrangement"
                                 value={formData.preferredArrangement}
                                 onChange={handleChange}
                             >
-                                <option value="LIVE_IN">Live-in</option>
-                                <option value="LIVE_OUT">Live-out</option>
-                                <option value="PART_TIME">Part-time</option>
+                                <option value="LIVE_IN">{t('live_in')}</option>
+                                <option value="LIVE_OUT">{t('live_out')}</option>
+                                <option value="PART_TIME">{t('part_time')}</option>
                             </select>
                         </div>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Job Type</label>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('job_type')}</label>
                             <input
                                 required
                                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                                 name="jobType"
                                 value={formData.jobType}
                                 onChange={handleChange}
-                                placeholder="Full-time, Contract..."
+                                placeholder={t('job_type_placeholder')}
                             />
                         </div>
                     </div>
 
                     <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Required Skills (Comma separated)</label>
-                        <input
-                            required
-                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                            name="requiredSkills"
-                            value={formData.requiredSkills}
-                            onChange={handleChange}
-                            placeholder="Cooking, Cleaning, Laundry..."
-                        />
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('skills_required')} (Select multiple)</label>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                            gap: '8px',
+                            background: '#f9f9f9',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: '1px solid #ddd',
+                            maxHeight: '200px',
+                            overflowY: 'auto'
+                        }}>
+                            {Object.entries(t('skills_list', { returnObjects: true })).map(([key, value]) => (
+                                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.requiredSkills.includes(key)}
+                                        onChange={() => handleSkillToggle(key)}
+                                    />
+                                    {value}
+                                </label>
+                            ))}
+                        </div>
+                        {formData.requiredSkills.includes('other') && (
+                            <div style={{ marginTop: '10px' }}>
+                                <input
+                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                                    name="customSkill"
+                                    value={formData.customSkill}
+                                    onChange={handleChange}
+                                    placeholder={t('specify_other')}
+                                    required
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>Description</label>
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('description')}</label>
                         <textarea
                             required
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', minHeight: '100px', fontFamily: 'inherit' }}
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
-                            placeholder="Describe the responsibilities and requirements..."
+                            placeholder={t('describe_responsibilities')}
                         />
                     </div>
 
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                        <button type="button" onClick={onClose} style={{ padding: '10px 20px', background: '#f5f5f5', color: '#333' }}>Cancel</button>
+                        <button type="button" onClick={onClose} style={{ padding: '10px 20px', background: '#f5f5f5', color: '#333' }}>{t('cancel')}</button>
                         <button type="submit" className="btn-primary" disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {loading ? 'Posting...' : 'Post Job'} <Check size={18} />
+                            {loading ? t('posting') : t('post_job_btn')} <Check size={18} />
                         </button>
                     </div>
                 </form>
