@@ -48,7 +48,7 @@ const Login = () => {
             else if (activeTab === 'admin') navigate('/admin');
 
         } catch (err) {
-            setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+            setError(err.response?.data?.error || t('login_failed'));
         } finally {
             setLoading(false);
         }
@@ -176,7 +176,7 @@ const Login = () => {
                 </form>
 
                 <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.9rem', color: '#666' }}>
-                    Don't have an account? <a href="/register" style={{ color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>{t('register')}</a>
+                    {t('no_account')} <a href="/register" style={{ color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>{t('register')}</a>
                 </div>
             </div>
         </div>

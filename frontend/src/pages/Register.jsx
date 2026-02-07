@@ -243,7 +243,7 @@ const Register = () => {
                             {/* Document Uploads */}
                             <div style={{ gridColumn: '1 / -1' }}>
                                 <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '15px 0' }} />
-                                <h4 style={{ marginBottom: '15px', color: '#444' }}>{t('security_verification') || 'Security & Verification'}</h4>
+                                <h4 style={{ marginBottom: '15px', color: '#444' }}>{t('security_verification')}</h4>
                             </div>
 
                             <div>
@@ -310,7 +310,7 @@ const Register = () => {
                             {/* Document Uploads for Employer */}
                             <div style={{ gridColumn: '1 / -1' }}>
                                 <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '15px 0' }} />
-                                <h4 style={{ marginBottom: '15px', color: '#444' }}>{t('security_verification') || 'Security & Verification'} (Optional)</h4>
+                                <h4 style={{ marginBottom: '15px', color: '#444' }}>{t('security_verification')} {t('optional')}</h4>
                             </div>
 
                             <div>
