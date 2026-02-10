@@ -174,6 +174,15 @@ const Pricing = () => {
                     </div>
                 </div>
 
+                <div style={{ marginTop: '30px', textAlign: 'center', borderTop: '1px solid #dee2e6', paddingTop: '20px' }}>
+                    <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', color: '#333' }}>{t('supported_payments')}</h3>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ background: '#007bff', color: 'white', padding: '8px 20px', borderRadius: '12px', fontWeight: 'bold' }}>Telebirr</div>
+                        <div style={{ background: '#8b5cf6', color: 'white', padding: '8px 20px', borderRadius: '12px', fontWeight: 'bold' }}>CBE Birr</div>
+                    </div>
+                    <p style={{ marginTop: '15px', color: '#666', fontSize: '0.9rem' }}>{t('telebirr_cbe_msg')}</p>
+                </div>
+
                 <div style={{ marginTop: '30px', textAlign: 'center' }}>
                     <button className="btn-primary" style={{ padding: '12px 30px' }} onClick={() => navigate('/activate')}>
                         {t('go_to_activate')}

@@ -8,7 +8,9 @@ exports.getAllUsers = async (req, res) => {
             select: {
                 id: true, fullName: true, phone: true, email: true,
                 isVerified: true, verificationStatus: true, tier: true, createdAt: true,
-                profilePhoto: true, idDocument: true
+                profilePhoto: true, idDocument: true,
+                nationalIdFayda: true, policeClearance: true, healthCertificate: true,
+                guarantorName: true, guarantorPhone: true
             }
         });
         const employers = await prisma.employer.findMany({
@@ -26,7 +28,14 @@ exports.getAllUsers = async (req, res) => {
 
 exports.verifyUser = async (req, res) => {
     try {
-        const { id, type, status, notes } = req.body; // status: APPROVED, REJECTED, PENDING
+        const { id, type, status, notes, badge } = req.body; // status: APPROVED, REJECTED, PENDING; badge: SILVER, GOLD, PLATINUM
+
+        let priorityWeight = 0;
+        if (status === 'APPROVED' && type === 'seeker') {
+            if (badge === 'PLATINUM') priorityWeight = 100;
+            else if (badge === 'GOLD') priorityWeight = 50;
+            else if (badge === 'SILVER') priorityWeight = 10;
+        }
 
         let updated;
         if (type === 'seeker') {
@@ -34,7 +43,9 @@ exports.verifyUser = async (req, res) => {
                 where: { id },
                 data: {
                     verificationStatus: status,
-                    isVerified: status === 'APPROVED'
+                    isVerified: status === 'APPROVED',
+                    badge: status === 'APPROVED' ? (badge || 'STANDARD') : 'STANDARD',
+                    priorityWeight
                 }
             });
         } else {
@@ -51,10 +62,10 @@ exports.verifyUser = async (req, res) => {
             'ADMIN_VERIFY_USER',
             req.user.id,
             'ADMIN',
-            { targetUserId: id, targetUserType: type, status, notes }
+            { targetUserId: id, targetUserType: type, status, notes, badge, priorityWeight }
         );
 
-        res.json({ message: `User verification status updated to ${status}`, user: { id: updated.id, status: updated.verificationStatus } });
+        res.json({ message: `User verification status updated to ${status}`, user: { id: updated.id, status: updated.verificationStatus, badge: updated.badge } });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
@@ -152,12 +163,12 @@ exports.activateSubscription = async (req, res) => {
         if (userType === 'JOB_SEEKER') {
             await prisma.jobSeeker.update({
                 where: { id: userId },
-                data: { tier: 'SUBSCRIBER', subscriptionExpiry: expiryDate }
+                data: { tier: 'SILVER', subscriptionExpiry: expiryDate }
             });
         } else {
             await prisma.employer.update({
                 where: { id: userId },
-                data: { tier: 'SUBSCRIBER', subscriptionExpiry: expiryDate }
+                data: { tier: 'SILVER', subscriptionExpiry: expiryDate }
             });
         }
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
-import { Users, Briefcase, CreditCard, Shield, AlertTriangle } from 'lucide-react';
+import { Users, Briefcase, CreditCard, Shield, AlertTriangle, FileText, Activity } from 'lucide-react';
 
 const AdminDashboard = () => {
     const { t } = useTranslation();
@@ -34,9 +34,9 @@ const AdminDashboard = () => {
         fetchData();
     }, []);
 
-    const handleVerify = async (id, type, status) => {
+    const handleVerify = async (id, type, status, badge) => {
         try {
-            await api.post('/admin/verify', { id, type, status });
+            await api.post('/admin/verify', { id, type, status, badge });
             alert(`User ${status.toLowerCase()} successfully!`);
             fetchData();
         } catch (err) {
@@ -73,24 +73,75 @@ const AdminDashboard = () => {
                         {[...users.seekers.map(s => ({ ...s, type: 'seeker' })), ...users.employers.map(e => ({ ...e, type: 'employer', fullName: e.contactName }))]
                             .filter(u => u.verificationStatus === 'NOT_STARTED' || u.verificationStatus === 'PENDING')
                             .map(user => (
-                                <div key={user.id} className="card" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                                    <div style={{ width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', background: '#eee' }}>
-                                        {user.profilePhoto ? <img src={user.profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={40} style={{ margin: '20px' }} color="#ccc" />}
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ margin: '0 0 5px' }}>{user.fullName}</h4>
-                                        <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>{user.phone} • {user.email}</p>
-                                        <div style={{ marginTop: '10px' }}>
-                                            {user.idDocument ? (
-                                                <a href={user.idDocument} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600' }}>{t('view_id_document')}</a>
-                                            ) : (
-                                                <span style={{ fontSize: '0.85rem', color: '#999' }}>{t('no_id_uploaded')}</span>
+                                <div key={user.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderLeft: user.type === 'seeker' ? '4px solid #f97316' : '4px solid #3b82f6' }}>
+                                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+                                        <div style={{ width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', background: '#eee', flexShrink: 0 }}>
+                                            {user.profilePhoto ? <img src={user.profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={40} style={{ margin: '20px' }} color="#ccc" />}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <h4 style={{ margin: '0' }}>{user.fullName}</h4>
+                                                <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '10px', background: user.type === 'seeker' ? '#fff7ed' : '#eff6ff', color: user.type === 'seeker' ? '#c2410c' : '#1d4ed8', fontWeight: 'bold', textTransform: 'uppercase' }}>{user.type}</span>
+                                            </div>
+                                            <p style={{ fontSize: '0.9rem', color: '#666', margin: '5px 0' }}>{user.phone} • {user.email}</p>
+
+                                            <div style={{ display: 'flex', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                                {user.idDocument ? (
+                                                    <a href={user.idDocument} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                        <Shield size={14} /> {t('view_id_document')}
+                                                    </a>
+                                                ) : (
+                                                    <span style={{ fontSize: '0.85rem', color: '#999' }}>{t('no_id_uploaded')}</span>
+                                                )}
+
+                                                {user.policeClearance && (
+                                                    <a href={user.policeClearance} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                        <FileText size={14} /> {t('police_clearance')}
+                                                    </a>
+                                                )}
+
+                                                {user.healthCertificate && (
+                                                    <a href={user.healthCertificate} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                        <Activity size={14} /> {t('health_certificate')}
+                                                    </a>
+                                                )}
+                                            </div>
+
+                                            {user.nationalIdFayda && (
+                                                <p style={{ fontSize: '0.8rem', color: '#444', margin: '10px 0 0', background: '#f8fafc', padding: '5px 10px', borderRadius: '4px', border: '1px solid #e2e8f0', display: 'inline-block' }}>
+                                                    <strong>{t('national_id_fayda')}:</strong> {user.nationalIdFayda}
+                                                </p>
                                             )}
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <button onClick={() => handleVerify(user.id, user.type, 'APPROVED')} style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer' }}>{t('approve')}</button>
-                                        <button onClick={() => handleVerify(user.id, user.type, 'REJECTED')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '6px', cursor: 'pointer' }}>{t('reject')}</button>
+
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '15px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
+                                        {user.type === 'seeker' && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#666' }}>{t('level_to_grant') || 'Level'}:</span>
+                                                <select
+                                                    id={`badge-select-${user.id}`}
+                                                    defaultValue="SILVER"
+                                                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '0.85rem' }}
+                                                >
+                                                    <option value="SILVER">{t('silver')}</option>
+                                                    <option value="GOLD">{t('gold')}</option>
+                                                    <option value="PLATINUM">{t('platinum')}</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button
+                                                onClick={() => {
+                                                    const badge = user.type === 'seeker' ? document.getElementById(`badge-select-${user.id}`).value : undefined;
+                                                    handleVerify(user.id, user.type, 'APPROVED', badge);
+                                                }}
+                                                style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                            >
+                                                {t('approve')}
+                                            </button>
+                                            <button onClick={() => handleVerify(user.id, user.type, 'REJECTED')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>{t('reject')}</button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}

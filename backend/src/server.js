@@ -1,7 +1,9 @@
 console.log('Starting server.js...');
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
+const multer = require('multer');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -66,13 +68,14 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"], // unsafe-inline needed for some dev tools/simple scripts, tighten if possible
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https://*"], // Limited to trusted if possible, but allowing all for user uploads/links for now
+      imgSrc: ["'self'", "data:", "https://*"],
       connectSrc: ["'self'"],
     },
   },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
 // Enforce HTTPS in production
@@ -143,8 +146,23 @@ app.use('/api/reports', require('./routes/report'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  console.error("Global Error Handler caught:", {
+    name: err.name,
+    message: err.message,
+    code: err.code,
+    stack: err.stack
+  });
+
+  // Catch Multer errors specifically
+  if (err.name === 'MulterError' || err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File too large. Maximum size allowed is 10MB.' });
+    }
+    return res.status(400).json({ error: `Upload error: ${err.message}` });
+  }
+
   if (process.env.NODE_ENV !== 'production') {
-    console.error(err.stack);
+    // console.error(err.stack); // already logged above
   }
   res.status(500).json({
     error: process.env.NODE_ENV === 'production' ? 'An internal server error occurred' : err.message
@@ -153,7 +171,6 @@ app.use((err, req, res, next) => {
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
-  const path = require('path');
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
   app.get('*', (req, res) => {
@@ -162,7 +179,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Serve uploads directory - available in all environments
-const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 if (require.main === module) {

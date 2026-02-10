@@ -10,14 +10,16 @@ const Register = () => {
     const [activeTab, setActiveTab] = useState('seeker'); // seeker, employer
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
 
     // Seeker State
     const [seekerData, setSeekerData] = useState({
         fullName: '', gender: 'FEMALE', age: '', religion: '', maritalStatus: 'SINGLE',
-        phone: '', email: '', password: '', bio: '', skills: [],
+        phone: '', email: '', password: '', bio: '', skills: [], languages: [],
         experienceYears: '', expectedSalary: '', preferredLocation: '',
-        preferredArrangement: 'LIVE_IN', customSkill: '',
-        profilePhoto: null, idDocument: null
+        preferredArrangement: 'LIVE_IN', customSkill: '', customLanguage: '',
+        profilePhoto: null, idDocument: null,
+        profilePhotoPreview: null, idDocumentPreview: null
     });
 
     // Employer State
@@ -27,7 +29,16 @@ const Register = () => {
     });
 
     const handleSeekerChange = (e) => setSeekerData({ ...seekerData, [e.target.name]: e.target.value });
-    const handleFileChange = (e) => setSeekerData({ ...seekerData, [e.target.name]: e.target.files[0] });
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSeekerData({
+                ...seekerData,
+                [e.target.name]: file,
+                [`${e.target.name}Preview`]: URL.createObjectURL(file)
+            });
+        }
+    };
     const handleSkillToggle = (skill) => {
         const currentSkills = [...seekerData.skills];
         const index = currentSkills.indexOf(skill);
@@ -39,6 +50,17 @@ const Register = () => {
         setSeekerData({ ...seekerData, skills: currentSkills });
     };
 
+    const handleLanguageToggle = (language) => {
+        const currentLanguages = [...seekerData.languages];
+        const index = currentLanguages.indexOf(language);
+        if (index > -1) {
+            currentLanguages.splice(index, 1);
+        } else {
+            currentLanguages.push(language);
+        }
+        setSeekerData({ ...seekerData, languages: currentLanguages });
+    };
+
     const handleEmployerChange = (e) => setEmployerData({ ...employerData, [e.target.name]: e.target.value });
 
     const handleRegister = async (e) => {
@@ -47,7 +69,38 @@ const Register = () => {
         setLoading(true);
 
         try {
+            console.log("Registration process started...");
+
             if (activeTab === 'seeker') {
+                // Pre-submission validation for Seeker
+                const requiredFields = [
+                    { key: 'fullName', label: t('full_name') },
+                    { key: 'phone', label: t('phone_number'), condition: !seekerData.email },
+                    { key: 'email', label: t('email_address'), condition: !seekerData.phone },
+                    { key: 'age', label: t('age') },
+                    { key: 'password', label: t('password') },
+                    { key: 'experienceYears', label: t('experience_years') },
+                    { key: 'expectedSalary', label: t('expected_salary') },
+                    { key: 'preferredLocation', label: t('preferred_location') },
+                    { key: 'profilePhoto', label: t('profile_photo') },
+                    { key: 'idDocument', label: t('id_passport') }
+                ];
+
+                const missing = requiredFields.filter(f => {
+                    const value = seekerData[f.key];
+                    const isMissing = !value || (typeof value === 'string' && value.trim() === '');
+                    const conditionMet = f.condition !== undefined ? f.condition : true;
+                    return isMissing && conditionMet;
+                });
+
+                if (missing.length > 0) {
+                    const missingLabels = missing.map(f => f.label).join(', ');
+                    setError(`${t('missing_required_fields')}: ${missingLabels}`);
+                    setLoading(false);
+                    window.scrollTo(0, 0);
+                    return;
+                }
+
                 // Use FormData for file uploads
                 const formData = new FormData();
                 let finalSkills = [...seekerData.skills];
@@ -56,24 +109,39 @@ const Register = () => {
                     finalSkills.push(seekerData.customSkill);
                 }
 
-                // Append all text fields
+                let finalLanguages = [...seekerData.languages];
+                if (finalLanguages.includes('other') && seekerData.customLanguage) {
+                    finalLanguages = finalLanguages.filter(l => l !== 'other');
+                    finalLanguages.push(seekerData.customLanguage);
+                }
+
+                // Append all text fields (EXCEPT previews)
                 Object.keys(seekerData).forEach(key => {
-                    if (key !== 'profilePhoto' && key !== 'idDocument' && key !== 'skills') {
+                    if (!['profilePhoto', 'idDocument', 'skills', 'languages', 'profilePhotoPreview', 'idDocumentPreview', 'customSkill', 'customLanguage'].includes(key)) {
                         formData.append(key, seekerData[key]);
                     }
                 });
 
                 // Append complex/special fields
                 formData.append('skills', JSON.stringify(finalSkills));
+                formData.append('languages', JSON.stringify(finalLanguages));
                 if (seekerData.profilePhoto) formData.append('profilePhoto', seekerData.profilePhoto);
                 if (seekerData.idDocument) formData.append('idDocument', seekerData.idDocument);
 
+                console.log("Sending Seeker Registration FormData...");
                 await authService.register(formData, 'seeker');
-                navigate('/dashboard/seeker');
+                setSuccess(true);
+                setTimeout(() => navigate('/dashboard/seeker'), 3000);
             } else {
-                const formData = new FormData();
+                // Pre-submission validation for Employer
+                if (!employerData.phone && !employerData.email) {
+                    setError(t('email_or_phone_required'));
+                    setLoading(false);
+                    window.scrollTo(0, 0);
+                    return;
+                }
 
-                // Append all fields
+                const formData = new FormData();
                 Object.keys(employerData).forEach(key => {
                     if (key === 'familySize') {
                         const val = employerData.employerType === 'HOUSEHOLD' ? parseInt(employerData.familySize) : null;
@@ -83,16 +151,44 @@ const Register = () => {
                     }
                 });
 
+                console.log("Sending Employer Registration FormData...");
                 await authService.register(formData, 'employer');
-                navigate('/dashboard/employer');
+                setSuccess(true);
+                setTimeout(() => navigate('/dashboard/employer'), 3000);
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Registration failed.');
+            console.error("Full Registration Error Object:", err);
+            const backendError = err.response?.data?.error;
+            const message = backendError || err.message || 'Registration failed.';
+            setError(message);
             window.scrollTo(0, 0);
         } finally {
             setLoading(false);
         }
     };
+
+    if (success) {
+        return (
+            <div className="container" style={{ padding: '80px 20px', textAlign: 'center' }}>
+                <div className="card" style={{ maxWidth: '500px', margin: '0 auto', padding: '40px' }}>
+                    <div style={{ background: '#e8f5e9', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 25px' }}>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <h2 style={{ color: '#2e7d32', marginBottom: '15px' }}>{t('registration_success')}</h2>
+                    <p style={{ color: '#666', fontSize: '1.1rem', marginBottom: '30px' }}>{t('redirecting_dashboard')}</p>
+                    <div className="loading-bar" style={{ height: '4px', background: '#eee', borderRadius: '2px', overflow: 'hidden' }}>
+                        <div style={{ width: '100%', height: '100%', background: 'var(--primary)', animation: 'progress 3s linear' }}></div>
+                    </div>
+                </div>
+                <style>{`
+                    @keyframes progress {
+                        from { width: 0; }
+                        to { width: 100%; }
+                    }
+                `}</style>
+            </div>
+        );
+    }
 
     return (
         <div className="container" style={{ padding: '40px 20px', maxWidth: '800px' }}>
@@ -145,11 +241,11 @@ const Register = () => {
                             </div>
                             <div>
                                 <label className="label">{t('phone_number')}</label>
-                                <input required className="input" name="phone" value={seekerData.phone} onChange={handleSeekerChange} placeholder="+251..." />
+                                <input className="input" name="phone" value={seekerData.phone} onChange={handleSeekerChange} placeholder="+251..." />
                             </div>
                             <div>
                                 <label className="label">{t('email_address')}</label>
-                                <input required type="email" className="input" name="email" value={seekerData.email} onChange={handleSeekerChange} placeholder="email@example.com" />
+                                <input type="email" className="input" name="email" value={seekerData.email} onChange={handleSeekerChange} placeholder="email@example.com" />
                             </div>
                             <div>
                                 <label className="label">{t('password')}</label>
@@ -215,6 +311,41 @@ const Register = () => {
                                     </div>
                                 )}
                             </div>
+                            <div style={{ gridColumn: '1 / -1' }}>
+                                <label className="label">{t('select_languages')}</label>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                                    gap: '10px',
+                                    background: '#f9f9f9',
+                                    padding: '15px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ddd'
+                                }}>
+                                    {Object.entries(t('languages_list', { returnObjects: true })).map(([key, value]) => (
+                                        <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={seekerData.languages.includes(key)}
+                                                onChange={() => handleLanguageToggle(key)}
+                                            />
+                                            {value}
+                                        </label>
+                                    ))}
+                                </div>
+                                {seekerData.languages.includes('other') && (
+                                    <div style={{ marginTop: '10px' }}>
+                                        <input
+                                            className="input"
+                                            name="customLanguage"
+                                            value={seekerData.customLanguage}
+                                            onChange={handleSeekerChange}
+                                            placeholder={t('specify_other_language')}
+                                            required
+                                        />
+                                    </div>
+                                )}
+                            </div>
                             <div>
                                 <label className="label">{t('experience_years')}</label>
                                 <input required type="number" className="input" name="experienceYears" value={seekerData.experienceYears} onChange={handleSeekerChange} placeholder="0" />
@@ -256,19 +387,39 @@ const Register = () => {
                                     accept="image/*"
                                     onChange={handleFileChange}
                                 />
+                                {seekerData.profilePhotoPreview && (
+                                    <div style={{ marginTop: '10px', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                                        <img src={seekerData.profilePhotoPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                )}
                                 <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>{t('upload_photo_msg')}</p>
                             </div>
 
                             <div>
-                                <label className="label">{t('id_passport')}</label>
+                                <label className="label">{t('id_passport')} <span style={{ color: 'red' }}>*</span></label>
                                 <input
+                                    required
                                     type="file"
                                     className="input"
                                     name="idDocument"
                                     accept="image/*,.pdf"
                                     onChange={handleFileChange}
                                 />
-                                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>{t('upload_id_msg')}</p>
+                                {seekerData.idDocumentPreview && !seekerData.idDocument?.name.toLowerCase().endsWith('.pdf') && (
+                                    <div style={{ marginTop: '10px', width: '160px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                                        <img src={seekerData.idDocumentPreview} alt="ID Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                )}
+                                {seekerData.idDocument?.name.toLowerCase().endsWith('.pdf') && (
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '5px' }}>📄 PDF Selected</p>
+                                )}
+                                <p style={{ fontSize: '0.8rem', color: '#FF4500', fontWeight: 'bold', marginTop: '5px' }}>{t('id_mandatory_msg')}</p>
+                            </div>
+
+                            <div style={{ gridColumn: '1 / -1', background: '#FFF5F0', padding: '15px', borderRadius: '8px', border: '1px border var(--primary)', marginTop: '10px' }}>
+                                <p style={{ margin: 0, color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                                    ✨ {t('platinum_incentive_msg')}
+                                </p>
                             </div>
                         </div>
                     ) : (
@@ -286,11 +437,11 @@ const Register = () => {
                             </div>
                             <div>
                                 <label className="label">{t('phone_number')}</label>
-                                <input required className="input" name="phone" value={employerData.phone} onChange={handleEmployerChange} placeholder="+251..." />
+                                <input className="input" name="phone" value={employerData.phone} onChange={handleEmployerChange} placeholder="+251..." />
                             </div>
                             <div>
                                 <label className="label">{t('email_address')}</label>
-                                <input required type="email" className="input" name="email" value={employerData.email} onChange={handleEmployerChange} placeholder="email@example.com" />
+                                <input type="email" className="input" name="email" value={employerData.email} onChange={handleEmployerChange} placeholder="email@example.com" />
                             </div>
                             <div>
                                 <label className="label">{t('password')}</label>

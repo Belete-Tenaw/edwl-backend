@@ -23,6 +23,16 @@ const authService = {
         return response.data;
     },
 
+    loginWithFirebase: async (data) => {
+        // data contains { idToken, role }
+        const response = await api.post('/auth/firebase-login', data);
+        if (response.data.token) {
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        return response.data;
+    },
+
     logout: () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');

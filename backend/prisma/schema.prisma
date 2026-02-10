@@ -32,7 +32,16 @@ enum PreferredArrangement {
 
 enum UserTier {
   FREEMIUM
-  SUBSCRIBER
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum WorkerBadge {
+  STANDARD
+  SILVER
+  GOLD
+  PLATINUM
 }
 
 enum EmployerType {
@@ -99,24 +108,34 @@ model JobSeeker {
   age                Int
   religion           String?
   maritalStatus      MaritalStatus
-  phone              String               @unique
-  email              String               @unique
+  phone              String?              @unique
+  email              String?              @unique
   password           String
   bio                String?
   skills             String[]
+  languages          String[]             @default([])
   experienceYears    Int
   expectedSalary     Int
   preferredLocation  String
   preferredArrangement PreferredArrangement
-  profilePhoto       String               // Made mandatory - checked in backend validation
-  certificates       String[]             @default([]) // Array of certificate file URLs
-  idDocument         String?
+  profilePhoto       String               // Mandatory
+  idDocument         String               // Now mandatory
+  
+  // Advanced Verification (New)
+  nationalIdFayda    String?              @unique
+  guarantorName      String?
+  guarantorPhone     String?
+  guarantorIdCard    String?
+  policeClearance    String?              // URL
+  healthCertificate  String?              // URL
   
   // Verification & Trust
+  badge              WorkerBadge          @default(STANDARD)
   isVerified         Boolean              @default(false)
   verificationStatus VerificationStatus   @default(NOT_STARTED)
   rating             Float                @default(0.0)
   completedJobs      Int                  @default(0)
+  priorityWeight     Int                  @default(0)
   
   // Location (Detailed)
   locationRegion     String?
@@ -149,8 +168,8 @@ model Employer {
   id                 String               @id @default(uuid())
   employerType       EmployerType
   contactName        String
-  phone              String               @unique
-  email              String               @unique
+  phone              String?              @unique
+  email              String?              @unique
   password           String
   address            String
   familySize         Int?
@@ -249,15 +268,23 @@ model ViewLog {
   targetJobSeekerId String?
 }
 
-// Payment & Monetization
+enum BillingPeriod {
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+}
 
 model SubscriptionTier {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String         @id @default(uuid())
+  name        String         // Descriptive name: "Silver Monthly", "Gold Upgrade Quarterly", etc.
+  tier        UserTier
+  period      BillingPeriod
   priceETB    Float
   durationDays Int
+  isUpgrade   Boolean        @default(false)
   features    String[]
-  createdAt   DateTime @default(now())
+  createdAt   DateTime       @default(now())
   
   subscriptions Subscription[]
 }

@@ -12,6 +12,21 @@ class PaymentService {
     }
 
     /**
+     * Get simulated payment URL for providers
+     */
+    getPaymentURL(provider, amount, transactionReference) {
+        if (provider === 'TELEBIRR') {
+            // Simulate Telebirr H5/Web-pay URL
+            return `https://telebirr.et/pay?appId=edwl_app&amount=${amount}&ref=${transactionReference}&callback=https://edwl.et/api/payments/complete`;
+        }
+        if (provider === 'CBE') {
+            // Simulate CBE Birr USSD/Link
+            return `https://cbebirr.et/ussd/pay?shortcode=123456&amount=${amount}&ref=${transactionReference}`;
+        }
+        return `https://edwl.et/manual-payment?ref=${transactionReference}`;
+    }
+
+    /**
      * Initialize a payment for a subscription
      * @param {string} userId - ID of the jobseeker or employer
      * @param {string} userType - 'seeker' or 'employer'
@@ -22,18 +37,23 @@ class PaymentService {
         const tier = await prisma.subscriptionTier.findUnique({ where: { id: tierId } });
         if (!tier) throw new Error('Subscription tier not found');
 
+        const transactionReference = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         const payment = await prisma.payment.create({
             data: {
                 amount: tier.priceETB,
                 provider,
-                transactionReference: `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                transactionReference,
                 status: 'PENDING',
                 tierId,
                 [userType === 'seeker' ? 'jobSeekerId' : 'employerId']: userId
             }
         });
 
-        return payment;
+        // Add payment URL to the response for mobile/web redirects
+        return {
+            ...payment,
+            paymentUrl: this.getPaymentURL(provider, tier.priceETB, transactionReference)
+        };
     }
 
     /**
@@ -80,16 +100,16 @@ class PaymentService {
                 }
             });
 
-            // 4. Update User Tier
+            // 4. Update User Tier (SILVER, GOLD, or PLATINUM)
             if (payment.jobSeekerId) {
                 await tx.jobSeeker.update({
                     where: { id: payment.jobSeekerId },
-                    data: { tier: 'SUBSCRIBER', subscriptionExpiry: expiryDate }
+                    data: { tier: tier.tier, subscriptionExpiry: expiryDate }
                 });
             } else {
                 await tx.employer.update({
                     where: { id: payment.employerId },
-                    data: { tier: 'SUBSCRIBER', subscriptionExpiry: expiryDate }
+                    data: { tier: tier.tier, subscriptionExpiry: expiryDate }
                 });
             }
 
@@ -143,12 +163,12 @@ class PaymentService {
             if (userType === 'seeker') {
                 updatedUser = await tx.jobSeeker.update({
                     where: { id: userId },
-                    data: { tier: 'SUBSCRIBER', subscriptionExpiry: expiryDate }
+                    data: { tier: 'SILVER', subscriptionExpiry: expiryDate }
                 });
             } else {
                 updatedUser = await tx.employer.update({
                     where: { id: userId },
-                    data: { tier: 'SUBSCRIBER', subscriptionExpiry: expiryDate }
+                    data: { tier: 'SILVER', subscriptionExpiry: expiryDate }
                 });
             }
 

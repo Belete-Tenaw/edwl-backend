@@ -14,7 +14,7 @@ module.exports = async (req, res, next) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     // Active subscribers have unlimited access
-    if (user.tier === 'SUBSCRIBER') {
+    if (user.tier !== 'FREEMIUM') {
         // Check if subscription is still valid
         if (user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date()) {
             return next(); // Unlimited access during active subscription

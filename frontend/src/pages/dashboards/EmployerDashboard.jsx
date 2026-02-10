@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import authService from '../../services/authService';
-import { User, MapPin, Briefcase, Plus, Star, Settings } from 'lucide-react';
+import { User, MapPin, Briefcase, Plus, Star, Settings, Shield } from 'lucide-react';
 import JobPostModal from '../../components/JobPostModal';
 import WorkerProfileModal from '../../components/WorkerProfileModal';
 
@@ -74,9 +75,19 @@ const EmployerDashboard = () => {
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{worker.fullName}</h3>
-                                    {worker.isVerified && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: '#e1f5fe', color: '#0284c7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                            <Shield size={12} fill="#0284c7" /> {t('verified')}
+                                    {worker.badge === 'PLATINUM' && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                                            <Shield size={10} fill="white" /> {t('platinum')}
+                                        </div>
+                                    )}
+                                    {worker.badge === 'GOLD' && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: '#f59e0b', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                                            <Shield size={10} fill="white" /> {t('gold')}
+                                        </div>
+                                    )}
+                                    {worker.badge === 'SILVER' && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: '#94a3b8', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                                            <Shield size={10} fill="white" /> {t('silver')}
                                         </div>
                                     )}
                                 </div>
@@ -109,13 +120,15 @@ const EmployerDashboard = () => {
                 ))}
             </div>
 
-            {selectedWorker && (
-                <WorkerProfileModal
-                    worker={selectedWorker}
-                    onClose={() => setSelectedWorker(null)}
-                />
-            )}
-        </div>
+            {
+                selectedWorker && (
+                    <WorkerProfileModal
+                        worker={selectedWorker}
+                        onClose={() => setSelectedWorker(null)}
+                    />
+                )
+            }
+        </div >
     );
 };
 

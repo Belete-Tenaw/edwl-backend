@@ -1,0 +1,13 @@
+<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <circle cx="256" cy="256" r="240" fill="#ff4500"/>
+  <circle cx="150" cy="256" r="45" fill="white" opacity="0.95"/>
+  <circle cx="150" cy="230" r="22" fill="#ff4500"/>
+  <path d="M 150 252 L 150 290 M 135 270 L 165 270" stroke="#ff4500" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="362" cy="256" r="45" fill="white" opacity="0.95"/>
+  <circle cx="362" cy="230" r="22" fill="#ff4500"/>
+  <path d="M 362 252 L 362 290 M 347 270 L 377 270" stroke="#ff4500" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 195 256 L 317 256" stroke="white" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+  <circle cx="256" cy="256" r="8" fill="white"/>
+  <text x="256" y="390" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="bold" 
+        fill="white" text-anchor="middle">EDWL</text>
+</svg>

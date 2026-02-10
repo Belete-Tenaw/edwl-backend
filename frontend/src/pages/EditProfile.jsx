@@ -41,7 +41,19 @@ const EditProfile = () => {
                     customSkill = custom;
                 }
             }
-            setFormData({ ...data, skills: currentSkills, customSkill });
+
+            let currentLanguages = [];
+            let customLanguage = '';
+            if (data.languages && Array.isArray(data.languages)) {
+                const langList = t('languages_list', { returnObjects: true });
+                currentLanguages = data.languages.filter(l => Object.keys(langList).includes(l));
+                const customLang = data.languages.find(l => !Object.keys(langList).includes(l));
+                if (customLang) {
+                    currentLanguages.push('other');
+                    customLanguage = customLang;
+                }
+            }
+            setFormData({ ...data, skills: currentSkills, customSkill, languages: currentLanguages, customLanguage });
         } catch (err) {
             console.error("Failed to fetch profile", err);
             alert("Could not load profile data.");
@@ -69,6 +81,17 @@ const EditProfile = () => {
         setFormData({ ...formData, skills: currentSkills });
     };
 
+    const handleLanguageToggle = (language) => {
+        const currentLanguages = [...(formData.languages || [])];
+        const index = currentLanguages.indexOf(language);
+        if (index > -1) {
+            currentLanguages.splice(index, 1);
+        } else {
+            currentLanguages.push(language);
+        }
+        setFormData({ ...formData, languages: currentLanguages });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
@@ -85,12 +108,19 @@ const EditProfile = () => {
                     finalSkills.push(formData.customSkill);
                 }
 
+                let finalLanguages = Array.isArray(formData.languages) ? [...formData.languages] : [];
+                if (finalLanguages.includes('other') && formData.customLanguage) {
+                    finalLanguages = finalLanguages.filter(l => l !== 'other');
+                    finalLanguages.push(formData.customLanguage);
+                }
+
                 dataToSend.append('fullName', formData.fullName);
                 dataToSend.append('phone', formData.phone);
                 dataToSend.append('age', formData.age);
                 dataToSend.append('maritalStatus', formData.maritalStatus || 'SINGLE');
                 dataToSend.append('religion', formData.religion || '');
                 dataToSend.append('skills', JSON.stringify(finalSkills));
+                dataToSend.append('languages', JSON.stringify(finalLanguages));
                 dataToSend.append('experienceYears', formData.experienceYears);
                 dataToSend.append('expectedSalary', formData.expectedSalary);
                 dataToSend.append('preferredArrangement', formData.preferredArrangement || 'LIVE_IN');
@@ -206,6 +236,41 @@ const EditProfile = () => {
                                             value={formData.customSkill || ''}
                                             onChange={handleChange}
                                             placeholder={t('specify_other')}
+                                            required
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <div style={{ gridColumn: '1 / -1' }}>
+                                <label className="label">{t('select_languages')}</label>
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                                    gap: '10px',
+                                    background: '#f9f9f9',
+                                    padding: '15px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #ddd'
+                                }}>
+                                    {Object.entries(t('languages_list', { returnObjects: true })).map(([key, value]) => (
+                                        <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={(formData.languages || []).includes(key)}
+                                                onChange={() => handleLanguageToggle(key)}
+                                            />
+                                            {value}
+                                        </label>
+                                    ))}
+                                </div>
+                                {(formData.languages || []).includes('other') && (
+                                    <div style={{ marginTop: '10px' }}>
+                                        <input
+                                            className="input"
+                                            name="customLanguage"
+                                            value={formData.customLanguage || ''}
+                                            onChange={handleChange}
+                                            placeholder={t('specify_other_language')}
                                             required
                                         />
                                     </div>

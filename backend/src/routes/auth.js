@@ -124,5 +124,6 @@ router.post('/employer/login', authController.loginEmployer);
 
 // Admin
 router.post('/admin/login', authController.loginAdmin);
+router.post('/firebase-login', authController.firebaseLogin);
 
 module.exports = router;

@@ -1,0 +1,25 @@
+<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E3A8A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="192" height="192" fill="url(#bgGradient)" rx="24"/>
+  
+  <!-- Ethiopian flag accent stripe -->
+  <rect x="0" y="168" width="192" height="8" fill="#009543"/>
+  <rect x="0" y="176" width="192" height="8" fill="#FCDD09"/>
+  <rect x="0" y="184" width="192" height="8" fill="#DA121A"/>
+  
+  <!-- Main EDWL text -->
+  <text x="96" y="105" font-family="Arial, sans-serif" font-size="48" font-weight="bold" 
+        fill="white" text-anchor="middle">EDWL</text>
+  
+  <!-- Connecting icon element -->
+  <circle cx="60" cy="140" r="7" fill="#FF4500" opacity="0.8"/>
+  <circle cx="132" cy="140" r="7" fill="#FF4500" opacity="0.8"/>
+  <line x1="67" y1="140" x2="125" y2="140" stroke="#FF4500" stroke-width="3" opacity="0.8"/>
+</svg>

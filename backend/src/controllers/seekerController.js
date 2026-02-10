@@ -1,12 +1,54 @@
 const prisma = require('../utils/prisma');
 
+const maskPlatinumBadge = (seeker, employerTier) => {
+    const maskedSeeker = { ...seeker };
+
+    if (employerTier === 'SILVER' || employerTier === 'FREEMIUM') {
+        // SILVER ACCESS (Base Subscription)
+        // Phone numbers: LOCKED
+        maskedSeeker.phone = '********';
+        maskedSeeker.email = '********';
+        // National ID (Fayda): LOCKED
+        maskedSeeker.nationalIdFayda = '********';
+        // Guarantor data: LOCKED
+        maskedSeeker.guarantorName = '********';
+        maskedSeeker.guarantorPhone = '********';
+        maskedSeeker.guarantorIdCard = null;
+        // Police & Health records: LOCKED
+        maskedSeeker.policeClearance = null;
+        maskedSeeker.healthCertificate = null;
+        maskedSeeker.idDocument = null;
+
+        // Badge masking: Platinum workers must appear as Standard/Silver
+        // In this context, let's say they appear as Standard if they are higher than Silver, 
+        // or just cap it at SILVER. The prompt says "appear as Standard/Silver".
+        if (maskedSeeker.badge === 'GOLD' || maskedSeeker.badge === 'PLATINUM') {
+            maskedSeeker.badge = 'SILVER';
+        }
+    } else if (employerTier === 'GOLD') {
+        // GOLD ACCESS (Mid-Tier Upgrade)
+        // Unlocked: Phone, Fayda, Guarantor
+        // Police & Health records: NOT ACCESSIBLE
+        maskedSeeker.policeClearance = null;
+        maskedSeeker.healthCertificate = null;
+
+        // Badge masking: Platinum workers are downgraded visually to Gold
+        if (maskedSeeker.badge === 'PLATINUM') {
+            maskedSeeker.badge = 'GOLD';
+        }
+    }
+    // PLATINUM ACCESS: Full, true badge state (No masking)
+
+    return maskedSeeker;
+};
+
 exports.getSeekerProfile = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
         const userRole = req.user.role;
 
-        const seeker = await prisma.jobSeeker.findUnique({
+        let seeker = await prisma.jobSeeker.findUnique({
             where: { id }
         });
 
@@ -23,11 +65,7 @@ exports.getSeekerProfile = async (req, res) => {
 
             // Check tier
             const employer = await prisma.employer.findUnique({ where: { id: userId } });
-            if (employer.tier === 'FREEMIUM') {
-                seeker.phone = '********';
-                seeker.email = '********';
-                seeker.idDocument = null;
-            }
+            seeker = maskPlatinumBadge(seeker, employer.tier);
         }
 
         res.json(seeker);
@@ -87,7 +125,10 @@ exports.updateProfile = async (req, res) => {
 
 exports.getAllSeekers = async (req, res) => {
     try {
-        const seekers = await prisma.jobSeeker.findMany({
+        const userId = req.user.id;
+        const userRole = req.user.role;
+
+        let seekers = await prisma.jobSeeker.findMany({
             select: {
                 id: true,
                 fullName: true,
@@ -97,9 +138,21 @@ exports.getAllSeekers = async (req, res) => {
                 experienceYears: true,
                 preferredLocation: true,
                 preferredArrangement: true,
-                profilePhoto: true
+                profilePhoto: true,
+                badge: true,
+                priorityWeight: true
+            },
+            orderBy: {
+                priorityWeight: 'desc'
             }
         });
+
+        // Apply masking if viewed by an employer
+        if (userRole === 'EMPLOYER') {
+            const employer = await prisma.employer.findUnique({ where: { id: userId } });
+            seekers = seekers.map(s => maskPlatinumBadge(s, employer.tier));
+        }
+
         res.json(seekers);
     } catch (error) {
         res.status(500).json({ error: error.message });
