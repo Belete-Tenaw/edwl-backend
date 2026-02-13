@@ -1,4 +1,4 @@
-const CACHE_NAME = 'edwl-v1';
+const CACHE_NAME = 'edwl-v2';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',

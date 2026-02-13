@@ -1,16 +1,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Users, Briefcase, ArrowRight } from 'lucide-react';
 import logo from '../assets/logo_integrated.png';
 import heroBg from '../assets/hero-bg.jpg';
 
 const Home = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const navigate = useNavigate();
 
     return (
         <div className="home-page">
             <header className="hero" style={{
-                padding: '140px 0',
                 background: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${heroBg})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
@@ -25,9 +26,30 @@ const Home = () => {
                     <p style={{ fontSize: '1.4rem', color: 'rgba(255,255,255,0.9)', marginBottom: '40px', maxWidth: '800px', margin: '0 auto 40px', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
                         {t('hero_title')}
                     </p>
-                    <button className="btn-primary" style={{ fontSize: '1.2rem', padding: '15px 40px' }} onClick={() => window.location.href = '/register'}>
-                        {t('get_started')} <ArrowRight size={20} style={{ marginLeft: '8px', verticalAlign: 'middle' }} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button className="btn-primary" style={{ fontSize: '1.2rem', padding: '15px 40px', display: 'flex', alignItems: 'center' }} onClick={() => navigate('/register')}>
+                            {t('get_started')} <ArrowRight size={20} style={{ marginLeft: '8px' }} />
+                        </button>
+                        <button
+                            onClick={() => {
+                                const newLang = i18n.language === 'en' ? 'am' : 'en';
+                                i18n.changeLanguage(newLang);
+                            }}
+                            style={{
+                                fontSize: '1.2rem',
+                                padding: '15px 30px',
+                                background: 'rgba(255,255,255,0.2)',
+                                border: '2px solid white',
+                                color: 'white',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                backdropFilter: 'blur(5px)',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            {i18n.language === 'en' ? 'አማርኛ' : 'English'}
+                        </button>
+                    </div>
                 </div>
             </header>
 

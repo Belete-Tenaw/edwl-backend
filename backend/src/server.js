@@ -107,11 +107,12 @@ app.use('/api/', limiter);
 // Strict rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // Limit each IP to 10 login/register requests per hour
+  max: 20, // Limit each IP to 20 login/register requests per hour
   message: 'Too many authentication attempts, please try again after an hour'
 });
-app.use('/api/auth/login', authLimiter);
-app.use('/api/admin/login', authLimiter);
+app.use('/api/auth/*/login', authLimiter);
+app.use('/api/auth/admin/login', authLimiter);
+app.use('/api/auth/firebase-login', authLimiter);
 
 // Routes
 app.get('/', (req, res) => {
@@ -144,30 +145,8 @@ app.use('/api/payments', require('./routes/payment'));
 app.use('/api/reports', require('./routes/report'));
 
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("Global Error Handler caught:", {
-    name: err.name,
-    message: err.message,
-    code: err.code,
-    stack: err.stack
-  });
-
-  // Catch Multer errors specifically
-  if (err.name === 'MulterError' || err instanceof multer.MulterError) {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'File too large. Maximum size allowed is 10MB.' });
-    }
-    return res.status(400).json({ error: `Upload error: ${err.message}` });
-  }
-
-  if (process.env.NODE_ENV !== 'production') {
-    // console.error(err.stack); // already logged above
-  }
-  res.status(500).json({
-    error: process.env.NODE_ENV === 'production' ? 'An internal server error occurred' : err.message
-  });
-});
+// 404 handler for API routes
+app.use('/api', require('./middleware/notFound'));
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
@@ -177,6 +156,9 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.resolve(__dirname, '../../frontend/dist/index.html'));
   });
 }
+
+// Global Error Handler (must be last)
+app.use(require('./middleware/errorHandler'));
 
 // Serve uploads directory - available in all environments
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

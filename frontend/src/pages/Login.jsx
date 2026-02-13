@@ -246,7 +246,7 @@ const Login = () => {
                 )}
 
                 <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.9rem', color: '#666' }}>
-                    {t('no_account')} <a href="/register" style={{ color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>{t('register')}</a>
+                    {t('no_account')} <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '600', textDecoration: 'none' }}>{t('register')}</Link>
                 </div>
             </div>
         </div>

@@ -498,7 +498,7 @@ const Register = () => {
                             style={{ marginTop: '5px' }}
                         />
                         <label htmlFor="termsConsent" style={{ fontSize: '0.9rem', color: '#555' }}>
-                            {t('i_agree_to')} <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>{t('terms_and_conditions')}</a> {t('and')} <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>{t('privacy_policy')}</a>.
+                            {t('i_agree_to')} <Link to="/terms-and-conditions" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>{t('terms_and_conditions')}</Link> {t('and')} <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>{t('privacy_policy')}</Link>.
                         </label>
                     </div>
 

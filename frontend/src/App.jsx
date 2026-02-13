@@ -19,7 +19,8 @@ const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 const About = lazy(() => import('./pages/About'));
 const Safety = lazy(() => import('./pages/Safety'));
-const Contact = lazy(() => import('./pages/Contact'));
+import Contact from './pages/Contact';
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const Loading = () => (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'var(--primary)' }}>
@@ -52,6 +53,7 @@ function App() {
                             <Route path="/about" element={<About />} />
                             <Route path="/safety" element={<Safety />} />
                             <Route path="/contact" element={<Contact />} />
+                            <Route path="*" element={<NotFound />} />
 
                             <Route path="/messages" element={
                                 <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER']}>
