@@ -110,7 +110,7 @@ const authLimiter = rateLimit({
   max: 20, // Limit each IP to 20 login/register requests per hour
   message: 'Too many authentication attempts, please try again after an hour'
 });
-app.use('/api/auth/*/login', authLimiter);
+app.use('/api/auth/:role/login', authLimiter);
 app.use('/api/auth/admin/login', authLimiter);
 app.use('/api/auth/firebase-login', authLimiter);
 

@@ -39,7 +39,8 @@ describe('Auth Endpoints', () => {
             .field('preferredLocation', 'Addis Ababa')
             .field('preferredArrangement', 'LIVE_IN')
             .field('maritalStatus', 'SINGLE')
-            .attach('profilePhoto', Buffer.from('fake image'), 'profile.jpg');
+            .attach('profilePhoto', Buffer.from('fake image'), 'profile.jpg')
+            .attach('idDocument', Buffer.from('fake id'), 'id.jpg');
 
         expect(res.statusCode).toEqual(201);
         expect(res.body).toHaveProperty('token');
