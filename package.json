@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "npm run build --prefix frontend"
+  },
   "dependencies": {
     "firebase": "^12.9.0"
   }
