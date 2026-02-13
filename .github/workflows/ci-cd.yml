@@ -49,6 +49,7 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql://postgres:test_password@localhost:5432/edwl_test_db?schema=public
+          DIRECT_URL: postgresql://postgres:test_password@localhost:5432/edwl_test_db?schema=public
           JWT_SECRET: test_secret_key_for_ci
         run: npm test
 
