@@ -115,8 +115,15 @@ app.use('/api/auth/admin/login', authLimiter);
 app.use('/api/auth/firebase-login', authLimiter);
 
 // Routes
+// Health Check
 app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to EDWL API' });
+  res.json({
+    status: 'UP',
+    message: 'Welcome to EDWL API',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
 });
 
 // Auth Routes
