@@ -466,35 +466,6 @@ const Register = () => {
                                 </div>
                             )}
 
-                            {/* Document Uploads for Employer */}
-                            <div style={{ gridColumn: '1 / -1' }}>
-                                <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '15px 0' }} />
-                                <h4 style={{ marginBottom: '15px', color: '#444' }}>{t('security_verification')} {t('optional')}</h4>
-                            </div>
-
-                            <div>
-                                <label className="label">{t('profile_photo')}</label>
-                                <input
-                                    type="file"
-                                    className="input"
-                                    name="profilePhoto"
-                                    accept="image/*"
-                                    onChange={(e) => setEmployerData({ ...employerData, profilePhoto: e.target.files[0] })}
-                                />
-                                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>{t('upload_photo_msg')}</p>
-                            </div>
-
-                            <div>
-                                <label className="label">{t('id_passport')}</label>
-                                <input
-                                    type="file"
-                                    className="input"
-                                    name="idDocument"
-                                    accept="image/*,.pdf"
-                                    onChange={(e) => setEmployerData({ ...employerData, idDocument: e.target.files[0] })}
-                                />
-                                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>{t('upload_id_msg')}</p>
-                            </div>
                         </div>
                     )}
 

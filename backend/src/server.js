@@ -54,13 +54,13 @@ const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 if (!process.env.JWT_SECRET) {
-  console.warn('WARNING: JWT_SECRET is not defined.');
-  // process.exit(1);
+  console.error('FATAL ERROR: JWT_SECRET is not defined.');
+  process.exit(1);
 }
 
 if (!process.env.DATABASE_URL) {
-  console.warn('WARNING: DATABASE_URL is not defined.');
-  // process.exit(1);
+  console.error('FATAL ERROR: DATABASE_URL is not defined.');
+  process.exit(1);
 }
 
 // Middleware
@@ -138,25 +138,17 @@ app.get('/', (req, res) => {
 
 const prisma = require('./utils/prisma');
 
-// Debug Endpoint
-app.get('/api/debug', async (req, res) => {
+// Combined Health & DB check
+app.get('/api/health', async (req, res) => {
   try {
     const dbStatus = await prisma.$queryRaw`SELECT 1`.then(() => 'UP').catch(e => `DOWN: ${e.message}`);
     res.json({
-      status: 'DEBUG',
+      status: 'UP',
       database: dbStatus,
-      env: process.env.NODE_ENV,
-      has_jwt_secret: !!process.env.JWT_SECRET,
-      has_db_url: !!process.env.DATABASE_URL,
-      cors: process.env.CORS_ORIGIN || '*',
-      time: new Date().toISOString()
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({
-      error: 'Debug endpoint failed',
-      message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    res.status(500).json({ error: 'Health check failed' });
   }
 });
 
