@@ -98,6 +98,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Lowercase image names
+        run: |
+          echo "IMAGE_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -111,8 +115,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/edwl-backend:latest
-            ghcr.io/${{ github.repository_owner }}/edwl-backend:${{ github.sha }}
+            ghcr.io/${{ env.IMAGE_OWNER }}/edwl-backend:latest
+            ghcr.io/${{ env.IMAGE_OWNER }}/edwl-backend:${{ github.sha }}
 
       - name: Build and push frontend
         uses: docker/build-push-action@v5
@@ -120,5 +124,5 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/edwl-frontend:latest
-            ghcr.io/${{ github.repository_owner }}/edwl-frontend:${{ github.sha }}
+            ghcr.io/${{ env.IMAGE_OWNER }}/edwl-frontend:latest
+            ghcr.io/${{ env.IMAGE_OWNER }}/edwl-frontend:${{ github.sha }}
