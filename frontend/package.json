@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --host",
-    "test": "vitest"
+    "test": "vitest",
+    "deploy": "firebase deploy --only hosting"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.2",

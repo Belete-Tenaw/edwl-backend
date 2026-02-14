@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: '/api', // Proxy in vite.config.js handles the rest
+    baseURL: import.meta.env.MODE === 'production'
+        ? 'https://edwl-backend.onrender.com/api'
+        : '/api',
 });
 
 // Add a request interceptor to add the auth token to headers
