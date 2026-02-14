@@ -149,17 +149,16 @@ app.get('/api/health', async (req, res) => {
       .then(() => 'OK')
       .catch(e => `FAIL: ${e.message}`);
 
-    // 3. Credential Diagnostic (Masked)
-    let dbDiagnostic = 'NOT_SET';
+    // 3. Credential Diagnostic (Masked password, but full user)
+    let dbUser = 'NOT_SET';
     let isPlaceholder = false;
     if (process.env.DATABASE_URL) {
       try {
         const url = new URL(process.env.DATABASE_URL.replace('pgbouncer=true', ''));
-        const maskedUser = url.username.length > 8 ? `${url.username.substring(0, 8)}...` : url.username;
-        dbDiagnostic = `${url.protocol}//${maskedUser}@${url.hostname}`;
+        dbUser = url.username;
         if (url.password === 'admin123') isPlaceholder = true;
       } catch (e) {
-        dbDiagnostic = 'PARSE_ERROR';
+        dbUser = 'PARSE_ERROR';
       }
     }
 
@@ -170,12 +169,12 @@ app.get('/api/health', async (req, res) => {
         deep_table: tableStatus
       },
       diagnostics: {
-        url_summary: dbDiagnostic,
+        db_user: dbUser,
         using_placeholder_password: isPlaceholder,
         node_env: process.env.NODE_ENV
       },
       timestamp: new Date().toISOString(),
-      version: '1.0.3'
+      version: '1.0.4'
     });
   } catch (error) {
     res.status(500).json({ error: 'Health check failed', message: error.message });
