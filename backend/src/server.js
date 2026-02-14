@@ -152,12 +152,14 @@ app.get('/api/health', async (req, res) => {
     // 3. Credential Diagnostic (Masked password)
     let dbUser = 'NOT_SET';
     let dbProtocol = 'NOT_SET';
-    let urlShape = 'NOT_SET';
+    let urlStart = 'NOT_SET';
+    let urlEnd = 'NOT_SET';
     let isPlaceholder = false;
     if (process.env.DATABASE_URL) {
       try {
         const rawUrl = process.env.DATABASE_URL;
-        urlShape = rawUrl.substring(0, 5) + '...' + rawUrl.substring(rawUrl.length - 5);
+        urlStart = `[${rawUrl.substring(0, 15)}]`;
+        urlEnd = `[${rawUrl.substring(rawUrl.length - 15)}]`;
         const url = new URL(rawUrl.replace('pgbouncer=true', ''));
         dbUser = url.username;
         dbProtocol = url.protocol;
@@ -177,12 +179,13 @@ app.get('/api/health', async (req, res) => {
       diagnostics: {
         db_user: dbUser,
         db_protocol: dbProtocol,
-        url_shape: urlShape,
+        url_start: urlStart,
+        url_end: urlEnd,
         using_placeholder_password: isPlaceholder,
         node_env: process.env.NODE_ENV
       },
       timestamp: new Date().toISOString(),
-      version: '1.0.5'
+      version: '1.0.6'
     });
   } catch (error) {
     res.status(500).json({ error: 'Health check failed', message: error.message });
