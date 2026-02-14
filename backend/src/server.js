@@ -90,21 +90,19 @@ if (process.env.NODE_ENV === 'production') {
 
 // Request Logging for debugging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.header('origin')}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log(`  Origin: ${req.header('origin')}`);
+  console.log(`  Path: ${req.path}`);
   next();
 });
 
-const allowedOrigins = [
-  'https://edwl-ethio-domesticworkerslink.web.app',
-  'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
-  process.env.CORS_ORIGIN
-].filter(Boolean);
-
-const corsOptions = {
-  origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
+// Extremely permissive CORS for debugging
+app.use(cors({
+  origin: true,
+  credentials: true,
   optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+}));
+
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 
