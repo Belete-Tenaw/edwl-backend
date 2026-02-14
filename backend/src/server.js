@@ -136,6 +136,8 @@ app.get('/', (req, res) => {
   });
 });
 
+const prisma = require('./utils/prisma');
+
 // Debug Endpoint
 app.get('/api/debug', async (req, res) => {
   try {
@@ -144,11 +146,17 @@ app.get('/api/debug', async (req, res) => {
       status: 'DEBUG',
       database: dbStatus,
       env: process.env.NODE_ENV,
+      has_jwt_secret: !!process.env.JWT_SECRET,
+      has_db_url: !!process.env.DATABASE_URL,
       cors: process.env.CORS_ORIGIN || '*',
       time: new Date().toISOString()
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: 'Debug endpoint failed',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
