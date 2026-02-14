@@ -52,8 +52,13 @@ const Navbar = () => {
                 </div>
             </Link>
 
-            <div className="mobile-only" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                <Menu size={28} color="var(--primary)" style={{ cursor: 'pointer' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                <button className="mobile-only" onClick={toggleLanguage} style={{ background: 'transparent', border: '1px solid #ddd', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                    {i18n.language === 'en' ? 'አማ' : 'En'}
+                </button>
+                <div className="mobile-only" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                    <Menu size={28} color="var(--primary)" style={{ cursor: 'pointer' }} />
+                </div>
             </div>
 
             <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -61,9 +66,11 @@ const Navbar = () => {
                 <Link to="/about" onClick={closeMenu} style={{ textDecoration: 'none', color: '#333', fontWeight: '500' }}>{t('about_us')}</Link>
                 <Link to="/contact" onClick={closeMenu} style={{ textDecoration: 'none', color: '#333', fontWeight: '500' }}>{t('contact_us')}</Link>
                 <Link to="/pricing" onClick={closeMenu} style={{ textDecoration: 'none', color: '#333', fontWeight: '500' }}>{t('plans')}</Link>
-                <button onClick={toggleLanguage} style={{ background: 'transparent', border: '1px solid #ddd', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', width: 'fit-content' }}>
-                    {i18n.language === 'en' ? 'አማርኛ' : 'English'}
-                </button>
+                <div className="desktop-only">
+                    <button onClick={toggleLanguage} style={{ background: 'transparent', border: '1px solid #ddd', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', width: 'fit-content' }}>
+                        {i18n.language === 'en' ? 'አማርኛ' : 'English'}
+                    </button>
+                </div>
 
                 {user ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }} className="nav-links">

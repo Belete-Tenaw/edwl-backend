@@ -11,6 +11,7 @@ const Register = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
 
     // Seeker State
     const [seekerData, setSeekerData] = useState({
@@ -70,6 +71,13 @@ const Register = () => {
 
         try {
             console.log("Registration process started...");
+
+            if (!termsAccepted) {
+                setError(t('must_accept_terms'));
+                setLoading(false);
+                window.scrollTo(0, 0);
+                return;
+            }
 
             if (activeTab === 'seeker') {
                 // Pre-submission validation for Seeker
@@ -495,6 +503,8 @@ const Register = () => {
                             type="checkbox"
                             required
                             id="termsConsent"
+                            checked={termsAccepted}
+                            onChange={(e) => setTermsAccepted(e.target.checked)}
                             style={{ marginTop: '5px' }}
                         />
                         <label htmlFor="termsConsent" style={{ fontSize: '0.9rem', color: '#555' }}>
