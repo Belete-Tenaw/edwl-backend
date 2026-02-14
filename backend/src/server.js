@@ -138,6 +138,22 @@ app.get('/', (req, res) => {
   });
 });
 
+// Debug Endpoint
+app.get('/api/debug', async (req, res) => {
+  try {
+    const dbStatus = await prisma.$queryRaw`SELECT 1`.then(() => 'UP').catch(e => `DOWN: ${e.message}`);
+    res.json({
+      status: 'DEBUG',
+      database: dbStatus,
+      env: process.env.NODE_ENV,
+      cors: process.env.CORS_ORIGIN || '*',
+      time: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Auth Routes
 app.use('/api/auth', require('./routes/auth'));
 
