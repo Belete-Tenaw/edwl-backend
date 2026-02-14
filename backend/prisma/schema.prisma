@@ -163,6 +163,7 @@ model JobSeeker {
   reportsFiled     Report[]             @relation("ReporterJS")
   reportsReceived  Report[]             @relation("ReportedJS")
   verificationRequests VerificationRequest[]
+  targetViewLogs       ViewLog[]            @relation("TargetSeeker")
 }
 
 model Employer {
@@ -267,6 +268,7 @@ model ViewLog {
   targetJobPostId String?
   targetJobPost   JobPost?   @relation(fields: [targetJobPostId], references: [id])
   targetJobSeekerId String?
+  targetJobSeeker   JobSeeker? @relation("TargetSeeker", fields: [targetJobSeekerId], references: [id])
 }
 
 enum BillingPeriod {

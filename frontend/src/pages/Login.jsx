@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import { User, Briefcase, ShieldCheck, Lock, Mail, Phone, ArrowRight, MessageSquare } from 'lucide-react';
 import { auth } from '../firebase';

@@ -72,7 +72,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https://*"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "https://*.firebaseio.com", "https://*.googleapis.com"],
     },
   },
   crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -82,7 +82,7 @@ app.use(helmet({
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
     if (req.header('x-forwarded-proto') !== 'https') {
-      return res.redirect(`https://${req.header('host')}${req.url}`);
+      return res.status(301).redirect(`https://${req.header('host')}${req.url}`);
     }
     next();
   });
@@ -155,6 +155,10 @@ app.use('/api/reports', require('./routes/report'));
 // 404 handler for API routes
 app.use('/api', require('./middleware/notFound'));
 
+// Serve uploads directory - available in all environments
+// CRITICAL: Must be defined before the frontend catch-all route in production
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));
@@ -166,9 +170,6 @@ if (process.env.NODE_ENV === 'production') {
 
 // Global Error Handler (must be last)
 app.use(require('./middleware/errorHandler'));
-
-// Serve uploads directory - available in all environments
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 if (require.main === module) {
   app.listen(PORT, () => {
