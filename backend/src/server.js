@@ -138,27 +138,47 @@ app.get('/', (req, res) => {
 
 const prisma = require('./utils/prisma');
 
-// Combined Health & DB check
+// Enhanced Health & Deep DB check
 app.get('/api/health', async (req, res) => {
   try {
-    const dbStatus = await prisma.$queryRaw`SELECT 1`.then(() => 'UP').catch(e => `DOWN: ${e.message}`);
+    // 1. Basic Connection Check
+    const basicStatus = await prisma.$queryRaw`SELECT 1`.then(() => 'OK').catch(e => `FAIL: ${e.message}`);
 
-    // Masked DB URL for debugging without exposing secrets
-    let maskedDbUrl = 'NOT_DEFINED';
+    // 2. Deep Table Check
+    const tableStatus = await prisma.employer.count()
+      .then(() => 'OK')
+      .catch(e => `FAIL: ${e.message}`);
+
+    // 3. Credential Diagnostic (Masked)
+    let dbDiagnostic = 'NOT_SET';
+    let isPlaceholder = false;
     if (process.env.DATABASE_URL) {
-      const url = new URL(process.env.DATABASE_URL.replace('pgbouncer=true', ''));
-      maskedDbUrl = `${url.protocol}//${url.username.substring(0, 10)}...[:password]@${url.hostname}:${url.port}${url.pathname}`;
+      try {
+        const url = new URL(process.env.DATABASE_URL.replace('pgbouncer=true', ''));
+        const maskedUser = url.username.length > 8 ? `${url.username.substring(0, 8)}...` : url.username;
+        dbDiagnostic = `${url.protocol}//${maskedUser}@${url.hostname}`;
+        if (url.password === 'admin123') isPlaceholder = true;
+      } catch (e) {
+        dbDiagnostic = 'PARSE_ERROR';
+      }
     }
 
     res.json({
       status: 'UP',
-      database: dbStatus,
-      db_user_prefix: maskedDbUrl,
+      database: {
+        basic: basicStatus,
+        deep_table: tableStatus
+      },
+      diagnostics: {
+        url_summary: dbDiagnostic,
+        using_placeholder_password: isPlaceholder,
+        node_env: process.env.NODE_ENV
+      },
       timestamp: new Date().toISOString(),
-      version: '1.0.2'
+      version: '1.0.3'
     });
   } catch (error) {
-    res.status(500).json({ error: 'Health check failed', details: error.message });
+    res.status(500).json({ error: 'Health check failed', message: error.message });
   }
 });
 
