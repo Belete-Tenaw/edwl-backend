@@ -54,13 +54,13 @@ const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 if (!process.env.JWT_SECRET) {
-  console.error('FATAL ERROR: JWT_SECRET is not defined.');
-  process.exit(1);
+  console.warn('WARNING: JWT_SECRET is not defined.');
+  // process.exit(1);
 }
 
 if (!process.env.DATABASE_URL) {
-  console.error('FATAL ERROR: DATABASE_URL is not defined.');
-  process.exit(1);
+  console.warn('WARNING: DATABASE_URL is not defined.');
+  // process.exit(1);
 }
 
 // Middleware
