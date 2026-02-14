@@ -72,7 +72,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https://*"],
-      connectSrc: ["'self'", "https://*.firebaseio.com", "https://*.googleapis.com"],
+      connectSrc: ["'self'", "https://*.firebaseio.com", "https://*.googleapis.com", "https://edwl-ethio-domesticworkerslink.web.app", "https://edwl-ethio-domesticworkerslink.firebaseapp.com"],
     },
   },
   crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -88,8 +88,20 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Request Logging for debugging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - Origin: ${req.header('origin')}`);
+  next();
+});
+
+const allowedOrigins = [
+  'https://edwl-ethio-domesticworkerslink.web.app',
+  'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
+  process.env.CORS_ORIGIN
+].filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
