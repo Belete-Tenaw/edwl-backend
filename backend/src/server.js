@@ -142,13 +142,23 @@ const prisma = require('./utils/prisma');
 app.get('/api/health', async (req, res) => {
   try {
     const dbStatus = await prisma.$queryRaw`SELECT 1`.then(() => 'UP').catch(e => `DOWN: ${e.message}`);
+
+    // Masked DB URL for debugging without exposing secrets
+    let maskedDbUrl = 'NOT_DEFINED';
+    if (process.env.DATABASE_URL) {
+      const url = new URL(process.env.DATABASE_URL.replace('pgbouncer=true', ''));
+      maskedDbUrl = `${url.protocol}//${url.username.substring(0, 10)}...[:password]@${url.hostname}:${url.port}${url.pathname}`;
+    }
+
     res.json({
       status: 'UP',
       database: dbStatus,
-      timestamp: new Date().toISOString()
+      db_user_prefix: maskedDbUrl,
+      timestamp: new Date().toISOString(),
+      version: '1.0.2'
     });
   } catch (error) {
-    res.status(500).json({ error: 'Health check failed' });
+    res.status(500).json({ error: 'Health check failed', details: error.message });
   }
 });
 

@@ -200,6 +200,11 @@ const Register = () => {
 
     return (
         <div className="container" style={{ padding: '40px 20px', maxWidth: '800px' }}>
+            <div style={{ background: '#FF4500', color: 'white', padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                ⚠️ FORCED UPDATE ACTIVE (v1.0.5) ⚠️
+                <br />
+                <span style={{ fontSize: '0.9rem', fontWeight: 'normal' }}>If you see this, Employer Photo/ID fields are disabled.</span>
+            </div>
             <h2 style={{ textAlign: 'center', marginBottom: '30px', color: 'var(--primary)' }}>{t('create_account_title')}</h2>
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>
@@ -510,6 +515,9 @@ const Register = () => {
           box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
         }
       `}</style>
+            <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#ccc', marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+                UI Version: 1.0.7-CACHE-PURGE-REQUIRED
+            </div>
         </div>
     );
 };
