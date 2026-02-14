@@ -149,16 +149,22 @@ app.get('/api/health', async (req, res) => {
       .then(() => 'OK')
       .catch(e => `FAIL: ${e.message}`);
 
-    // 3. Credential Diagnostic (Masked password, but full user)
+    // 3. Credential Diagnostic (Masked password)
     let dbUser = 'NOT_SET';
+    let dbProtocol = 'NOT_SET';
+    let urlShape = 'NOT_SET';
     let isPlaceholder = false;
     if (process.env.DATABASE_URL) {
       try {
-        const url = new URL(process.env.DATABASE_URL.replace('pgbouncer=true', ''));
+        const rawUrl = process.env.DATABASE_URL;
+        urlShape = rawUrl.substring(0, 5) + '...' + rawUrl.substring(rawUrl.length - 5);
+        const url = new URL(rawUrl.replace('pgbouncer=true', ''));
         dbUser = url.username;
+        dbProtocol = url.protocol;
         if (url.password === 'admin123') isPlaceholder = true;
       } catch (e) {
         dbUser = 'PARSE_ERROR';
+        dbProtocol = 'PARSE_ERROR';
       }
     }
 
@@ -170,11 +176,13 @@ app.get('/api/health', async (req, res) => {
       },
       diagnostics: {
         db_user: dbUser,
+        db_protocol: dbProtocol,
+        url_shape: urlShape,
         using_placeholder_password: isPlaceholder,
         node_env: process.env.NODE_ENV
       },
       timestamp: new Date().toISOString(),
-      version: '1.0.4'
+      version: '1.0.5'
     });
   } catch (error) {
     res.status(500).json({ error: 'Health check failed', message: error.message });
