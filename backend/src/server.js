@@ -132,7 +132,7 @@ app.get('/', (req, res) => {
     message: 'Welcome to EDWL API',
     environment: process.env.NODE_ENV,
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.1'
   });
 });
 
