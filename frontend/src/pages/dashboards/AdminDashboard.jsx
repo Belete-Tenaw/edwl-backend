@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import api from '../../services/api';
+import api, { API_BASE_URL } from '../../services/api';
 import { Users, Briefcase, CreditCard, Shield, AlertTriangle, FileText, Activity } from 'lucide-react';
+
+// Helper function to get full document URL
+const getDocumentUrl = (path) => {
+    // Handle null, undefined, empty string, or string literals 'undefined'/'null'
+    if (!path || path === 'undefined' || path === 'null' || path.trim() === '') return null;
+    if (path.startsWith('http')) return path; // Already a full URL
+    return `${API_BASE_URL}${path}`; // Prepend backend URL
+};
 
 const AdminDashboard = () => {
     const { t } = useTranslation();
@@ -87,7 +95,7 @@ const AdminDashboard = () => {
 
                                             <div style={{ display: 'flex', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
                                                 {user.idDocument ? (
-                                                    <a href={user.idDocument} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    <a href={getDocumentUrl(user.idDocument)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <Shield size={14} /> {t('view_id_document')}
                                                     </a>
                                                 ) : (
@@ -95,13 +103,13 @@ const AdminDashboard = () => {
                                                 )}
 
                                                 {user.policeClearance && (
-                                                    <a href={user.policeClearance} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    <a href={getDocumentUrl(user.policeClearance)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <FileText size={14} /> {t('police_clearance')}
                                                     </a>
                                                 )}
 
                                                 {user.healthCertificate && (
-                                                    <a href={user.healthCertificate} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    <a href={getDocumentUrl(user.healthCertificate)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <Activity size={14} /> {t('health_certificate')}
                                                     </a>
                                                 )}
