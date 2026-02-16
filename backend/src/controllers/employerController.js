@@ -7,9 +7,9 @@ exports.updateProfile = async (req, res) => {
 
         const { contactName, address, familySize } = req.body;
 
-        // Extract file paths
-        const profilePhotoPath = req.files?.profilePhoto ? `/uploads/profilePhoto/${req.files.profilePhoto[0].filename}` : undefined;
-        const idDocumentPath = req.files?.idDocument ? `/uploads/idDocument/${req.files.idDocument[0].filename}` : undefined;
+        // Extract file paths - FIXED: Removed leading /
+        const profilePhotoPath = req.files?.profilePhoto ? `uploads/profilePhoto/${req.files.profilePhoto[0].filename}` : undefined;
+        const idDocumentPath = req.files?.idDocument ? `uploads/idDocument/${req.files.idDocument[0].filename}` : undefined;
 
         // If ID document is updated, reset verification status
         let verificationData = {};

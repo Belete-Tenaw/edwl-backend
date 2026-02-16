@@ -3,7 +3,6 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const multer = require('multer');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -16,7 +15,6 @@ const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
 const swaggerOptions = {
-  // ... check integrity manually or reuse existing content if possible ...
   definition: {
     openapi: '3.0.0',
     info: {
@@ -28,40 +26,19 @@ const swaggerOptions = {
         email: 'support@edwl.com'
       }
     },
-    servers: [
-      {
-        url: `http://localhost:${PORT}`,
-        description: 'Local server'
-      }
-    ],
+    servers: [{ url: `http://localhost:${PORT}`, description: 'Local server' }],
     components: {
       securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       },
     },
-    security: [{
-      bearerAuth: []
-    }],
+    security: [{ bearerAuth: [] }],
   },
-  apis: ['./src/routes/*.js'], // Path to the API docs
+  apis: ['./src/routes/*.js'],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-if (!process.env.JWT_SECRET) {
-  console.error('FATAL ERROR: JWT_SECRET is not defined.');
-  process.exit(1);
-}
-
-if (!process.env.DATABASE_URL) {
-  console.error('FATAL ERROR: DATABASE_URL is not defined.');
-  process.exit(1);
-}
 
 // Middleware
 app.use(helmet({
@@ -78,25 +55,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
-// Enforce HTTPS in production
-if (process.env.NODE_ENV === 'production') {
-  app.use((req, res, next) => {
-    if (req.header('x-forwarded-proto') !== 'https') {
-      return res.status(301).redirect(`https://${req.header('host')}${req.url}`);
-    }
-    next();
-  });
-}
-
-// Request Logging for debugging
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  console.log(`  Origin: ${req.header('origin')}`);
-  console.log(`  Path: ${req.path}`);
-  next();
-});
-
-// Extremely permissive CORS for debugging
+// CORS Configuration
 app.use(cors({
   origin: true,
   credentials: true,
@@ -106,139 +65,32 @@ app.use(cors({
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-console.log('Static file serving enabled for /uploads directory');
-
-// Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again after 15 minutes'
-});
-app.use('/api/', limiter);
-
-// Strict rate limiting for auth routes
-const authLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // Limit each IP to 20 login/register requests per hour
-  message: 'Too many authentication attempts, please try again after an hour'
-});
-app.use('/api/auth/:role/login', authLimiter);
-app.use('/api/auth/admin/login', authLimiter);
-app.use('/api/auth/firebase-login', authLimiter);
+// --- FIXED STATIC FILE SERVING ---
+const uploadsPath = path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadsPath, {
+  setHeaders: (res) => {
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
+console.log(`✅ Static files being served from: ${uploadsPath}`);
+// ---------------------------------
 
 // Routes
-// Health Check
 app.get('/', (req, res) => {
-  res.json({
-    status: 'UP',
-    message: 'Welcome to EDWL API',
-    environment: process.env.NODE_ENV,
-    timestamp: new Date().toISOString(),
-    version: '1.0.1'
-  });
+  res.json({ status: 'UP', message: 'Welcome to EDWL API', version: '1.0.1' });
 });
 
-const prisma = require('./utils/prisma');
-
-// Enhanced Health & Deep DB check
-app.get('/api/health', async (req, res) => {
-  try {
-    // 1. Basic Connection Check
-    const basicStatus = await prisma.$queryRaw`SELECT 1`.then(() => 'OK').catch(e => `FAIL: ${e.message}`);
-
-    // 2. Deep Table Check
-    const tableStatus = await prisma.employer.count()
-      .then(() => 'OK')
-      .catch(e => `FAIL: ${e.message}`);
-
-    // 3. Credential Diagnostic (Masked password)
-    let dbUser = 'NOT_SET';
-    let dbProtocol = 'NOT_SET';
-    let urlStart = 'NOT_SET';
-    let urlEnd = 'NOT_SET';
-    let isPlaceholder = false;
-    if (process.env.DATABASE_URL) {
-      try {
-        const rawUrl = process.env.DATABASE_URL;
-        urlStart = `[${rawUrl.substring(0, 15)}]`;
-        urlEnd = `[${rawUrl.substring(rawUrl.length - 15)}]`;
-        const url = new URL(rawUrl.replace('pgbouncer=true', ''));
-        dbUser = url.username;
-        dbProtocol = url.protocol;
-        if (url.password === 'admin123') isPlaceholder = true;
-      } catch (e) {
-        dbUser = 'PARSE_ERROR';
-        dbProtocol = 'PARSE_ERROR';
-      }
-    }
-
-    res.json({
-      status: 'UP',
-      database: {
-        basic: basicStatus,
-        deep_table: tableStatus
-      },
-      diagnostics: {
-        db_user: dbUser,
-        db_protocol: dbProtocol,
-        url_start: urlStart,
-        url_end: urlEnd,
-        using_placeholder_password: isPlaceholder,
-        node_env: process.env.NODE_ENV
-      },
-      timestamp: new Date().toISOString(),
-      version: '1.0.6'
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Health check failed', message: error.message });
-  }
-});
-
-// Auth Routes
+// Import existing routes
 app.use('/api/auth', require('./routes/auth'));
-
-// Job Seeker Routes
 app.use('/api/seekers', require('./routes/seekers'));
-
-// Employer Routes
 app.use('/api/employers', require('./routes/employers'));
-
-
-// Job Post Routes
 app.use('/api/jobs', require('./routes/jobs'));
-
-// Messaging Routes
-app.use('/api/messages', require('./routes/messages'));
-
-// Admin Routes
 app.use('/api/admin', require('./routes/admin'));
 
-// Payment Routes
-app.use('/api/payments', require('./routes/payment'));
+// --- NEW ROUTE FOR HIRING REQUIREMENTS ---
+app.use('/api/hiring', require('./routes/hiringRoutes'));
 
-// Report Routes
-app.use('/api/reports', require('./routes/report'));
-
-
-// 404 handler for API routes
-app.use('/api', require('./middleware/notFound'));
-
-// Serve uploads directory - available in all environments
-// CRITICAL: Must be defined before the frontend catch-all route in production
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Serve static assets in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../../frontend/dist')));
-
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../../frontend/dist/index.html'));
-  });
-}
-
-// Global Error Handler (must be last)
+// Global Error Handler
 app.use(require('./middleware/errorHandler'));
 
 if (require.main === module) {
