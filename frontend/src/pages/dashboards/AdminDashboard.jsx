@@ -8,7 +8,10 @@ const getDocumentUrl = (path) => {
     // Handle null, undefined, empty string, or string literals 'undefined'/'null'
     if (!path || path === 'undefined' || path === 'null' || path.trim() === '') return null;
     if (path.startsWith('http')) return path; // Already a full URL
-    return `${API_BASE_URL}${path}`; // Prepend backend URL
+
+    // Ensure path doesn't result in double slashes if API_BASE_URL ends with /
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${API_BASE_URL}${cleanPath}`;
 };
 
 const AdminDashboard = () => {
@@ -84,7 +87,16 @@ const AdminDashboard = () => {
                                 <div key={user.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderLeft: user.type === 'seeker' ? '4px solid #f97316' : '4px solid #3b82f6' }}>
                                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
                                         <div style={{ width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', background: '#eee', flexShrink: 0 }}>
-                                            {user.profilePhoto ? <img src={user.profilePhoto} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={40} style={{ margin: '20px' }} color="#ccc" />}
+                                            {/* FIXED: Check for 'undefined' string before rendering image */}
+                                            {user.profilePhoto && user.profilePhoto !== 'undefined' && user.profilePhoto !== 'null' ? (
+                                                <img
+                                                    src={user.profilePhoto.startsWith('http') ? user.profilePhoto : `${API_BASE_URL}${user.profilePhoto}`}
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    alt="Profile"
+                                                />
+                                            ) : (
+                                                <Users size={40} style={{ margin: '20px' }} color="#ccc" />
+                                            )}
                                         </div>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -94,7 +106,9 @@ const AdminDashboard = () => {
                                             <p style={{ fontSize: '0.9rem', color: '#666', margin: '5px 0' }}>{user.phone} • {user.email}</p>
 
                                             <div style={{ display: 'flex', gap: '15px', marginTop: '10px', flexWrap: 'wrap' }}>
-                                                {user.idDocument ? (
+
+                                                {/* FIXED: Check for 'undefined' string before rendering ID Link */}
+                                                {user.idDocument && user.idDocument !== 'undefined' && user.idDocument !== 'null' ? (
                                                     <a href={getDocumentUrl(user.idDocument)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <Shield size={14} /> {t('view_id_document')}
                                                     </a>
@@ -102,13 +116,15 @@ const AdminDashboard = () => {
                                                     <span style={{ fontSize: '0.85rem', color: '#999' }}>{t('no_id_uploaded')}</span>
                                                 )}
 
-                                                {user.policeClearance && (
+                                                {/* FIXED: Check for 'undefined' string before rendering Police Link */}
+                                                {user.policeClearance && user.policeClearance !== 'undefined' && user.policeClearance !== 'null' && (
                                                     <a href={getDocumentUrl(user.policeClearance)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <FileText size={14} /> {t('police_clearance')}
                                                     </a>
                                                 )}
 
-                                                {user.healthCertificate && (
+                                                {/* FIXED: Check for 'undefined' string before rendering Health Link */}
+                                                {user.healthCertificate && user.healthCertificate !== 'undefined' && user.healthCertificate !== 'null' && (
                                                     <a href={getDocumentUrl(user.healthCertificate)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <Activity size={14} /> {t('health_certificate')}
                                                     </a>

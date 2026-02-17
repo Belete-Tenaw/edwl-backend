@@ -12,6 +12,9 @@ const WorkerProfileModal = ({ worker, onClose }) => {
     const [targetTier, setTargetTier] = useState('GOLD');
     const user = authService.getCurrentUser();
 
+    // Constant for your backend URL to ensure images load from Render, not Firebase
+    const BACKEND_URL = 'https://edwl-backend.onrender.com';
+
     const handleContact = () => {
         navigate('/messages', {
             state: {
@@ -47,8 +50,13 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                 <div style={{ padding: '0 30px 30px' }}>
                     <div style={{ textAlign: 'center', marginTop: '-60px', marginBottom: '20px' }}>
                         <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: 'white', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '4px solid white', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-                            {worker.profilePhoto ? (
-                                <img src={worker.profilePhoto} alt={worker.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            {/* FIXED IMAGE LOGIC: Prepend Backend URL and check for 'undefined' string */}
+                            {worker.profilePhoto && worker.profilePhoto !== 'undefined' ? (
+                                <img
+                                    src={worker.profilePhoto.startsWith('http') ? worker.profilePhoto : `${BACKEND_URL}${worker.profilePhoto}`}
+                                    alt={worker.fullName}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
                             ) : (
                                 <User size={60} color="#999" />
                             )}
@@ -114,7 +122,6 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Trust Infrastructure Specific Sections */}
                     <div style={{ marginBottom: '25px', padding: '20px', background: '#f0f9ff', borderRadius: '12px', border: '1px solid #bae6fd' }}>
                         <h3 style={{ fontSize: '1rem', marginBottom: '15px', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Shield size={18} /> {t('legal_health_assurance') || 'Legal & Health Assurance'}
