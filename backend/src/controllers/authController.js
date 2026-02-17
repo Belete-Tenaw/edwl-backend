@@ -7,8 +7,8 @@ exports.register = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
 
-        // Correct way to get the path from Multer upload.fields() 
-        // These are now inside the function, so 'req' is defined!
+        // FIXED: These lines are now INSIDE the function.
+        // This ensures 'req' is defined when the code runs.
         const idDoc = req.files && req.files['idDocument'] 
             ? req.files['idDocument'][0].path.replace(/\\/g, '/') 
             : null;
@@ -17,24 +17,21 @@ exports.register = async (req, res) => {
             ? req.files['profilePhoto'][0].path.replace(/\\/g, '/') 
             : null;
 
-        // Check if user already exists
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user in database
         const newUser = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
                 role: role || 'USER',
-                idDocument: idDoc, // Saving the path we grabbed above
-                profilePhoto: photo // Saving the path we grabbed above
+                idDocument: idDoc,
+                profilePhoto: photo
             }
         });
 
