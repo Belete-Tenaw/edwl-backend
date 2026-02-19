@@ -1,21 +1,20 @@
-# Use an official Node.js runtime as a parent image
-FROM node:18
+# Use a very stable version of Node
+FROM node:18-alpine
 
-# Set the working directory in the container
-WORKDIR /app
+# Create the folder where the app lives
+WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
+# Copy the file that lists the "parts" needed
 COPY package*.json ./
 
-# Install dependencies
-# We use --production to keep the image small
-RUN npm install --production
+# Install the parts (standard command)
+RUN npm install
 
-# Copy the rest of your application code
+# Copy everything else from your computer to Render
 COPY . .
 
-# Expose the port your app runs on
+# Tell Render to use port 10000
 EXPOSE 10000
 
-# Command to run your app
+# The command to start your engine
 CMD ["node", "src/server.js"]
