@@ -1,22 +1,21 @@
-# Backend Dockerfile
-FROM node:18-alpine AS base
+# Use an official Node.js runtime as a parent image
+FROM node:18
 
+# Set the working directory in the container
 WORKDIR /app
 
-# Install dependencies
+# Copy package.json and package-lock.json
 COPY package*.json ./
-# Note: if npm ci fails, we can change this to npm install
+
+# Install dependencies
+# We use --production to keep the image small
 RUN npm install --production
 
-# Copy application code
+# Copy the rest of your application code
 COPY . .
 
-# Generate Prisma Client (Crucial for Supabase/Postgres)
-RUN npx prisma generate
+# Expose the port your app runs on
+EXPOSE 10000
 
-# Cloud Run requires port 8080
-ENV PORT 8080
-EXPOSE 8080
-
-# Start application
-CMD ["npm", "start"]
+# Command to run your app
+CMD ["node", "src/server.js"]
