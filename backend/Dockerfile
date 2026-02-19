@@ -1,20 +1,20 @@
-# Use a very stable version of Node
+# Use a stable, lightweight version of Node
 FROM node:18-alpine
 
-# Create the folder where the app lives
-WORKDIR /usr/src/app
+# Set the working directory inside the container
+WORKDIR /app
 
-# Copy the file that lists the "parts" needed
+# Copy only the package files first to speed up the build
 COPY package*.json ./
 
-# Install the parts (standard command)
+# Install dependencies (this will now work since we fixed package.json)
 RUN npm install
 
-# Copy everything else from your computer to Render
+# Copy the rest of the application code
 COPY . .
 
-# Tell Render to use port 10000
+# Expose the port Render uses
 EXPOSE 10000
 
-# The command to start your engine
+# The start command (fixed to lowercase 'node' for Linux)
 CMD ["node", "src/server.js"]
