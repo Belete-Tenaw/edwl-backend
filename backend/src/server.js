@@ -8,12 +8,13 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+// Google Cloud Run sets the PORT variable automatically to 8080
+const PORT = process.env.PORT || 8080;
 
 // ================================
-// 🔐 SECURITY: TRUST PROXY (Render)
+// 🔐 SECURITY: TRUST PROXY (Updated for Google Cloud Run)
 // ================================
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 // ================================
 // 📘 Swagger Setup
@@ -75,7 +76,6 @@ app.use(helmet({
 // ================================
 // 🔐 LOCKED CORS CONFIGURATION
 // ================================
-
 const allowedOrigins = [
   'https://edwl-ethio-domesticworkerslink.web.app',
   'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
@@ -85,12 +85,11 @@ const allowedOrigins = [
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-
-    if (!allowedOrigins.includes(origin)) {
-      return callback(new Error('CORS not allowed from this origin'), false);
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed from this origin'));
     }
-
-    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -100,7 +99,7 @@ app.use(cors({
 // 🚦 BASIC GLOBAL RATE LIMIT
 // ================================
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
@@ -122,8 +121,6 @@ app.use('/uploads', express.static(uploadsPath, {
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
   }
 }));
-
-console.log(`✅ Static files being served from: ${uploadsPath}`);
 
 // ================================
 // 🏠 ROOT ROUTE
@@ -148,10 +145,10 @@ app.use('/api/hiring', require('./routes/hiringRoutes'));
 app.use(require('./middleware/errorHandler'));
 
 // ================================
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
+// 🚀 SERVER START
+// ================================
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ EDWL Backend is live on port ${PORT}`);
+});
 
 module.exports = app;

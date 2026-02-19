@@ -5,20 +5,18 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci --only=production
+# Note: if npm ci fails, we can change this to npm install
+RUN npm install --production
 
 # Copy application code
 COPY . .
 
-# Generate Prisma Client
+# Generate Prisma Client (Crucial for Supabase/Postgres)
 RUN npx prisma generate
 
-# Expose port
-EXPOSE 5000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:5000/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+# Cloud Run requires port 8080
+ENV PORT 8080
+EXPOSE 8080
 
 # Start application
 CMD ["npm", "start"]
