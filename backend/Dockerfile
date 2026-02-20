@@ -4,10 +4,11 @@ FROM node:18-alpine
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy only the package files first to speed up the build
+# Copy only the package files and prisma schema first
 COPY package*.json ./
+COPY prisma ./prisma/
 
-# Install dependencies (this will now work since we fixed package.json)
+# Install dependencies
 RUN npm install
 
 # Copy the rest of the application code
