@@ -132,10 +132,14 @@ app.use('/uploads', express.static(uploadsPath, {
 }));
 
 // ================================
-// 🏠 ROOT ROUTE
+// 🏠 ROOT ROUTE (Redirect to Frontend)
 // ================================
 app.get('/', (req, res) => {
-  res.json({ status: 'UP', message: 'Welcome to EDWL API', version: '1.0.1' });
+  const frontendUrl = 'https://edwl-ethio-domesticworkerslink.web.app';
+  if (process.env.NODE_ENV === 'production') {
+    return res.redirect(frontendUrl);
+  }
+  res.json({ status: 'UP', message: 'Welcome to EDWL API (Dev Mode)', version: '1.0.1' });
 });
 
 // ================================
