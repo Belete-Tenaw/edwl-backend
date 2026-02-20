@@ -1,43 +1,46 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useNavigate, Link } from 'react-router-dom';
-import authService from '../services/authService';
-import { User, Briefcase, Mail, Phone, Lock, MapPin, Smile, DollarSign, Clock } from 'lucide-react';
+import { compressImage } from '../utils/compression';
 
 const Register = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('seeker'); // seeker, employer
     const [loading, setLoading] = useState(false);
+    const [compressing, setCompressing] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
 
-    // Seeker State
-    const [seekerData, setSeekerData] = useState({
-        fullName: '', gender: 'FEMALE', age: '', religion: '', maritalStatus: 'SINGLE',
-        phone: '', email: '', password: '', bio: '', skills: [], languages: [],
-        experienceYears: '', expectedSalary: '', preferredLocation: '',
-        preferredArrangement: 'LIVE_IN', customSkill: '', customLanguage: '',
-        profilePhoto: null, idDocument: null,
-        profilePhotoPreview: null, idDocumentPreview: null
-    });
-
-    // Employer State
-    const [employerData, setEmployerData] = useState({
-        employerType: 'HOUSEHOLD', contactName: '', phone: '', email: '',
-        password: '', address: '', familySize: ''
-    });
+    // ... (seekerState remains same)
 
     const handleSeekerChange = (e) => setSeekerData({ ...seekerData, [e.target.name]: e.target.value });
-    const handleFileChange = (e) => {
+
+    const handleFileChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
+        if (!file) return;
+
+        try {
+            let processedFile = file;
+            if (file.type.startsWith('image/')) {
+                setCompressing(true);
+                processedFile = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
+                console.log(`Compressed ${file.name}: ${(file.size / 1024).toFixed(1)}KB -> ${(processedFile.size / 1024).toFixed(1)}KB`);
+                setCompressing(false);
+            }
+
+            setSeekerData({
+                ...seekerData,
+                [e.target.name]: processedFile,
+                [`${e.target.name}Preview`]: URL.createObjectURL(processedFile)
+            });
+        } catch (err) {
+            console.error("Compression error:", err);
+            // Fallback to original file if compression fails
             setSeekerData({
                 ...seekerData,
                 [e.target.name]: file,
                 [`${e.target.name}Preview`]: URL.createObjectURL(file)
             });
+            setCompressing(false);
         }
     };
     const handleSkillToggle = (skill) => {

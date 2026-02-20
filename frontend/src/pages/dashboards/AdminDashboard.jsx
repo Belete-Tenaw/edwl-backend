@@ -117,15 +117,15 @@ const AdminDashboard = () => {
                                                 )}
 
                                                 {/* FIXED: Check for 'undefined' string before rendering Police Link */}
-                                                {user.policeClearance && user.policeClearance !== 'undefined' && user.policeClearance !== 'null' && (
-                                                    <a href={getDocumentUrl(user.policeClearance)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                {user.policeClearanceUrl && user.policeClearanceUrl !== 'undefined' && user.policeClearanceUrl !== 'null' && (
+                                                    <a href={getDocumentUrl(user.policeClearanceUrl)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#0284c7', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <FileText size={14} /> {t('police_clearance')}
                                                     </a>
                                                 )}
 
                                                 {/* FIXED: Check for 'undefined' string before rendering Health Link */}
-                                                {user.healthCertificate && user.healthCertificate !== 'undefined' && user.healthCertificate !== 'null' && (
-                                                    <a href={getDocumentUrl(user.healthCertificate)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                {user.healthCertificateUrl && user.healthCertificateUrl !== 'undefined' && user.healthCertificateUrl !== 'null' && (
+                                                    <a href={getDocumentUrl(user.healthCertificateUrl)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <Activity size={14} /> {t('health_certificate')}
                                                     </a>
                                                 )}

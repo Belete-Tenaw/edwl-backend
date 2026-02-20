@@ -3,6 +3,7 @@
     "build": "npm run build --prefix frontend"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.97.0",
     "firebase": "^12.9.0"
   }
 }

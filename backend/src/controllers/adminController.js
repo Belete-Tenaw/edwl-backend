@@ -7,17 +7,17 @@ exports.getAllUsers = async (req, res) => {
         const seekers = await prisma.jobSeeker.findMany({
             select: {
                 id: true, fullName: true, phone: true, email: true,
-                isVerified: true, verificationStatus: true, tier: true, createdAt: true,
+                isVerified: true, verificationStatus: true, tier: true, badge: true, createdAt: true,
                 profilePhoto: true, idDocument: true,
-                nationalIdFayda: true, policeClearance: true, healthCertificate: true,
-                guarantorName: true, guarantorPhone: true
+                nationalIdFayda: true, policeClearanceUrl: true, healthCertificateUrl: true,
+                guarantorFayda: true
             }
         });
         const employers = await prisma.employer.findMany({
             select: {
                 id: true, contactName: true, phone: true, email: true,
-                isVerified: true, verificationStatus: true, tier: true, createdAt: true,
-                profilePhoto: true, idDocument: true // Employers might have these later too
+                isVerified: true, verificationStatus: true, tier: true, badge: true, createdAt: true,
+                profilePhoto: true, idDocument: true
             }
         });
         res.json({ seekers, employers });
@@ -168,7 +168,7 @@ exports.activateSubscription = async (req, res) => {
         } else {
             await prisma.employer.update({
                 where: { id: userId },
-                data: { tier: 'SILVER', subscriptionExpiry: expiryDate }
+                data: { tier: 'SILVER_ACCESS', subscriptionExpiry: expiryDate }
             });
         }
 

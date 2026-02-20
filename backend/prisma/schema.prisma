@@ -1,5 +1,3 @@
-// 1. DATABASE CONFIGURATION
-// In Prisma v7, ensure the env() calls are exactly as mapped in your .env file.
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -10,65 +8,449 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// 2. EMPLOYER MODEL
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum PreferredArrangement {
+  LIVE_IN
+  LIVE_OUT
+  PART_TIME
+}
+
+enum SeekerTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum EmployerTier {
+  FREE
+  SILVER_ACCESS
+  GOLD_ACCESS
+  PLATINUM_ACCESS
+}
+
+enum EmployerType {
+  HOUSEHOLD
+  BUSINESS
+}
+
+enum SubscriptionStatus {
+  PENDING
+  UNUSED
+  USED
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum AdminRole {
+  SUPERADMIN
+  MODERATOR
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  TELEBIRR
+  CHAPA
+  CBE
+  MANUAL
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NOT_STARTED
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_SIGNATURE
+  ACTIVE
+  COMPLETED
+  TERMINATED
+  DISPUTED
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  CLOSED
+}
+
+// ==========================================
+// CORE MODELS
+// ==========================================
+
+model JobSeeker {
+  id                   String               @id @default(uuid())
+  fullName             String
+  gender               Gender
+  age                  Int
+  religion             String?
+  maritalStatus        MaritalStatus
+  phone                String?              @unique
+  email                String?              @unique
+  password             String
+  bio                  String?
+  skills               String[]
+  languages            String[]             @default([])
+  experienceYears      Int
+  expectedSalary       Int
+  preferredLocation    String
+  preferredArrangement PreferredArrangement
+  profilePhoto         String
+  certificates         String[]             @default([])
+  idDocument           String?
+  
+  // Zero-Cost Specifics
+  nationalIdFayda      String?
+  guarantorFayda       String?
+  healthCertificateUrl String?
+  policeClearanceUrl   String?
+  
+  isVerified           Boolean              @default(false)
+  verificationStatus   VerificationStatus   @default(NOT_STARTED)
+  rating               Float                @default(0.0)
+  completedJobs        Int                  @default(0)
+  
+  locationRegion       String?
+  locationZone         String?
+  locationWoreda       String?
+  locationKebele       String?
+  
+  tier                 SeekerTier           @default(BRONZE)
+  badge                String?              @default("STANDARD") // For visual status
+  subscriptionExpiry   DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  // Relations
+  viewLogs             ViewLog[]
+  sentMessages         Message[]            @relation("SentByJS")
+  receivedMessages     Message[]            @relation("ReceivedByJS")
+  subscriptions        Subscription[]
+  payments             Payment[]
+  verificationRequests VerificationRequest[]
+  contracts            Contract[]
+  disputes             Dispute[]            @relation("ReportedByJS")
+  reportsSent          Report[]             @relation("JSReports")
+  reportsReceived      Report[]             @relation("JSReported")
+  auditLogs            AuditLog[]
+}
+
 model Employer {
-  id                 String             @id @default(uuid())
-  email              String             @unique
-  password           String
+  id                 String               @id @default(uuid())
+  employerType       EmployerType
   contactName        String
-  employerType       String             // HOUSEHOLD or BUSINESS
-  address            String?
+  phone              String?              @unique
+  email              String?              @unique
+  password           String
+  address            String
   familySize         Int?
   profilePhoto       String?
   idDocument         String?
-  verificationStatus String             @default("PENDING")
-  isVerified         Boolean            @default(false)
-  tier               String             @default("FREEMIUM")
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  certificates       String[]             @default([])
+  
+  isVerified         Boolean              @default(false)
+  verificationStatus VerificationStatus   @default(NOT_STARTED)
+  rating             Float                @default(0.0)
+  completedJobs      Int                  @default(0)
+  
+  locationRegion     String?
+  locationZone       String?
+  locationWoreda     String?
+  locationKebele     String?
+  
+  tier               EmployerTier         @default(FREE)
+  badge              String?              @default("STANDARD") // For visual status
+  subscriptionExpiry DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
 
-  // Relation link to the hiring requirements
-  hiringRequirement  HiringRequirement? 
+  // Relations
+  jobPosts           JobPost[]
+  viewLogs           ViewLog[]
+  sentMessages       Message[]            @relation("SentByEmp")
+  receivedMessages   Message[]            @relation("ReceivedByEmp")
+  subscriptions      Subscription[]
+  payments           Payment[]
+  verificationRequests VerificationRequest[]
+  contracts          Contract[]
+  disputes           Dispute[]            @relation("ReportedByEmp")
+  reportsSent        Report[]             @relation("EmpReports")
+  reportsReceived    Report[]             @relation("EmpReported")
+  auditLogs          AuditLog[]
+  hiringRequirement HiringRequirement?
 }
 
-// 3. HIRING REQUIREMENT MODEL
 model HiringRequirement {
-  id                String   @id @default(uuid())
-  employerId        String   @unique
-  employer          Employer @relation(fields: [employerId], references: [id])
+  id              String   @id @default(uuid())
+  employerId      String   @unique
+  requirements    Json?    
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  // Basic Information
-  employerType      String   
-  preferredLanguage String   @default("Amharic")
-  urgencyLevel      String   
+  employer        Employer @relation(fields: [employerId], references: [id])
+}
 
-  // Job Definition
-  jobTypes          String[] 
-  workerCount       Int      @default(1)
-  responsibilities  String?  @db.Text
+model JobPost {
+  id                   String               @id @default(uuid())
+  employerId           String
+  title                String
+  description          String
+  requiredSkills       String[]
+  salaryOffered        Int
+  jobType              String
+  preferredArrangement PreferredArrangement
+  address              String
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 
-  // Worker Profile Preferences
-  prefAgeRange      String?
-  prefGender        String?
-  prefExperience    String?  
+  employer             Employer             @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  viewLogs             ViewLog[]
+  contracts            Contract[]
 
-  // Work Arrangement & Schedule
-  workType          String   
-  workingHours      String?
-  salaryMin         Int?
-  salaryMax         Int?
-  isSalaryNegotiable Boolean @default(true)
-  benefits          String[] 
+  @@index([employerId])
+  @@index([createdAt])
+}
 
-  // Trust, Safety & Compliance
-  idRequired        Boolean  @default(true)
-  trialPeriodDays   Int      @default(0)
+model Message {
+  id            String     @id @default(uuid())
+  content       String
+  timestamp     DateTime   @default(now())
+  read          Boolean    @default(false)
+  
+  senderJSId    String?
+  receiverJSId  String?
+  senderEmpId   String?
+  receiverEmpId String?
 
-  // Matching Priority Weights (Scale 1-5)
-  weightExperience  Int      @default(3)
-  weightSalary      Int      @default(3)
-  weightLocation    Int      @default(3)
+  senderJS      JobSeeker? @relation("SentByJS", fields: [senderJSId], references: [id])
+  receiverJS    JobSeeker? @relation("ReceivedByJS", fields: [receiverJSId], references: [id])
+  senderEmp     Employer?  @relation("SentByEmp", fields: [senderEmpId], references: [id])
+  receiverEmp   Employer?  @relation("ReceivedByEmp", fields: [receiverEmpId], references: [id])
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  @@index([senderJSId])
+  @@index([receiverJSId])
+  @@index([senderEmpId])
+  @@index([receiverEmpId])
+}
+
+model ViewLog {
+  id                String     @id @default(uuid())
+  createdAt         DateTime   @default(now())
+  jobSeekerId       String?
+  employerId        String?
+  targetJobPostId   String?
+  targetJobSeekerId String?
+
+  jobSeeker         JobSeeker? @relation(fields: [jobSeekerId], references: [id])
+  employer          Employer?  @relation(fields: [employerId], references: [id])
+  targetJobPost     JobPost?   @relation(fields: [targetJobPostId], references: [id])
+}
+
+model SubscriptionTier {
+  id           String         @id @default(uuid())
+  name         String         @unique
+  priceETB     Float
+  tier         String         // Change to String for polymorphism (SILVER vs SILVER_ACCESS)
+  durationDays Int
+  features     String[]
+  createdAt    DateTime       @default(now())
+  
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id          String             @id @default(uuid())
+  jobSeekerId String?
+  employerId  String?
+  tierId      String
+  startDate   DateTime           @default(now())
+  endDate     DateTime
+  status      SubscriptionStatus @default(ACTIVE)
+  paymentId   String?            @unique
+
+  jobSeeker   JobSeeker?         @relation(fields: [jobSeekerId], references: [id])
+  employer    Employer?          @relation(fields: [employerId], references: [id])
+  tier        SubscriptionTier   @relation(fields: [tierId], references: [id])
+  payment     Payment?           @relation(fields: [paymentId], references: [id])
+}
+
+model Payment {
+  id                   String          @id @default(uuid())
+  amount               Float
+  currency             String          @default("ETB")
+  provider             PaymentProvider
+  transactionReference String          @unique
+  status               PaymentStatus   @default(PENDING)
+  createdAt            DateTime        @default(now())
+  
+  jobSeekerId          String?
+  employerId           String?
+  tierId               String?
+
+  jobSeeker            JobSeeker?      @relation(fields: [jobSeekerId], references: [id])
+  employer             Employer?       @relation(fields: [employerId], references: [id])
+  subscription         Subscription?
+  invoice              Invoice?
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  paymentId     String   @unique
+  generatedAt   DateTime @default(now())
+  pdfUrl        String?
+
+  payment       Payment  @relation(fields: [paymentId], references: [id])
+}
+
+model SubscriptionCode {
+  id           String             @id @default(uuid())
+  code         String             @unique
+  status       SubscriptionStatus @default(UNUSED)
+  assignedTo   String?
+  userType     String?
+  durationDays Int                @default(30)
+  createdAt    DateTime           @default(now())
+  expiresAt    DateTime
+}
+
+model VerificationRequest {
+  id          String             @id @default(uuid())
+  jobSeekerId String?
+  employerId  String?
+  requestType String
+  status      VerificationStatus @default(PENDING)
+  adminNotes  String?
+  submittedAt DateTime           @default(now())
+  reviewedAt  DateTime?
+
+  jobSeeker   JobSeeker?         @relation(fields: [jobSeekerId], references: [id])
+  employer    Employer?          @relation(fields: [employerId], references: [id])
+  documents   Document[]
+}
+
+model Document {
+  id           String              @id @default(uuid())
+  url          String
+  documentType String
+  uploadedAt   DateTime            @default(now())
+  requestId    String
+
+  request      VerificationRequest @relation(fields: [requestId], references: [id])
+}
+
+model Contract {
+  id             String         @id @default(uuid())
+  employerId     String
+  jobSeekerId    String
+  jobPostId      String?
+  status         ContractStatus @default(DRAFT)
+  startDate      DateTime
+  endDate        DateTime?
+  salary         Float
+  employerSigned Boolean        @default(false)
+  workerSigned   Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  employer       Employer       @relation(fields: [employerId], references: [id])
+  jobSeeker      JobSeeker      @relation(fields: [jobSeekerId], references: [id])
+  jobPost        JobPost?       @relation(fields: [jobPostId], references: [id])
+  terms          ContractTerm[]
+  disputes       Dispute[]
+}
+
+model ContractTerm {
+  id         String   @id @default(uuid())
+  contractId String
+  title      String
+  content    String
+
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+}
+
+model Dispute {
+  id            String        @id @default(uuid())
+  contractId    String?
+  reporterJSId  String?
+  reporterEmpId String?
+  reason        String
+  description   String
+  status        DisputeStatus @default(OPEN)
+  resolution    String?
+  adminId       String?
+  createdAt     DateTime      @default(now())
+
+  contract      Contract?     @relation(fields: [contractId], references: [id])
+  reporterJS    JobSeeker?    @relation("ReportedByJS", fields: [reporterJSId], references: [id])
+  reporterEmp   Employer?     @relation("ReportedByEmp", fields: [reporterEmpId], references: [id])
+  admin         Admin?        @relation(fields: [adminId], references: [id])
+}
+
+model Report {
+  id            String     @id @default(uuid())
+  reporterJSId  String?
+  reporterEmpId String?
+  reportedJSId  String?
+  reportedEmpId String?
+  reason        String
+  timestamp     DateTime   @default(now())
+
+  reporterJS    JobSeeker? @relation("JSReports", fields: [reporterJSId], references: [id])
+  reporterEmp   Employer?  @relation("EmpReports", fields: [reporterEmpId], references: [id])
+  reportedJS    JobSeeker? @relation("JSReported", fields: [reportedJSId], references: [id])
+  reportedEmp   Employer?  @relation("EmpReported", fields: [reportedEmpId], references: [id])
+}
+
+model Admin {
+  id       String    @id @default(uuid())
+  username String    @unique
+  password String
+  role     AdminRole @default(MODERATOR)
+
+  disputes Dispute[]
+  auditLogs AuditLog[]
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  userId    String?  // Can be Admin, Seeker, or Employer ID
+  userType  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  admin     Admin?     @relation(fields: [userId], references: [id]) 
+  jobSeeker JobSeeker? @relation(fields: [jobSeekerId], references: [id])
+  employer  Employer?  @relation(fields: [employerId], references: [id])
+  
+  jobSeekerId String?
+  employerId  String?
 }

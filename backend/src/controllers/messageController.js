@@ -43,7 +43,11 @@ exports.sendMessage = async (req, res) => {
                 user = await prisma.employer.findUnique({ where: { id: senderId } });
             }
 
-            if (user.tier !== 'SUBSCRIBER') {
+            const isPremium = senderRole === 'JOB_SEEKER'
+                ? user.tier !== 'BRONZE'
+                : user.tier !== 'FREE';
+
+            if (!isPremium) {
                 return res.status(403).json({
                     error: 'Action restricted',
                     message: 'Only premium subscribers can initiate a conversation. Upgrade to Premium to contact users.'

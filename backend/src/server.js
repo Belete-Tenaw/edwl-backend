@@ -6,10 +6,16 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const keepAlive = require('./utils/keepAlive');
 
 const app = express();
 // Google Cloud Run sets the PORT variable automatically to 8080
 const PORT = process.env.PORT || 8080;
+
+// Start Keep-Alive (Zero-Cost Move)
+// if (process.env.NODE_ENV === 'production' && process.env.BASE_URL) {
+//   keepAlive(`${process.env.BASE_URL}/health`);
+// }
 
 // ================================
 // 🔐 SECURITY: TRUST PROXY (Updated for Google Cloud Run)
@@ -74,21 +80,24 @@ app.use(helmet({
 }));
 
 // ================================
-// 🔐 LOCKED CORS CONFIGURATION
+// 🔐 DYNAMIC CORS CONFIGURATION
 // ================================
+const envOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
 const allowedOrigins = [
   'https://edwl-ethio-domesticworkerslink.web.app',
   'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  ...envOrigins
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+    // Allow if in allowedOrigins OR if not in production
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
-      callback(new Error('CORS not allowed from this origin'));
+      callback(new Error(`CORS not allowed from: ${origin}`));
     }
   },
   credentials: true,
@@ -130,6 +139,19 @@ app.get('/', (req, res) => {
 });
 
 // ================================
+// Start Keep-Alive (Zero-Cost Move)
+if (process.env.NODE_ENV === 'production' && process.env.BASE_URL) {
+  keepAlive(`${process.env.BASE_URL}/health`);
+}
+
+// ================================
+// 🩺 HEALTH CHECK ROUTE (NEW)
+// ================================
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// ================================
 // 📌 ROUTES
 // ================================
 app.use('/api/auth', require('./routes/auth'));
@@ -138,6 +160,9 @@ app.use('/api/employers', require('./routes/employers'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/hiring', require('./routes/hiringRoutes'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/report', require('./routes/report'));
+app.use('/api/payments', require('./routes/payment'));
 
 // ================================
 // ❌ GLOBAL ERROR HANDLER

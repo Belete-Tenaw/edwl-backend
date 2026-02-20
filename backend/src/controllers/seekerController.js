@@ -36,13 +36,8 @@ exports.getSeekerProfile = async (req, res) => {
         const userId = req.user.id;
         const userRole = req.user.role;
 
-        let seeker = await prisma.jobSeeker.findUnique({
-            where: { id }
-        });
-
-        if (!seeker) return res.status(404).json({ error: 'Seeker not found' });
-
         if (userRole === 'EMPLOYER') {
+            // Log the view
             await prisma.viewLog.create({
                 data: {
                     employerId: userId,
@@ -50,12 +45,26 @@ exports.getSeekerProfile = async (req, res) => {
                 }
             });
 
-            const employer = await prisma.employer.findUnique({ where: { id: userId } });
-            seeker = maskPlatinumBadge(seeker, employer.tier);
+            // Fetch masked data from the view function for this specific seeker
+            const seekers = await prisma.$queryRaw`
+                SELECT * FROM get_seeker_visibility_with_id(${userId})
+                WHERE id = ${id}::uuid
+                LIMIT 1
+            `;
+
+            if (!seekers || seekers.length === 0) return res.status(404).json({ error: 'Seeker not found' });
+            return res.json(seekers[0]);
         }
 
+        // For Seekers/Admins, return the full profile
+        const seeker = await prisma.jobSeeker.findUnique({
+            where: { id }
+        });
+
+        if (!seeker) return res.status(404).json({ error: 'Seeker not found' });
         res.json(seeker);
     } catch (error) {
+        console.error("Get profile error:", error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -115,28 +124,18 @@ exports.getAllSeekers = async (req, res) => {
         const userId = req.user.id;
         const userRole = req.user.role;
 
-        let seekers = await prisma.jobSeeker.findMany({
-            select: {
-                id: true,
-                fullName: true,
-                gender: true,
-                age: true,
-                skills: true,
-                experienceYears: true,
-                preferredLocation: true,
-                preferredArrangement: true,
-                profilePhoto: true,
-                badge: true,
-                priorityWeight: true
-            },
-            orderBy: {
-                priorityWeight: 'desc'
-            }
-        });
-
+        let seekers;
         if (userRole === 'EMPLOYER') {
-            const employer = await prisma.employer.findUnique({ where: { id: userId } });
-            seekers = seekers.map(s => maskPlatinumBadge(s, employer.tier));
+            // Use the database-level masking function for employers
+            seekers = await prisma.$queryRaw`
+                SELECT * FROM get_seeker_visibility_with_id(${userId})
+                ORDER BY "fullName" ASC
+            `;
+        } else {
+            // Seekers and Admin see the full data
+            seekers = await prisma.jobSeeker.findMany({
+                orderBy: { fullName: 'asc' }
+            });
         }
 
         res.json(seekers);

@@ -35,7 +35,7 @@ const SeekerDashboard = () => {
                     <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>{t('welcome')}, {user?.fullName}</h1>
                     <p style={{ color: '#666' }}>{t('welcome_msg')}</p>
                 </div>
-                {user?.tier === 'FREEMIUM' && (
+                {user?.tier === 'BRONZE' && (
                     <div style={{ background: '#fff4e5', padding: '15px 25px', borderRadius: '12px', border: '1px solid #ffcc80' }}>
                         <p style={{ color: '#e65100', fontWeight: 'bold', marginBottom: '5px' }}>{t('free_account')}</p>
                         <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }} onClick={() => navigate('/pricing')}>

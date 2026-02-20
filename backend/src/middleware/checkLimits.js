@@ -19,14 +19,15 @@ module.exports = async (req, res, next) => {
     }
 
     // Active subscribers have unlimited access
-    if (user.tier !== 'FREEMIUM') {
+    const isPremium = role === 'JOB_SEEKER' ? user.tier !== 'BRONZE' : user.tier !== 'FREE';
+    if (isPremium) {
         const now = new Date();
         if (user.subscriptionExpiry && new Date(user.subscriptionExpiry) > now) {
             return next();
         }
     }
 
-    // Freemium: 5 profiles per day
+    // Free Tier: 5 profiles per day
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
 
@@ -34,9 +35,7 @@ module.exports = async (req, res, next) => {
         where: {
             AND: [
                 role === 'JOB_SEEKER' ? { jobSeekerId: id } : { employerId: id },
-                { createdAt: { gte: startOfToday } },
-                // Only count views of OTHER users/jobs
-                req.params.id ? { targetJobSeekerId: req.params.id } : { targetJobPostId: req.params.id }
+                { createdAt: { gte: startOfToday } }
             ]
         }
     });
@@ -44,7 +43,7 @@ module.exports = async (req, res, next) => {
     if (viewCount >= 5) {
         return res.status(403).json({
             error: 'Daily limit reached',
-            message: 'Freemium users are limited to 5 views per day. Upgrade to Premium for unlimited access.',
+            message: 'Free users are limited to 5 views per day. Upgrade to a Premium plan for unlimited access.',
             upgradeUrl: '/pricing'
         });
     }

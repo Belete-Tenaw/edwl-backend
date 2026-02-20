@@ -4,6 +4,7 @@ import api from '../services/api';
 import authService from '../services/authService';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { compressImage } from '../utils/compression';
 
 const EditProfile = () => {
     const { t } = useTranslation();
@@ -66,8 +67,21 @@ const EditProfile = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleFileChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.files[0] });
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            let processedFile = file;
+            if (file.type.startsWith('image/')) {
+                processedFile = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
+                console.log(`Compressed ${file.name}: ${(file.size / 1024).toFixed(1)}KB -> ${(processedFile.size / 1024).toFixed(1)}KB`);
+            }
+            setFormData({ ...formData, [e.target.name]: processedFile });
+        } catch (err) {
+            console.error("Compression error:", err);
+            setFormData({ ...formData, [e.target.name]: file });
+        }
     };
 
     const handleSkillToggle = (skill) => {

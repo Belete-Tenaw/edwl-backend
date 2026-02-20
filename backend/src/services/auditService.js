@@ -10,15 +10,25 @@ const prisma = require('../utils/prisma');
  */
 const logAction = async (action, userId, userType, details = {}, ipAddress = null) => {
     try {
-        await prisma.auditLog.create({
-            data: {
-                action,
-                userId,
-                userType,
-                details: details || {},
-                ipAddress
-            }
-        });
+        const data = {
+            action,
+            userType,
+            details: details || {},
+            ipAddress
+        };
+
+        // Map userId to the correct specific field based on userType
+        if (userType === 'JOB_SEEKER') {
+            data.jobSeekerId = userId;
+        } else if (userType === 'EMPLOYER') {
+            data.employerId = userId;
+        } else if (userType === 'ADMIN') {
+            data.userId = userId;
+        }
+
+        console.log(`[Audit] Logging action: ${action} for user: ${userId} (${userType})`);
+        const log = await prisma.auditLog.create({ data });
+        console.log(`[Audit] Log created successfully: ${log.id}`);
     } catch (error) {
         console.error('Audit Log Error:', error);
         // We don't want to crash the request if logging fails, 

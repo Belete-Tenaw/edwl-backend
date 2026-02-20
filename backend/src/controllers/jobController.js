@@ -9,6 +9,18 @@ exports.createJobPost = async (req, res) => {
             return res.status(403).json({ error: 'Only employers can post jobs' });
         }
 
+        // Job Posting Limit for FREE tier
+        const employer = await prisma.employer.findUnique({ where: { id: employerId } });
+        if (employer.tier === 'FREE') {
+            const activeJobs = await prisma.jobPost.count({ where: { employerId } });
+            if (activeJobs >= 2) {
+                return res.status(403).json({
+                    error: 'Limit reached',
+                    message: 'Free tier employers are limited to 2 job posts. Upgrade to a Premium plan to post more.'
+                });
+            }
+        }
+
         const job = await prisma.jobPost.create({
             data: {
                 title, description, requiredSkills,
@@ -75,7 +87,7 @@ exports.getJobById = async (req, res) => {
             user = await prisma.employer.findUnique({ where: { id: userId } });
         }
 
-        if (user.tier === 'FREEMIUM') {
+        if (user.tier === 'FREE') {
             // Masking employer details
             job.employer.phone = '********';
             job.employer.email = '********';
