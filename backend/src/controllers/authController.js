@@ -4,6 +4,22 @@ const jwt = require('jsonwebtoken');
 const { logAction } = require('../services/auditService');
 
 // =============================
+// HELPERS
+// =============================
+const calculateSeekerTier = (data) => {
+    let points = 0;
+    if (data.nationalIdUrl) points++;
+    if (data.guarantorIdUrl && data.guarantorPhone) points++;
+    if (data.policeClearanceUrl) points++;
+    if (data.healthCertificateUrl) points++;
+
+    if (points >= 4) return 'PLATINUM';
+    if (points === 3) return 'GOLD';
+    if (points === 2) return 'SILVER';
+    return 'BRONZE';
+};
+
+// =============================
 // JOB SEEKER REGISTER
 // =============================
 exports.registerJobSeeker = async (req, res) => {
@@ -12,15 +28,31 @@ exports.registerJobSeeker = async (req, res) => {
             fullName, email, password, phone, gender,
             age, maritalStatus, expectedSalary,
             preferredLocation, preferredArrangement,
-            experienceYears, skills, bio
+            experienceYears, skills, bio, guarantorPhone
         } = req.body;
+
+        const photo = req.files && req.files['profilePhoto']
+            ? req.files['profilePhoto'][0].path.replace(/\\/g, '/')
+            : null;
 
         const idDoc = req.files && req.files['idDocument']
             ? req.files['idDocument'][0].path.replace(/\\/g, '/')
             : null;
 
-        const photo = req.files && req.files['profilePhoto']
-            ? req.files['profilePhoto'][0].path.replace(/\\/g, '/')
+        const natId = req.files && req.files['nationalIdUrl']
+            ? req.files['nationalIdUrl'][0].path.replace(/\\/g, '/')
+            : null;
+
+        const guarId = req.files && req.files['guarantorIdUrl']
+            ? req.files['guarantorIdUrl'][0].path.replace(/\\/g, '/')
+            : null;
+
+        const policeClr = req.files && req.files['policeClearanceUrl']
+            ? req.files['policeClearanceUrl'][0].path.replace(/\\/g, '/')
+            : null;
+
+        const healthCert = req.files && req.files['healthCertificateUrl']
+            ? req.files['healthCertificateUrl'][0].path.replace(/\\/g, '/')
             : null;
 
         const existingSeeker = await prisma.jobSeeker.findUnique({
@@ -48,7 +80,19 @@ exports.registerJobSeeker = async (req, res) => {
                 skills: skills ? (Array.isArray(skills) ? skills : [skills]) : [],
                 bio: bio || '',
                 profilePhoto: photo || '', // Required field
-                idDocument: idDoc
+                idDocument: idDoc,
+                nationalIdUrl: natId,
+                guarantorIdUrl: guarId,
+                guarantorPhone: guarantorPhone,
+                policeClearanceUrl: policeClr,
+                healthCertificateUrl: healthCert,
+                tier: calculateSeekerTier({
+                    nationalIdUrl: natId,
+                    guarantorIdUrl: guarId,
+                    guarantorPhone: guarantorPhone,
+                    policeClearanceUrl: policeClr,
+                    healthCertificateUrl: healthCert
+                })
             }
         });
 
@@ -86,6 +130,10 @@ exports.loginJobSeeker = async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, seeker.password);
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        if (!seeker.isActive) {
+            return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
         }
 
         const token = jwt.sign(
@@ -165,6 +213,10 @@ exports.loginEmployer = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        if (!employer.isActive) {
+            return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
+        }
+
         const token = jwt.sign(
             { id: employer.id, role: 'EMPLOYER' },
             process.env.JWT_SECRET,
@@ -190,14 +242,12 @@ exports.loginEmployer = async (req, res) => {
 // =============================
 exports.loginAdmin = async (req, res) => {
     try {
-        const { email, password } = req.body; // Actually uses username probably
+        const { email, username, password } = req.body;
+        const loginUsername = username || email; // Frontend sends 'username', support both
 
         const admin = await prisma.admin.findFirst({
             where: {
-                OR: [
-                    { username: email },
-                    { username: 'admin' } // Fallback for testing initial seed
-                ]
+                username: loginUsername
             }
         });
 
