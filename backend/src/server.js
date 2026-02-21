@@ -80,6 +80,12 @@ app.use(helmet({
 }));
 
 // ================================
+// 🧾 MIDDLEWARE
+// ================================
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(express.json({ limit: '10mb' }));
+
+// ================================
 // 🔐 DYNAMIC CORS CONFIGURATION
 // ================================
 const envOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
@@ -114,12 +120,6 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(limiter);
-
-// ================================
-// 🧾 MIDDLEWARE
-// ================================
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-app.use(express.json({ limit: '10mb' }));
 
 // ================================
 // 📂 STATIC FILE SERVING
