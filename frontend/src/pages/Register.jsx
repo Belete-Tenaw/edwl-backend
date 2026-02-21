@@ -1,3 +1,7 @@
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, Link } from 'react-router-dom';
+import authService from '../services/authService';
 import { compressImage } from '../utils/compression';
 
 const Register = () => {
@@ -10,7 +14,48 @@ const Register = () => {
     const [success, setSuccess] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
 
-    // ... (seekerState remains same)
+    const [seekerData, setSeekerData] = useState({
+        fullName: '',
+        phone: '',
+        email: '',
+        password: '',
+        gender: 'FEMALE',
+        age: '',
+        maritalStatus: 'SINGLE',
+        religion: '',
+        skills: [],
+        customSkill: '',
+        languages: [],
+        customLanguage: '',
+        experienceYears: '',
+        expectedSalary: '',
+        preferredArrangement: 'LIVE_IN',
+        preferredLocation: '',
+        bio: '',
+        profilePhoto: null,
+        profilePhotoPreview: null,
+        idDocument: null,
+        idDocumentPreview: null,
+        nationalIdUrl: null,
+        nationalIdUrlPreview: null,
+        guarantorIdUrl: null,
+        guarantorIdUrlPreview: null,
+        guarantorPhone: '',
+        policeClearanceUrl: null,
+        policeClearanceUrlPreview: null,
+        healthCertificateUrl: null,
+        healthCertificateUrlPreview: null
+    });
+
+    const [employerData, setEmployerData] = useState({
+        employerType: 'HOUSEHOLD',
+        contactName: '',
+        phone: '',
+        email: '',
+        password: '',
+        address: '',
+        familySize: ''
+    });
 
     const handleSeekerChange = (e) => setSeekerData({ ...seekerData, [e.target.name]: e.target.value });
 
@@ -138,6 +183,11 @@ const Register = () => {
                 formData.append('languages', JSON.stringify(finalLanguages));
                 if (seekerData.profilePhoto) formData.append('profilePhoto', seekerData.profilePhoto);
                 if (seekerData.idDocument) formData.append('idDocument', seekerData.idDocument);
+                if (seekerData.nationalIdUrl) formData.append('nationalIdUrl', seekerData.nationalIdUrl);
+                if (seekerData.guarantorIdUrl) formData.append('guarantorIdUrl', seekerData.guarantorIdUrl);
+                if (seekerData.policeClearanceUrl) formData.append('policeClearanceUrl', seekerData.policeClearanceUrl);
+                if (seekerData.healthCertificateUrl) formData.append('healthCertificateUrl', seekerData.healthCertificateUrl);
+                if (seekerData.guarantorPhone) formData.append('guarantorPhone', seekerData.guarantorPhone);
 
                 console.log("Sending Seeker Registration FormData...");
                 await authService.register(formData, 'seeker');
@@ -169,7 +219,7 @@ const Register = () => {
             }
         } catch (err) {
             console.error("Full Registration Error Object:", err);
-            const backendError = err.response?.data?.error;
+            const backendError = err.response?.data?.error || err.response?.data?.message;
             const message = backendError || err.message || 'Registration failed.';
             setError(message);
             window.scrollTo(0, 0);
@@ -249,19 +299,19 @@ const Register = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
                             <div>
                                 <label className="label">{t('full_name')}</label>
-                                <input required className="input" name="fullName" value={seekerData.fullName} onChange={handleSeekerChange} placeholder={t('enter_full_name')} />
+                                <input required className="input" name="fullName" value={seekerData.fullName} onChange={handleSeekerChange} placeholder={t('enter_full_name')} autoComplete="off" />
                             </div>
                             <div>
                                 <label className="label">{t('phone_number')}</label>
-                                <input className="input" name="phone" value={seekerData.phone} onChange={handleSeekerChange} placeholder="+251..." />
+                                <input className="input" name="phone" value={seekerData.phone} onChange={handleSeekerChange} placeholder="+251..." autoComplete="off" />
                             </div>
                             <div>
                                 <label className="label">{t('email_address')}</label>
-                                <input type="email" className="input" name="email" value={seekerData.email} onChange={handleSeekerChange} placeholder="email@example.com" />
+                                <input type="email" className="input" name="email" value={seekerData.email} onChange={handleSeekerChange} placeholder="email@example.com" autoComplete="off" />
                             </div>
                             <div>
                                 <label className="label">{t('password')}</label>
-                                <input required type="password" className="input" name="password" value={seekerData.password} onChange={handleSeekerChange} placeholder={t('create_password')} />
+                                <input required type="password" className="input" name="password" value={seekerData.password} onChange={handleSeekerChange} placeholder={t('create_password')} autoComplete="new-password" />
                             </div>
                             <div>
                                 <label className="label">{t('gender')}</label>
@@ -397,6 +447,7 @@ const Register = () => {
                                     className="input"
                                     name="profilePhoto"
                                     accept="image/*"
+                                    capture="environment"
                                     onChange={handleFileChange}
                                 />
                                 {seekerData.profilePhotoPreview && (
@@ -415,17 +466,105 @@ const Register = () => {
                                     className="input"
                                     name="idDocument"
                                     accept="image/*,.pdf"
+                                    capture="environment"
                                     onChange={handleFileChange}
                                 />
-                                {seekerData.idDocumentPreview && !seekerData.idDocument?.name.toLowerCase().endsWith('.pdf') && (
+                                {seekerData.idDocumentPreview && !seekerData.idDocument?.name?.toLowerCase().endsWith('.pdf') && (
                                     <div style={{ marginTop: '10px', width: '160px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
                                         <img src={seekerData.idDocumentPreview} alt="ID Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>
                                 )}
-                                {seekerData.idDocument?.name.toLowerCase().endsWith('.pdf') && (
+                                {seekerData.idDocument?.name?.toLowerCase().endsWith('.pdf') && (
                                     <p style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '5px' }}>📄 PDF Selected</p>
                                 )}
                                 <p style={{ fontSize: '0.8rem', color: '#FF4500', fontWeight: 'bold', marginTop: '5px' }}>{t('id_mandatory_msg')}</p>
+                            </div>
+
+                            {/* Optional Verification Section */}
+                            <div style={{ gridColumn: '1 / -1', marginTop: '20px' }}>
+                                <div style={{ background: '#f0f7ff', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #007bff', marginBottom: '20px' }}>
+                                    <h5 style={{ margin: '0 0 5px 0', color: '#0056b3' }}>{t('optional_rank_msg')}</h5>
+                                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>{t('platinum_incentive_msg')}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="label">{t('national_id_fayda')} {t('optional')}</label>
+                                <input
+                                    type="file"
+                                    className="input"
+                                    name="nationalIdUrl"
+                                    accept="image/*,.pdf"
+                                    capture="environment"
+                                    onChange={handleFileChange}
+                                />
+                                {seekerData.nationalIdUrlPreview && (
+                                    <div style={{ marginTop: '10px', width: '100px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                                        <img src={seekerData.nationalIdUrlPreview} alt="Fayda Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="label">{t('guarantor_id')} {t('optional')}</label>
+                                <input
+                                    type="file"
+                                    className="input"
+                                    name="guarantorIdUrl"
+                                    accept="image/*,.pdf"
+                                    capture="environment"
+                                    onChange={handleFileChange}
+                                />
+                                {seekerData.guarantorIdUrlPreview && (
+                                    <div style={{ marginTop: '10px', width: '100px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                                        <img src={seekerData.guarantorIdUrlPreview} alt="Guarantor Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="label">{t('guarantor_phone')} {t('optional')}</label>
+                                <input
+                                    className="input"
+                                    name="guarantorPhone"
+                                    value={seekerData.guarantorPhone}
+                                    onChange={handleSeekerChange}
+                                    placeholder="+251..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="label">{t('police_clearance')} {t('optional')}</label>
+                                <input
+                                    type="file"
+                                    className="input"
+                                    name="policeClearanceUrl"
+                                    accept="image/*,.pdf"
+                                    capture="environment"
+                                    onChange={handleFileChange}
+                                />
+                                {seekerData.policeClearanceUrlPreview && (
+                                    <div style={{ marginTop: '10px', width: '100px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                                        <img src={seekerData.policeClearanceUrlPreview} alt="Police Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="label">{t('health_certificate')} {t('optional')}</label>
+                                <input
+                                    type="file"
+                                    className="input"
+                                    name="healthCertificateUrl"
+                                    accept="image/*,.pdf"
+                                    capture="environment"
+                                    onChange={handleFileChange}
+                                />
+                                {seekerData.healthCertificateUrlPreview && (
+                                    <div style={{ marginTop: '10px', width: '100px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
+                                        <img src={seekerData.healthCertificateUrlPreview} alt="Health Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                )}
                             </div>
 
                             <div style={{ gridColumn: '1 / -1', background: '#FFF5F0', padding: '15px', borderRadius: '8px', border: '1px border var(--primary)', marginTop: '10px' }}>
@@ -449,15 +588,15 @@ const Register = () => {
                             </div>
                             <div>
                                 <label className="label">{t('phone_number')}</label>
-                                <input className="input" name="phone" value={employerData.phone} onChange={handleEmployerChange} placeholder="+251..." />
+                                <input className="input" name="phone" value={employerData.phone} onChange={handleEmployerChange} placeholder="+251..." autoComplete="off" />
                             </div>
                             <div>
                                 <label className="label">{t('email_address')}</label>
-                                <input type="email" className="input" name="email" value={employerData.email} onChange={handleEmployerChange} placeholder="email@example.com" />
+                                <input type="email" className="input" name="email" value={employerData.email} onChange={handleEmployerChange} placeholder="email@example.com" autoComplete="off" />
                             </div>
                             <div>
                                 <label className="label">{t('password')}</label>
-                                <input required type="password" className="input" name="password" value={employerData.password} onChange={handleEmployerChange} placeholder={t('create_password')} />
+                                <input required type="password" className="input" name="password" value={employerData.password} onChange={handleEmployerChange} placeholder={t('create_password')} autoComplete="new-password" />
                             </div>
                             <div>
                                 <label className="label">{t('address_location')}</label>
