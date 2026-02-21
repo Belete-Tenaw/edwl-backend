@@ -59,7 +59,7 @@ exports.registerJobSeeker = async (req, res) => {
             where: { email: email || '' }
         });
         if (existingSeeker) {
-            return res.status(409).json({ message: "Job Seeker with this email already exists" });
+            return res.status(409).json({ message: "An account with this email already exists. Please log in instead." });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -167,7 +167,7 @@ exports.registerEmployer = async (req, res) => {
 
         const existingEmployer = await prisma.employer.findUnique({ where: { email } });
         if (existingEmployer) {
-            return res.status(409).json({ message: "Employer already exists" });
+            return res.status(409).json({ message: "An account with this email already exists. Please log in instead." });
         }
 
         const newEmployer = await prisma.employer.create({
