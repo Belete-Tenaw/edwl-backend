@@ -63,6 +63,15 @@ const Register = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Hard limit: 10MB to prevent backend crashes
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+        if (file.size > MAX_FILE_SIZE && !file.type.startsWith('image/')) {
+            setError(t('file_too_large') || 'File is too large. Maximum size is 10MB.');
+            window.scrollTo(0, 0);
+            e.target.value = ''; // Reset input
+            return;
+        }
+
         try {
             let processedFile = file;
             if (file.type.startsWith('image/')) {
@@ -79,7 +88,15 @@ const Register = () => {
             });
         } catch (err) {
             console.error("Compression error:", err);
-            // Fallback to original file if compression fails
+            // Fallback to original file if compression fails, but ensure it's under 10MB
+            if (file.size > 10 * 1024 * 1024) {
+                setError(t('file_too_large') || 'File is too large and compression failed. Maximum size is 10MB.');
+                window.scrollTo(0, 0);
+                e.target.value = '';
+                setCompressing(false);
+                return;
+            }
+
             setSeekerData({
                 ...seekerData,
                 [e.target.name]: file,
@@ -157,6 +174,23 @@ const Register = () => {
                     return;
                 }
 
+                if (seekerData.password.length < 6) {
+                    setError("Password must be at least 6 characters long.");
+                    setLoading(false);
+                    window.scrollTo(0, 0);
+                    return;
+                }
+
+                if (seekerData.phone) {
+                    const phoneRegex = /^(?:\+251|0)[79]\d{8}$/;
+                    if (!phoneRegex.test(seekerData.phone.replace(/\s+/g, ''))) {
+                        setError("Please enter a valid Ethiopian phone number (e.g., +2519... or 09...).");
+                        setLoading(false);
+                        window.scrollTo(0, 0);
+                        return;
+                    }
+                }
+
                 // Use FormData for file uploads
                 const formData = new FormData();
                 let finalSkills = [...seekerData.skills];
@@ -200,6 +234,23 @@ const Register = () => {
                     setLoading(false);
                     window.scrollTo(0, 0);
                     return;
+                }
+
+                if (employerData.password.length < 6) {
+                    setError("Password must be at least 6 characters long.");
+                    setLoading(false);
+                    window.scrollTo(0, 0);
+                    return;
+                }
+
+                if (employerData.phone) {
+                    const phoneRegex = /^(?:\+251|0)[79]\d{8}$/;
+                    if (!phoneRegex.test(employerData.phone.replace(/\s+/g, ''))) {
+                        setError("Please enter a valid Ethiopian phone number (e.g., +2519... or 09...).");
+                        setLoading(false);
+                        window.scrollTo(0, 0);
+                        return;
+                    }
                 }
 
                 const formData = new FormData();

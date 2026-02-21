@@ -126,8 +126,9 @@ model JobSeeker {
   idDocument           String?
   
   // Zero-Cost Specifics
-  nationalIdFayda      String?
-  guarantorFayda       String?
+  nationalIdUrl        String?
+  guarantorIdUrl       String?
+  guarantorPhone       String?
   healthCertificateUrl String?
   policeClearanceUrl   String?
   
@@ -143,6 +144,7 @@ model JobSeeker {
   
   tier                 SeekerTier           @default(BRONZE)
   badge                String?              @default("STANDARD") // For visual status
+  isActive             Boolean              @default(true) // For blocking/unblocking
   subscriptionExpiry   DateTime?
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
@@ -159,6 +161,10 @@ model JobSeeker {
   reportsSent          Report[]             @relation("JSReports")
   reportsReceived      Report[]             @relation("JSReported")
   auditLogs            AuditLog[]
+
+  @@index([tier])
+  @@index([createdAt])
+  @@index([isVerified])
 }
 
 model Employer {
@@ -186,6 +192,7 @@ model Employer {
   
   tier               EmployerTier         @default(FREE)
   badge              String?              @default("STANDARD") // For visual status
+  isActive           Boolean              @default(true) // For blocking/unblocking
   subscriptionExpiry DateTime?
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
@@ -204,6 +211,9 @@ model Employer {
   reportsReceived    Report[]             @relation("EmpReported")
   auditLogs          AuditLog[]
   hiringRequirement HiringRequirement?
+
+  @@index([tier])
+  @@index([createdAt])
 }
 
 model HiringRequirement {

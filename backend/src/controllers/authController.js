@@ -31,6 +31,17 @@ exports.registerJobSeeker = async (req, res) => {
             experienceYears, skills, bio, guarantorPhone
         } = req.body;
 
+        if (!password || password.length < 6) {
+            return res.status(400).json({ error: "Password must be at least 6 characters long." });
+        }
+
+        if (phone) {
+            const phoneRegex = /^(?:\+251|0)[79]\d{8}$/;
+            if (!phoneRegex.test(phone.replace(/\s+/g, ''))) {
+                return res.status(400).json({ error: "Invalid Ethiopian phone number." });
+            }
+        }
+
         const photo = req.files && req.files['profilePhoto']
             ? req.files['profilePhoto'][0].path.replace(/\\/g, '/')
             : null;
@@ -162,6 +173,17 @@ exports.loginJobSeeker = async (req, res) => {
 exports.registerEmployer = async (req, res) => {
     try {
         const { contactName, email, password, phone, employerType, address } = req.body;
+
+        if (!password || password.length < 6) {
+            return res.status(400).json({ error: "Password must be at least 6 characters long." });
+        }
+
+        if (phone) {
+            const phoneRegex = /^(?:\+251|0)[79]\d{8}$/;
+            if (!phoneRegex.test(phone.replace(/\s+/g, ''))) {
+                return res.status(400).json({ error: "Invalid Ethiopian phone number." });
+            }
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
