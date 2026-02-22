@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 const JobPostModal = ({ onClose, onJobPosted }) => {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -52,7 +53,7 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
             onJobPosted(res.data);
             onClose();
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to post job');
+            setError(err.response?.data?.error || err.response?.data?.message || 'Failed to post job.');
         } finally {
             setLoading(false);
         }
@@ -66,6 +67,12 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
                 </button>
 
                 <h2 style={{ marginBottom: '20px', color: 'var(--primary)' }}>{t('post_new_job')}</h2>
+
+                {error && (
+                    <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '10px 14px', borderRadius: '8px', marginBottom: '15px', fontSize: '0.9rem' }}>
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: '15px' }}>

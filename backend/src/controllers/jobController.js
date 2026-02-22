@@ -9,6 +9,13 @@ exports.createJobPost = async (req, res) => {
             return res.status(403).json({ error: 'Only employers can post jobs' });
         }
 
+        // Validate required fields
+        if (!title || !title.trim()) return res.status(400).json({ error: 'Job title is required.' });
+        if (!description || !description.trim()) return res.status(400).json({ error: 'Job description is required.' });
+        if (!salaryOffered || isNaN(parseInt(salaryOffered))) return res.status(400).json({ error: 'A valid salary is required.' });
+        if (!address || !address.trim()) return res.status(400).json({ error: 'Job address is required.' });
+        if (!preferredArrangement) return res.status(400).json({ error: 'Preferred arrangement is required.' });
+
         // Job Posting Limit for FREE tier
         const employer = await prisma.employer.findUnique({ where: { id: employerId } });
         if (employer.tier === 'FREE') {

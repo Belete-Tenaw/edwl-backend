@@ -13,6 +13,7 @@ const Messages = () => {
     const [chatHistory, setChatHistory] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
+    const [sendError, setSendError] = useState('');
     const currentUser = authService.getCurrentUser();
     const scrollRef = useRef(null);
 
@@ -147,16 +148,14 @@ const Messages = () => {
             };
 
             const res = await api.post('/messages', payload);
-
-            // Update locally
             const newMsg = res.data;
             setChatHistory([...chatHistory, newMsg]);
             setNewMessage('');
-
-            // Refresh list to show latest in sidebar
+            setSendError('');
             fetchMessages();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to send message');
+            const msg = err.response?.data?.message || err.response?.data?.error || 'Failed to send message.';
+            setSendError(msg);
         }
     };
 
@@ -259,16 +258,23 @@ const Messages = () => {
                             })}
                         </div>
 
-                        <form onSubmit={handleSendMessage} style={{ padding: '15px', borderTop: '1px solid #eee', display: 'flex', gap: '10px' }}>
-                            <input
-                                style={{ flex: 1, padding: '12px', borderRadius: '25px', border: '1px solid #ddd', outline: 'none' }}
-                                placeholder={t('type_message')}
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                            />
-                            <button disabled={!newMessage.trim()} type="submit" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'var(--primary)', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                <Send size={20} />
-                            </button>
+                        <form onSubmit={handleSendMessage} style={{ padding: '15px', borderTop: '1px solid #eee' }}>
+                            {sendError && (
+                                <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '8px 12px', borderRadius: '8px', marginBottom: '10px', fontSize: '0.9rem' }}>
+                                    {sendError}
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <input
+                                    style={{ flex: 1, padding: '12px', borderRadius: '25px', border: '1px solid #ddd', outline: 'none' }}
+                                    placeholder={t('type_message')}
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                />
+                                <button disabled={!newMessage.trim()} type="submit" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'var(--primary)', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                    <Send size={20} />
+                                </button>
+                            </div>
                         </form>
                     </>
                 ) : (

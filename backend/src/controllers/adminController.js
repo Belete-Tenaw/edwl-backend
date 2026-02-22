@@ -8,16 +8,16 @@ exports.getAllUsers = async (req, res) => {
             select: {
                 id: true, fullName: true, phone: true, email: true,
                 isVerified: true, verificationStatus: true, tier: true, badge: true, createdAt: true,
-                profilePhoto: true, idDocument: true,
-                nationalIdFayda: true, policeClearanceUrl: true, healthCertificateUrl: true,
-                guarantorFayda: true
+                profilePhoto: true, idDocument: true, isActive: true,
+                nationalIdUrl: true, policeClearanceUrl: true, healthCertificateUrl: true,
+                guarantorIdUrl: true, guarantorPhone: true
             }
         });
         const employers = await prisma.employer.findMany({
             select: {
                 id: true, contactName: true, phone: true, email: true,
                 isVerified: true, verificationStatus: true, tier: true, badge: true, createdAt: true,
-                profilePhoto: true, idDocument: true
+                profilePhoto: true, idDocument: true, isActive: true
             }
         });
         res.json({ seekers, employers });
@@ -94,16 +94,14 @@ exports.updateAccountStatus = async (req, res) => {
             await prisma.jobSeeker.update({
                 where: { id },
                 data: {
-                    verificationStatus: action === 'SUSPEND' ? 'REJECTED' : 'APPROVED',
-                    isVerified: action === 'ACTIVATE'
+                    isActive: action === 'ACTIVATE'
                 }
             });
         } else {
             await prisma.employer.update({
                 where: { id },
                 data: {
-                    verificationStatus: action === 'SUSPEND' ? 'REJECTED' : 'APPROVED',
-                    isVerified: action === 'ACTIVATE'
+                    isActive: action === 'ACTIVATE'
                 }
             });
         }
@@ -194,6 +192,12 @@ exports.activateSubscription = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         const { id, type } = req.params;
+
+        // Only SUPERADMIN can delete users — MODERATORs can only suspend
+        if (req.user.adminRole !== 'SUPERADMIN') {
+            return res.status(403).json({ error: 'Only SUPERADMIN can delete users. Use Account Suspension instead.' });
+        }
+
         if (type === 'seeker') {
             await prisma.jobSeeker.delete({ where: { id } });
         } else {

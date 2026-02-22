@@ -19,10 +19,14 @@ const Activate = () => {
         setSuccess('');
 
         try {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
             await api.post('/payments/activate-code', { code });
             setSuccess(t('subscription_activated_success') || 'Subscription activated successfully!');
             setTimeout(() => {
-                navigate('/dashboard');
+                const role = user?.role;
+                if (role === 'EMPLOYER') navigate('/dashboard/employer');
+                else if (role === 'JOB_SEEKER') navigate('/dashboard/seeker');
+                else navigate('/login');
             }, 2000);
         } catch (err) {
             setError(err.response?.data?.error || t('invalid_code'));

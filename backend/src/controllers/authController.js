@@ -290,14 +290,14 @@ exports.loginAdmin = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: admin.id, role: 'ADMIN' },
+            { id: admin.id, role: 'ADMIN', adminRole: admin.role },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
 
         res.status(200).json({
             token,
-            user: { id: admin.id, name: admin.username, role: 'ADMIN' }
+            user: { id: admin.id, name: admin.username, role: 'ADMIN', adminRole: admin.role }
         });
 
         // Audit Log
