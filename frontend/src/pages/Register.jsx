@@ -205,9 +205,14 @@ const Register = () => {
                     finalLanguages.push(seekerData.customLanguage);
                 }
 
-                // Append all text fields (EXCEPT previews)
+                // Append all text fields (EXCEPT files and previews — those are handled below)
+                const FILE_FIELDS = ['profilePhoto', 'idDocument', 'nationalIdUrl', 'guarantorIdUrl', 'policeClearanceUrl', 'healthCertificateUrl'];
+                const EXCLUDED_KEYS = [...FILE_FIELDS, 'skills', 'languages', 'customSkill', 'customLanguage',
+                    'profilePhotoPreview', 'idDocumentPreview', 'nationalIdUrlPreview',
+                    'guarantorIdUrlPreview', 'policeClearanceUrlPreview', 'healthCertificateUrlPreview'];
+
                 Object.keys(seekerData).forEach(key => {
-                    if (!['profilePhoto', 'idDocument', 'skills', 'languages', 'profilePhotoPreview', 'idDocumentPreview', 'customSkill', 'customLanguage'].includes(key)) {
+                    if (!EXCLUDED_KEYS.includes(key) && seekerData[key] !== null && seekerData[key] !== undefined && seekerData[key] !== '') {
                         formData.append(key, seekerData[key]);
                     }
                 });
