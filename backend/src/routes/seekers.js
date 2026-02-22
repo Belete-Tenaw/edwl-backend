@@ -7,7 +7,7 @@ const { authorize, Roles } = require('../middleware/rbac');
 
 const upload = require('../middleware/upload');
 
-router.get('/', auth, async (req, res, next) => {
+router.get('/', auth, authorize([Roles.EMPLOYER, Roles.ADMIN]), async (req, res, next) => {
     // Log browsing action for audit trail
     const { logAction } = require('../services/auditService');
     await logAction('BROWSE_SEEKER_LIST', req.user.id, req.user.role);
@@ -24,7 +24,11 @@ router.get('/:id', auth, (req, res, next) => {
 
 router.put('/profile', auth, authorize([Roles.SEEKER]), upload.fields([
     { name: 'profilePhoto', maxCount: 1 },
-    { name: 'idDocument', maxCount: 1 }
+    { name: 'idDocument', maxCount: 1 },
+    { name: 'nationalIdUrl', maxCount: 1 },
+    { name: 'guarantorIdUrl', maxCount: 1 },
+    { name: 'policeClearanceUrl', maxCount: 1 },
+    { name: 'healthCertificateUrl', maxCount: 1 }
 ]), seekerController.updateProfile);
 
 module.exports = router;

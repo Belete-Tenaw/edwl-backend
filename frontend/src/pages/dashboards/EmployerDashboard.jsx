@@ -12,6 +12,7 @@ const EmployerDashboard = () => {
     const [workers, setWorkers] = useState([]);
     const [user, setUser] = useState(authService.getCurrentUser());
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [showJobModal, setShowJobModal] = useState(false);
     const [selectedWorker, setSelectedWorker] = useState(null);
 
@@ -22,6 +23,7 @@ const EmployerDashboard = () => {
                 setWorkers(res.data);
             } catch (err) {
                 console.error("Failed to fetch workers", err);
+                setError(t('failed_to_load_data') || 'Failed to load data. Please refresh.');
             } finally {
                 setLoading(false);
             }
@@ -60,6 +62,9 @@ const EmployerDashboard = () => {
                     onJobPosted={handleJobPosted}
                 />
             )}
+
+            {error && <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '20px' }}>{error}</div>}
+            {loading && <p>{t('loading_workers') || 'Loading workers...'}</p>}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                 {workers.map(worker => (

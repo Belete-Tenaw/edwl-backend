@@ -99,7 +99,8 @@ const Login = () => {
             else if (activeTab === 'admin') navigate('/admin');
 
         } catch (err) {
-            setError(err.response?.data?.error || t('login_failed'));
+            const backendError = err.response?.data?.error || err.response?.data?.message;
+            setError(backendError || t('login_failed'));
         } finally {
             setLoading(false);
         }

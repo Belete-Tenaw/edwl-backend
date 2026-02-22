@@ -11,6 +11,7 @@ const SeekerDashboard = () => {
     const [jobs, setJobs] = useState([]);
     const [user, setUser] = useState(authService.getCurrentUser());
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
     const navigate = useNavigate();
 
@@ -21,6 +22,7 @@ const SeekerDashboard = () => {
                 setJobs(res.data);
             } catch (err) {
                 console.error("Failed to fetch jobs", err);
+                setError(t('failed_to_load_data') || 'Failed to load data. Please refresh.');
             } finally {
                 setLoading(false);
             }
@@ -72,6 +74,7 @@ const SeekerDashboard = () => {
                 {/* Main Content */}
                 <main>
                     <h2 style={{ marginBottom: '20px' }}>{t('jobs')}</h2>
+                    {error && <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '20px' }}>{error}</div>}
                     {loading ? (
                         <p>{t('loading_jobs')}</p>
                     ) : (

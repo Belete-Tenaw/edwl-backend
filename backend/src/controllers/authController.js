@@ -222,9 +222,16 @@ exports.registerEmployer = async (req, res) => {
 // =============================
 exports.loginEmployer = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { identifier, password } = req.body;
 
-        const employer = await prisma.employer.findUnique({ where: { email } });
+        const employer = await prisma.employer.findFirst({
+            where: {
+                OR: [
+                    { email: identifier },
+                    { phone: identifier }
+                ]
+            }
+        });
 
         if (!employer) {
             return res.status(401).json({ message: "Invalid credentials" });
