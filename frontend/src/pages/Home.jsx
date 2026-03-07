@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Users, Briefcase, ArrowRight } from 'lucide-react';
-import logo from '../assets/logo_integrated.png';
+
 import heroBg from '../assets/hero-bg.jpg';
 
 const Home = () => {
@@ -15,6 +15,7 @@ const Home = () => {
                 background: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(${heroBg})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
                 backgroundAttachment: 'fixed',
                 color: 'white',
                 minHeight: '700px',
@@ -22,7 +23,10 @@ const Home = () => {
                 alignItems: 'center'
             }}>
                 <div className="container" style={{ textAlign: 'center' }}>
-                    <h1 style={{ fontSize: '3.5rem', marginBottom: '20px', color: 'white', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>{t('welcome')}</h1>
+                    <h1 style={{ fontSize: '3.5rem', marginBottom: '10px', color: 'white', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>{t('welcome')}</h1>
+                    <h2 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '20px', textShadow: '1px 1px 2px rgba(0,0,0,0.2)' }}>
+                        "{t('motto')}"
+                    </h2>
                     <p style={{ fontSize: '1.4rem', color: 'rgba(255,255,255,0.9)', marginBottom: '40px', maxWidth: '800px', margin: '0 auto 40px', textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
                         {t('hero_title')}
                     </p>

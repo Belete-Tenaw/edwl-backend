@@ -6,9 +6,15 @@ module.exports = async (req, res, next) => {
     // Find user tier
     let user;
     if (role === 'JOB_SEEKER') {
-        user = await prisma.jobSeeker.findUnique({ where: { id } });
+        user = await prisma.jobSeeker.findUnique({
+            where: { id },
+            select: { tier: true, subscriptionExpiry: true }
+        });
     } else if (role === 'EMPLOYER') {
-        user = await prisma.employer.findUnique({ where: { id } });
+        user = await prisma.employer.findUnique({
+            where: { id },
+            select: { tier: true, subscriptionExpiry: true }
+        });
     }
 
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -19,7 +25,11 @@ module.exports = async (req, res, next) => {
     }
 
     // Active subscribers have unlimited access
-    const isPremium = role === 'JOB_SEEKER' ? user.tier !== 'BRONZE' : user.tier !== 'FREE';
+    // FIX: Match Prisma enum values
+    const isPremium = role === 'JOB_SEEKER'
+        ? ['SILVER', 'GOLD', 'PLATINUM'].includes(user.tier)
+        : ['SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS'].includes(user.tier);
+
     if (isPremium) {
         const now = new Date();
         if (user.subscriptionExpiry && new Date(user.subscriptionExpiry) > now) {

@@ -21,6 +21,7 @@ const AdminDashboard = () => {
     const [generatedCode, setGeneratedCode] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('verification'); // verification, reports, codes
+    const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, PENDING, APPROVED, REJECTED, BLOCKED
     const [days, setDays] = useState(30);
 
     const fetchData = async () => {
@@ -64,6 +65,27 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleStatusChange = async (user, action) => {
+        try {
+            await api.post('/admin/status', { id: user.id, type: user.type, action });
+            alert(action === 'ACTIVATE' ? t('user_activated') : t('user_blocked'));
+            fetchData();
+        } catch (err) {
+            alert('Failed to update user status');
+        }
+    };
+
+    const handleDeleteUser = async (user) => {
+        if (!window.confirm(t('confirm_delete_user'))) return;
+        try {
+            await api.delete(`/admin/user/${user.type}/${user.id}`);
+            alert('User profile deleted successfully!');
+            fetchData();
+        } catch (err) {
+            alert('Failed to delete user');
+        }
+    };
+
     if (loading) return <div className="container" style={{ padding: '40px 20px' }}>{t('loading')}</div>;
 
     return (
@@ -79,10 +101,38 @@ const AdminDashboard = () => {
 
             {activeTab === 'verification' && (
                 <div>
-                    <h3 style={{ marginBottom: '20px' }}>{t('pending_verification')}</h3>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <h3 style={{ margin: 0 }}>{t('user_management')}</h3>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            {['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'BLOCKED'].map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => setStatusFilter(s)}
+                                    style={{
+                                        padding: '5px 12px',
+                                        borderRadius: '20px',
+                                        border: '1px solid #ddd',
+                                        background: statusFilter === s ? 'var(--primary)' : 'white',
+                                        color: statusFilter === s ? 'white' : '#666',
+                                        fontSize: '0.8rem',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    {t(s.toLowerCase())}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     <div style={{ display: 'grid', gap: '20px' }}>
                         {[...users.seekers.map(s => ({ ...s, type: 'seeker' })), ...users.employers.map(e => ({ ...e, type: 'employer', fullName: e.contactName }))]
-                            .filter(u => u.verificationStatus === 'NOT_STARTED' || u.verificationStatus === 'PENDING')
+                            .filter(u => {
+                                if (statusFilter === 'ALL') return true;
+                                if (statusFilter === 'BLOCKED') return !u.isActive;
+                                if (statusFilter === 'PENDING') return u.verificationStatus === 'PENDING' || u.verificationStatus === 'NOT_STARTED';
+                                return u.verificationStatus === statusFilter && u.isActive;
+                            })
                             .map(user => (
                                 <div key={user.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderLeft: user.type === 'seeker' ? '4px solid #f97316' : '4px solid #3b82f6' }}>
                                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
@@ -129,42 +179,93 @@ const AdminDashboard = () => {
                                                         <Activity size={14} /> {t('health_certificate')}
                                                     </a>
                                                 )}
+                                                {user.nationalIdUrl && user.nationalIdUrl !== 'undefined' && user.nationalIdUrl !== 'null' && (
+                                                    <a href={getDocumentUrl(user.nationalIdUrl)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                        <Shield size={14} /> {t('national_id_fayda')}
+                                                    </a>
+                                                )}
+                                                {user.guarantorIdUrl && user.guarantorIdUrl !== 'undefined' && user.guarantorIdUrl !== 'null' && (
+                                                    <a href={getDocumentUrl(user.guarantorIdUrl)} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: '#8b5cf6', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                        <Users size={14} /> {t('guarantor_id')}
+                                                    </a>
+                                                )}
                                             </div>
+                                        </div>
 
-                                            {user.nationalIdFayda && (
-                                                <p style={{ fontSize: '0.8rem', color: '#444', margin: '10px 0 0', background: '#f8fafc', padding: '5px 10px', borderRadius: '4px', border: '1px solid #e2e8f0', display: 'inline-block' }}>
-                                                    <strong>{t('national_id_fayda')}:</strong> {user.nationalIdFayda}
-                                                </p>
-                                            )}
+                                        <div style={{ textAlign: 'right', minWidth: '120px' }}>
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                padding: '4px 10px',
+                                                borderRadius: '12px',
+                                                background: !user.isActive ? '#fee2e2' : user.verificationStatus === 'APPROVED' ? '#dcfce7' : '#fef9c3',
+                                                color: !user.isActive ? '#b91c1c' : user.verificationStatus === 'APPROVED' ? '#15803d' : '#854d0e',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {!user.isActive ? t('blocked') : t(user.verificationStatus.toLowerCase())}
+                                            </span>
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '15px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
-                                        {user.type === 'seeker' && (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#666' }}>{t('level_to_grant') || 'Level'}:</span>
-                                                <select
-                                                    id={`badge-select-${user.id}`}
-                                                    defaultValue="SILVER"
-                                                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '0.85rem' }}
-                                                >
-                                                    <option value="SILVER">{t('silver')}</option>
-                                                    <option value="GOLD">{t('gold')}</option>
-                                                    <option value="PLATINUM">{t('platinum')}</option>
-                                                </select>
-                                            </div>
-                                        )}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', paddingTop: '15px' }}>
                                         <div style={{ display: 'flex', gap: '10px' }}>
                                             <button
-                                                onClick={() => {
-                                                    const badge = user.type === 'seeker' ? document.getElementById(`badge-select-${user.id}`).value : undefined;
-                                                    handleVerify(user.id, user.type, 'APPROVED', badge);
-                                                }}
-                                                style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                                onClick={() => handleDeleteUser(user)}
+                                                style={{ background: 'transparent', color: '#ef4444', border: '1px solid #fee2e2', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
                                             >
-                                                {t('approve')}
+                                                {t('delete_profile')}
                                             </button>
-                                            <button onClick={() => handleVerify(user.id, user.type, 'REJECTED')} style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>{t('reject')}</button>
+                                            {user.isActive ? (
+                                                <button
+                                                    onClick={() => handleStatusChange(user, 'SUSPEND')}
+                                                    style={{ background: '#fef2f2', color: '#b91c1c', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                                >
+                                                    {t('block')}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleStatusChange(user, 'ACTIVATE')}
+                                                    style={{ background: '#ecfdf5', color: '#059669', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                                >
+                                                    {t('unblock')}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            {user.type === 'seeker' && user.verificationStatus !== 'APPROVED' && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#666' }}>{t('level_to_grant')}:</span>
+                                                    <select
+                                                        id={`badge-select-${user.id}`}
+                                                        defaultValue="SILVER"
+                                                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '0.85rem' }}
+                                                    >
+                                                        <option value="SILVER">{t('silver')}</option>
+                                                        <option value="GOLD">{t('gold')}</option>
+                                                        <option value="PLATINUM">{t('platinum')}</option>
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {user.verificationStatus !== 'APPROVED' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => {
+                                                            const badge = user.type === 'seeker' ? document.getElementById(`badge-select-${user.id}`).value : undefined;
+                                                            handleVerify(user.id, user.type, 'APPROVED', badge);
+                                                        }}
+                                                        style={{ background: '#10b981', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                                    >
+                                                        {t('approve')}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleVerify(user.id, user.type, 'REJECTED')}
+                                                        style={{ background: '#ef4444', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                                                    >
+                                                        {t('reject')}
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

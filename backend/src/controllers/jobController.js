@@ -52,7 +52,9 @@ exports.getAllJobs = async (req, res) => {
                         id: true,
                         contactName: true,
                         employerType: true,
-                        isVerified: true
+                        isVerified: true,
+                        rating: true,
+                        completedJobs: true
                         // The requirement says "Cannot view employer full profile or address" for freemium.
                     }
                 }
@@ -104,6 +106,23 @@ exports.getJobById = async (req, res) => {
 
         res.json(job);
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getMatchesForJob = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (req.user.role !== 'EMPLOYER') {
+            return res.status(403).json({ error: 'Only employers can see matches' });
+        }
+
+        // Use raw query to call the migration function
+        // Need to cast to UUID if necessary, depends on how Prisma handles strings to UUID
+        const matches = await prisma.$queryRawUnsafe(`SELECT * FROM match_seekers_for_job($1::uuid)`, id);
+        res.json(matches);
+    } catch (error) {
+        console.error("Matching error:", error);
         res.status(500).json({ error: error.message });
     }
 };

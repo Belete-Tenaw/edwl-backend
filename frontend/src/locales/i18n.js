@@ -1,7 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-
 import en from './en.json';
 import am from './am.json';
 
@@ -16,13 +15,16 @@ i18n
             am: { translation: am }
         },
         lng: storedLanguage,
-        fallbackLng: false,
+        fallbackLng: 'en',
         detection: {
             order: ['localStorage', 'navigator'],
             caches: ['localStorage']
         },
         interpolation: {
             escapeValue: false
+        },
+        react: {
+            useSuspense: true
         }
     });
 

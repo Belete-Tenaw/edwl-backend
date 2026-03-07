@@ -28,6 +28,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "jsdom": "^27.4.0",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.17"
   }
 }

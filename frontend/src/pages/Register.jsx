@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import { compressImage } from '../utils/compression';
+import { validateAndFormatPhone } from '../utils/validation';
+import { processVideoBio } from '../utils/videoProcessor';
+import { Camera, Video } from 'lucide-react';
+import MediaUploader from '../components/MediaUploader';
 
 const Register = () => {
     const { t } = useTranslation();
@@ -13,6 +17,8 @@ const Register = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
+    const [showCamera, setShowCamera] = useState(false);
+    const [showVideoRecorder, setShowVideoRecorder] = useState(false);
 
     const [seekerData, setSeekerData] = useState({
         fullName: '',
@@ -44,7 +50,10 @@ const Register = () => {
         policeClearanceUrl: null,
         policeClearanceUrlPreview: null,
         healthCertificateUrl: null,
-        healthCertificateUrlPreview: null
+        healthCertificateUrlPreview: null,
+        videoBio: null,
+        videoBioPreview: null,
+        referralCodeUsed: ''
     });
 
     const [employerData, setEmployerData] = useState({
@@ -54,80 +63,99 @@ const Register = () => {
         email: '',
         password: '',
         address: '',
-        familySize: ''
+        familySize: '',
+        referralCodeUsed: ''
     });
 
-    const handleSeekerChange = (e) => setSeekerData({ ...seekerData, [e.target.name]: e.target.value });
+    // Memory cleanup for preview URLs on unmount ONLY
+    useEffect(() => {
+        return () => {
+            const previewFields = [
+                'profilePhotoPreview', 'idDocumentPreview', 'nationalIdUrlPreview',
+                'guarantorIdUrlPreview', 'policeClearanceUrlPreview', 'healthCertificateUrlPreview',
+                'videoBioPreview'
+            ];
+            previewFields.forEach(field => {
+                if (seekerData[field]) {
+                    URL.revokeObjectURL(seekerData[field]);
+                }
+            });
+        };
+    }, []); // Only on unmount. Individual revokes happen in handleMediaCapture when choosing new files.
 
-    const handleFileChange = async (e) => {
-        const file = e.target.files[0];
+    const handleSeekerChange = useCallback((e) => {
+        const { name, value } = e.target;
+        setSeekerData(prev => ({ ...prev, [name]: value }));
+    }, []);
+
+    const handleMediaCapture = useCallback(async (name, file, previewUrl) => {
         if (!file) return;
-
-        // Hard limit: 10MB to prevent backend crashes
-        const MAX_FILE_SIZE = 10 * 1024 * 1024;
-        if (file.size > MAX_FILE_SIZE && !file.type.startsWith('image/')) {
-            setError(t('file_too_large') || 'File is too large. Maximum size is 10MB.');
-            window.scrollTo(0, 0);
-            e.target.value = ''; // Reset input
-            return;
-        }
 
         try {
             let processedFile = file;
+            let processedPreview = previewUrl;
+
+            // Revoke old preview to prevent memory leaks
+            if (seekerData[`${name}Preview`]) {
+                URL.revokeObjectURL(seekerData[`${name}Preview`]);
+            }
+
             if (file.type.startsWith('image/')) {
                 setCompressing(true);
                 processedFile = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
-                console.log(`Compressed ${file.name}: ${(file.size / 1024).toFixed(1)}KB -> ${(processedFile.size / 1024).toFixed(1)}KB`);
+                processedPreview = URL.createObjectURL(processedFile);
                 setCompressing(false);
+            } else if (file.type.startsWith('video/')) {
+                setLoading(true);
+                const result = await processVideoBio(file);
+                processedFile = result.file;
+                processedPreview = URL.createObjectURL(processedFile);
+                setLoading(false);
             }
 
-            setSeekerData({
-                ...seekerData,
-                [e.target.name]: processedFile,
-                [`${e.target.name}Preview`]: URL.createObjectURL(processedFile)
-            });
+            setSeekerData(prev => ({
+                ...prev,
+                [name]: processedFile,
+                [`${name}Preview`]: processedPreview
+            }));
         } catch (err) {
-            console.error("Compression error:", err);
-            // Fallback to original file if compression fails, but ensure it's under 10MB
-            if (file.size > 10 * 1024 * 1024) {
-                setError(t('file_too_large') || 'File is too large and compression failed. Maximum size is 10MB.');
-                window.scrollTo(0, 0);
-                e.target.value = '';
-                setCompressing(false);
-                return;
-            }
-
-            setSeekerData({
-                ...seekerData,
-                [e.target.name]: file,
-                [`${e.target.name}Preview`]: URL.createObjectURL(file)
-            });
+            console.error(`Error processing ${name}:`, err);
+            setError(err.message || "Failed to process media.");
             setCompressing(false);
+            setLoading(false);
         }
-    };
-    const handleSkillToggle = (skill) => {
-        const currentSkills = [...seekerData.skills];
-        const index = currentSkills.indexOf(skill);
-        if (index > -1) {
-            currentSkills.splice(index, 1);
-        } else {
-            currentSkills.push(skill);
-        }
-        setSeekerData({ ...seekerData, skills: currentSkills });
-    };
+    }, [seekerData]);
 
-    const handleLanguageToggle = (language) => {
-        const currentLanguages = [...seekerData.languages];
-        const index = currentLanguages.indexOf(language);
-        if (index > -1) {
-            currentLanguages.splice(index, 1);
-        } else {
-            currentLanguages.push(language);
-        }
-        setSeekerData({ ...seekerData, languages: currentLanguages });
-    };
+    const handleSkillToggle = useCallback((skill) => {
+        setSeekerData(prev => {
+            const currentSkills = [...prev.skills];
+            const index = currentSkills.indexOf(skill);
+            if (index > -1) {
+                currentSkills.splice(index, 1);
+            } else {
+                currentSkills.push(skill);
+            }
+            return { ...prev, skills: currentSkills };
+        });
+    }, []);
 
-    const handleEmployerChange = (e) => setEmployerData({ ...employerData, [e.target.name]: e.target.value });
+    const handleLanguageToggle = useCallback((language) => {
+        setSeekerData(prev => {
+            const currentLanguages = [...prev.languages];
+            const index = currentLanguages.indexOf(language);
+            if (index > -1) {
+                currentLanguages.splice(index, 1);
+            } else {
+                currentLanguages.push(language);
+            }
+            return { ...prev, languages: currentLanguages };
+        });
+    }, []);
+
+    const handleEmployerChange = useCallback((e) => {
+        const { name, value } = e.target;
+        setEmployerData(prev => ({ ...prev, [name]: value }));
+    }, []);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -182,13 +210,14 @@ const Register = () => {
                 }
 
                 if (seekerData.phone) {
-                    const phoneRegex = /^(?:\+251|0)[79]\d{8}$/;
-                    if (!phoneRegex.test(seekerData.phone.replace(/\s+/g, ''))) {
-                        setError("Please enter a valid Ethiopian phone number (e.g., +2519... or 09...).");
+                    const validation = validateAndFormatPhone(seekerData.phone);
+                    if (!validation.isValid) {
+                        setError(validation.error);
                         setLoading(false);
                         window.scrollTo(0, 0);
                         return;
                     }
+                    seekerData.phone = validation.formatted;
                 }
 
                 // Use FormData for file uploads
@@ -206,10 +235,9 @@ const Register = () => {
                 }
 
                 // Append all text fields (EXCEPT files and previews — those are handled below)
-                const FILE_FIELDS = ['profilePhoto', 'idDocument', 'nationalIdUrl', 'guarantorIdUrl', 'policeClearanceUrl', 'healthCertificateUrl'];
-                const EXCLUDED_KEYS = [...FILE_FIELDS, 'skills', 'languages', 'customSkill', 'customLanguage',
-                    'profilePhotoPreview', 'idDocumentPreview', 'nationalIdUrlPreview',
-                    'guarantorIdUrlPreview', 'policeClearanceUrlPreview', 'healthCertificateUrlPreview'];
+                const FILE_FIELDS = ['profilePhoto', 'idDocument', 'nationalIdUrl', 'guarantorIdUrl', 'policeClearanceUrl', 'healthCertificateUrl', 'videoBio'];
+                const PREVIEW_FIELDS = ['profilePhotoPreview', 'idDocumentPreview', 'nationalIdUrlPreview', 'guarantorIdUrlPreview', 'policeClearanceUrlPreview', 'healthCertificateUrlPreview', 'videoBioPreview'];
+                const EXCLUDED_KEYS = [...FILE_FIELDS, ...PREVIEW_FIELDS, 'skills', 'languages', 'customSkill', 'customLanguage'];
 
                 Object.keys(seekerData).forEach(key => {
                     if (!EXCLUDED_KEYS.includes(key) && seekerData[key] !== null && seekerData[key] !== undefined && seekerData[key] !== '') {
@@ -226,6 +254,7 @@ const Register = () => {
                 if (seekerData.guarantorIdUrl) formData.append('guarantorIdUrl', seekerData.guarantorIdUrl);
                 if (seekerData.policeClearanceUrl) formData.append('policeClearanceUrl', seekerData.policeClearanceUrl);
                 if (seekerData.healthCertificateUrl) formData.append('healthCertificateUrl', seekerData.healthCertificateUrl);
+                if (seekerData.videoBio) formData.append('videoBio', seekerData.videoBio);
                 if (seekerData.guarantorPhone) formData.append('guarantorPhone', seekerData.guarantorPhone);
 
                 console.log("Sending Seeker Registration FormData...");
@@ -249,13 +278,14 @@ const Register = () => {
                 }
 
                 if (employerData.phone) {
-                    const phoneRegex = /^(?:\+251|0)[79]\d{8}$/;
-                    if (!phoneRegex.test(employerData.phone.replace(/\s+/g, ''))) {
-                        setError("Please enter a valid Ethiopian phone number (e.g., +2519... or 09...).");
+                    const validation = validateAndFormatPhone(employerData.phone);
+                    if (!validation.isValid) {
+                        setError(validation.error);
                         setLoading(false);
                         window.scrollTo(0, 0);
                         return;
                     }
+                    employerData.phone = validation.formatted;
                 }
 
                 const formData = new FormData();
@@ -292,6 +322,7 @@ const Register = () => {
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
                     <h2 style={{ color: '#2e7d32', marginBottom: '15px' }}>{t('registration_success')}</h2>
+
                     <p style={{ color: '#666', fontSize: '1.1rem', marginBottom: '30px' }}>{t('redirecting_dashboard')}</p>
                     <div className="loading-bar" style={{ height: '4px', background: '#eee', borderRadius: '2px', overflow: 'hidden' }}>
                         <div style={{ width: '100%', height: '100%', background: 'var(--primary)', animation: 'progress 3s linear' }}></div>
@@ -489,6 +520,17 @@ const Register = () => {
                                 <textarea className="input" name="bio" value={seekerData.bio} onChange={handleSeekerChange} style={{ minHeight: '100px' }} placeholder={t('tell_about_yourself')} />
                             </div>
 
+                            <div style={{ gridColumn: '1 / -1' }}>
+                                <MediaUploader
+                                    type="video"
+                                    label={t('video_bio')}
+                                    id="videoBio"
+                                    previewUrl={seekerData.videoBioPreview}
+                                    onFileSelect={(file, url) => handleMediaCapture('videoBio', file, url)}
+                                />
+                                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-10px' }}>{t('video_bio_msg') || 'Record a short video introducing yourself to employers.'}</p>
+                            </div>
+
                             {/* Document Uploads */}
                             <div style={{ gridColumn: '1 / -1' }}>
                                 <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '15px 0' }} />
@@ -496,44 +538,30 @@ const Register = () => {
                             </div>
 
                             <div>
-                                <label className="label">{t('profile_photo')} <span style={{ color: 'red' }}>*</span></label>
-                                <input
-                                    required
-                                    type="file"
-                                    className="input"
-                                    name="profilePhoto"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onChange={handleFileChange}
+                                <MediaUploader
+                                    type="image"
+                                    label={t('profile_photo')}
+                                    id="profilePhoto"
+                                    required={true}
+                                    previewUrl={seekerData.profilePhotoPreview}
+                                    onFileSelect={(file, url) => handleMediaCapture('profilePhoto', file, url)}
                                 />
-                                {seekerData.profilePhotoPreview && (
-                                    <div style={{ marginTop: '10px', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                                        <img src={seekerData.profilePhotoPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </div>
-                                )}
-                                <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '5px' }}>{t('upload_photo_msg')}</p>
+                                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-10px' }}>{t('upload_photo_msg')}</p>
                             </div>
 
                             <div>
-                                <label className="label">{t('id_passport')} <span style={{ color: 'red' }}>*</span></label>
-                                <input
-                                    required
-                                    type="file"
-                                    className="input"
-                                    name="idDocument"
-                                    accept="image/*,.pdf"
-                                    capture="environment"
-                                    onChange={handleFileChange}
+                                <MediaUploader
+                                    type="image"
+                                    label={t('id_passport')}
+                                    id="idDocument"
+                                    required={true}
+                                    previewUrl={seekerData.idDocumentPreview}
+                                    onFileSelect={(file, url) => handleMediaCapture('idDocument', file, url)}
                                 />
-                                {seekerData.idDocumentPreview && !seekerData.idDocument?.name?.toLowerCase().endsWith('.pdf') && (
-                                    <div style={{ marginTop: '10px', width: '160px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                                        <img src={seekerData.idDocumentPreview} alt="ID Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </div>
-                                )}
                                 {seekerData.idDocument?.name?.toLowerCase().endsWith('.pdf') && (
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '5px' }}>📄 PDF Selected</p>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '-10px' }}>📄 PDF Selected</p>
                                 )}
-                                <p style={{ fontSize: '0.8rem', color: '#FF4500', fontWeight: 'bold', marginTop: '5px' }}>{t('id_mandatory_msg')}</p>
+                                <p style={{ fontSize: '0.8rem', color: '#ff4d4d', fontWeight: '600', marginTop: '-10px' }}>{t('id_mandatory_msg')}</p>
                             </div>
 
                             {/* Optional Verification Section */}
@@ -545,37 +573,23 @@ const Register = () => {
                             </div>
 
                             <div>
-                                <label className="label">{t('national_id_fayda')} {t('optional')}</label>
-                                <input
-                                    type="file"
-                                    className="input"
-                                    name="nationalIdUrl"
-                                    accept="image/*,.pdf"
-                                    capture="environment"
-                                    onChange={handleFileChange}
+                                <MediaUploader
+                                    type="image"
+                                    label={t('national_id_fayda') + ' ' + t('optional')}
+                                    id="nationalIdUrl"
+                                    previewUrl={seekerData.nationalIdUrlPreview}
+                                    onFileSelect={(file, url) => handleMediaCapture('nationalIdUrl', file, url)}
                                 />
-                                {seekerData.nationalIdUrlPreview && (
-                                    <div style={{ marginTop: '10px', width: '100px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                                        <img src={seekerData.nationalIdUrlPreview} alt="Fayda Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </div>
-                                )}
                             </div>
 
                             <div>
-                                <label className="label">{t('guarantor_id')} {t('optional')}</label>
-                                <input
-                                    type="file"
-                                    className="input"
-                                    name="guarantorIdUrl"
-                                    accept="image/*,.pdf"
-                                    capture="environment"
-                                    onChange={handleFileChange}
+                                <MediaUploader
+                                    type="image"
+                                    label={t('guarantor_id') + ' ' + t('optional')}
+                                    id="guarantorIdUrl"
+                                    previewUrl={seekerData.guarantorIdUrlPreview}
+                                    onFileSelect={(file, url) => handleMediaCapture('guarantorIdUrl', file, url)}
                                 />
-                                {seekerData.guarantorIdUrlPreview && (
-                                    <div style={{ marginTop: '10px', width: '100px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                                        <img src={seekerData.guarantorIdUrlPreview} alt="Guarantor Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </div>
-                                )}
                             </div>
 
                             <div>
@@ -590,42 +604,46 @@ const Register = () => {
                             </div>
 
                             <div>
-                                <label className="label">{t('police_clearance')} {t('optional')}</label>
-                                <input
-                                    type="file"
-                                    className="input"
-                                    name="policeClearanceUrl"
-                                    accept="image/*,.pdf"
-                                    capture="environment"
-                                    onChange={handleFileChange}
+                                <MediaUploader
+                                    type="image"
+                                    label={t('police_clearance') + ' ' + t('optional')}
+                                    id="policeClearanceUrl"
+                                    previewUrl={seekerData.policeClearanceUrlPreview}
+                                    onFileSelect={(file, url) => handleMediaCapture('policeClearanceUrl', file, url)}
                                 />
-                                {seekerData.policeClearanceUrlPreview && (
-                                    <div style={{ marginTop: '10px', width: '100px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                                        <img src={seekerData.policeClearanceUrlPreview} alt="Police Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </div>
-                                )}
                             </div>
 
                             <div>
-                                <label className="label">{t('health_certificate')} {t('optional')}</label>
-                                <input
-                                    type="file"
-                                    className="input"
-                                    name="healthCertificateUrl"
-                                    accept="image/*,.pdf"
-                                    capture="environment"
-                                    onChange={handleFileChange}
+                                <MediaUploader
+                                    type="image"
+                                    label={t('health_certificate') + ' ' + t('optional')}
+                                    id="healthCertificateUrl"
+                                    previewUrl={seekerData.healthCertificateUrlPreview}
+                                    onFileSelect={(file, url) => handleMediaCapture('healthCertificateUrl', file, url)}
                                 />
-                                {seekerData.healthCertificateUrlPreview && (
-                                    <div style={{ marginTop: '10px', width: '100px', height: '60px', borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd' }}>
-                                        <img src={seekerData.healthCertificateUrlPreview} alt="Health Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    </div>
-                                )}
                             </div>
 
-                            <div style={{ gridColumn: '1 / -1', background: '#FFF5F0', padding: '15px', borderRadius: '8px', border: '1px border var(--primary)', marginTop: '10px' }}>
+
+                            <div style={{ gridColumn: '1 / -1', background: '#FFF5F0', padding: '15px', borderRadius: '8px', border: '1px solid var(--primary)', marginTop: '10px' }}>
                                 <p style={{ margin: 0, color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
                                     ✨ {t('platinum_incentive_msg')}
+                                </p>
+                            </div>
+
+                            <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#f8fafc', borderRadius: '12px', marginTop: '10px', border: '1px solid #e2e8f0' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem' }}>
+                                    {t('referral_code_optional')}
+                                </label>
+                                <input
+                                    type="text"
+                                    name="referralCodeUsed"
+                                    value={seekerData.referralCodeUsed}
+                                    onChange={handleSeekerChange}
+                                    placeholder="e.g. BARK123"
+                                    style={{ width: '100%', padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '1rem', outline: 'none' }}
+                                />
+                                <p style={{ marginTop: '8px', fontSize: '0.8rem', color: '#64748b' }}>
+                                    {t('referral_bonus_msg')}
                                 </p>
                             </div>
                         </div>
@@ -665,6 +683,22 @@ const Register = () => {
                                 </div>
                             )}
 
+                            <div style={{ gridColumn: '1 / -1', padding: '20px', background: '#f8fafc', borderRadius: '12px', marginTop: '10px', border: '1px solid #e2e8f0' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '0.9rem' }}>
+                                    {t('referral_code_optional')}
+                                </label>
+                                <input
+                                    type="text"
+                                    name="referralCodeUsed"
+                                    value={employerData.referralCodeUsed}
+                                    onChange={handleEmployerChange}
+                                    placeholder="e.g. BARK123"
+                                    style={{ width: '100%', padding: '12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '1rem', outline: 'none' }}
+                                />
+                                <p style={{ marginTop: '8px', fontSize: '0.8rem', color: '#64748b' }}>
+                                    {t('referral_bonus_msg')}
+                                </p>
+                            </div>
                         </div>
                     )}
 
@@ -710,7 +744,7 @@ const Register = () => {
         }
       `}</style>
             <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#ccc', marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
-                UI Version: 1.0.7-CACHE-PURGE-REQUIRED
+                UI Version: 1.4.0-FORM_FIX
             </div>
         </div>
     );

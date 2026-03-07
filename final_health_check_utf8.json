@@ -1,0 +1,1 @@
+﻿{"status":"UP","database":{"basic":"OK","deep_table":"OK"},"diagnostics":{"db_user":"postgres.seqeximptkufzdeoprxr","db_protocol":"postgresql:","url_start":"[postgresql://po]","url_end":"[?pgbouncer=true]","using_placeholder_password":false},"timestamp":"2026-02-14T19:00:38.557Z","version":"1.0.6"}

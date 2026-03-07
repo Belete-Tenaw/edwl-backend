@@ -2,43 +2,44 @@ const prisma = require('../utils/prisma');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { logAction } = require('../services/auditService');
+const referralController = require('./referralController');
+const { calculateWorkerRank } = require('../utils/rankLogic');
 
 // =============================
 // HELPERS
 // =============================
-const calculateSeekerTier = (data) => {
-    let points = 0;
-    if (data.nationalIdUrl) points++;
-    if (data.guarantorIdUrl && data.guarantorPhone) points++;
-    if (data.policeClearanceUrl) points++;
-    if (data.healthCertificateUrl) points++;
-
-    if (points >= 4) return 'PLATINUM';
-    if (points === 3) return 'GOLD';
-    if (points === 2) return 'SILVER';
-    return 'BRONZE';
-};
+// Removed local calculateSeekerTier as it's now handled by calculateWorkerRank in utils
 
 // =============================
 // JOB SEEKER REGISTER
 // =============================
-exports.registerJobSeeker = async (req, res) => {
+exports.registerJobSeeker = async (req, res, next) => {
     try {
         const {
             fullName, email, password, phone, gender,
             age, maritalStatus, expectedSalary,
             preferredLocation, preferredArrangement,
-            experienceYears, skills, bio, guarantorPhone
+            experienceYears, skills, bio, guarantorPhone,
+            passwordHint, securityQuestion, securityAnswer,
+            referralCodeUsed
         } = req.body;
 
         if (!password || password.length < 6) {
             return res.status(400).json({ error: "Password must be at least 6 characters long." });
         }
 
+        let formattedPhone = phone;
         if (phone) {
-            const phoneRegex = /^(?:\+251|0)[79]\d{8}$/;
-            if (!phoneRegex.test(phone.replace(/\s+/g, ''))) {
-                return res.status(400).json({ error: "Invalid Ethiopian phone number." });
+            const trimmed = phone.trim().replace(/\s+/g, '');
+            // Simple server-side validation/normalization
+            if (/^(09|07)\d{8}$/.test(trimmed)) {
+                formattedPhone = '+251' + trimmed.substring(1);
+            } else if (/^\+251[79]\d{8}$/.test(trimmed)) {
+                formattedPhone = trimmed;
+            } else if (!/^\+\d{7,15}$/.test(trimmed)) {
+                return res.status(400).json({ error: "Invalid phone number format. Use 09... or +countrycode..." });
+            } else {
+                formattedPhone = trimmed;
             }
         }
 
@@ -66,6 +67,15 @@ exports.registerJobSeeker = async (req, res) => {
             ? req.files['healthCertificateUrl'][0].path.replace(/\\/g, '/')
             : null;
 
+        const videoBioPath = req.files && req.files['videoBio']
+            ? req.files['videoBio'][0].path.replace(/\\/g, '/')
+            : null;
+
+        // Rank Enforcement: Mandatory Bronze requirements
+        if (!photo || !idDoc) {
+            return res.status(400).json({ error: "Profile photo and ID document (Kebele/Passport) are mandatory for registration." });
+        }
+
         const existingSeeker = await prisma.jobSeeker.findUnique({
             where: { email: email || '' }
         });
@@ -74,13 +84,17 @@ exports.registerJobSeeker = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const myReferralCode = await referralController.generateReferralCode(fullName);
 
         const newSeeker = await prisma.jobSeeker.create({
             data: {
                 fullName,
                 email,
-                phone,
+                phone: formattedPhone,
                 password: hashedPassword,
+                passwordHint,
+                securityQuestion,
+                securityAnswer,
                 gender: gender || 'FEMALE',
                 age: parseInt(age) || 20,
                 maritalStatus: maritalStatus || 'SINGLE',
@@ -97,15 +111,24 @@ exports.registerJobSeeker = async (req, res) => {
                 guarantorPhone: guarantorPhone,
                 policeClearanceUrl: policeClr,
                 healthCertificateUrl: healthCert,
-                tier: calculateSeekerTier({
+                videoBio: videoBioPath,
+                tier: calculateWorkerRank({
+                    profilePhoto: photo,
+                    idDocument: idDoc,
                     nationalIdUrl: natId,
                     guarantorIdUrl: guarId,
                     guarantorPhone: guarantorPhone,
                     policeClearanceUrl: policeClr,
                     healthCertificateUrl: healthCert
-                })
+                }),
+                referralCode: myReferralCode
             }
         });
+
+        // Track referral if used
+        if (referralCodeUsed) {
+            await referralController.trackReferral(referralCodeUsed, 'seeker', newSeeker.id);
+        }
 
         res.status(201).json({ message: "Job Seeker registered successfully", userId: newSeeker.id });
 
@@ -114,7 +137,9 @@ exports.registerJobSeeker = async (req, res) => {
 
     } catch (error) {
         console.error("Seeker Registration error:", error);
-        res.status(500).json({ error: error.message || "Registration failed" });
+
+        // Let the global error handler handle the response formatting
+        return next(error);
     }
 };
 
@@ -143,6 +168,15 @@ exports.loginJobSeeker = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        // Just-in-Time Referral Code Generation for existing users
+        if (!seeker.referralCode) {
+            seeker.referralCode = await referralController.generateReferralCode(seeker.fullName);
+            await prisma.jobSeeker.update({
+                where: { id: seeker.id },
+                data: { referralCode: seeker.referralCode }
+            });
+        }
+
         if (!seeker.isActive) {
             return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
         }
@@ -155,7 +189,7 @@ exports.loginJobSeeker = async (req, res) => {
 
         res.status(200).json({
             token,
-            user: { id: seeker.id, name: seeker.fullName, role: 'JOB_SEEKER' }
+            user: { id: seeker.id, name: seeker.fullName, role: 'JOB_SEEKER', referralCode: seeker.referralCode, referralCount: seeker.referralCount }
         });
 
         // Audit Log
@@ -170,22 +204,30 @@ exports.loginJobSeeker = async (req, res) => {
 // =============================
 // EMPLOYER REGISTER
 // =============================
-exports.registerEmployer = async (req, res) => {
+exports.registerEmployer = async (req, res, next) => {
     try {
-        const { contactName, email, password, phone, employerType, address } = req.body;
+        const { contactName, email, password, phone, employerType, address, passwordHint, securityQuestion, securityAnswer, referralCodeUsed } = req.body;
 
         if (!password || password.length < 6) {
             return res.status(400).json({ error: "Password must be at least 6 characters long." });
         }
 
+        let formattedPhone = phone;
         if (phone) {
-            const phoneRegex = /^(?:\+251|0)[79]\d{8}$/;
-            if (!phoneRegex.test(phone.replace(/\s+/g, ''))) {
-                return res.status(400).json({ error: "Invalid Ethiopian phone number." });
+            const trimmed = phone.trim().replace(/\s+/g, '');
+            if (/^(09|07)\d{8}$/.test(trimmed)) {
+                formattedPhone = '+251' + trimmed.substring(1);
+            } else if (/^\+251[79]\d{8}$/.test(trimmed)) {
+                formattedPhone = trimmed;
+            } else if (!/^\+\d{7,15}$/.test(trimmed)) {
+                return res.status(400).json({ error: "Invalid phone number format. Use 09... or +countrycode..." });
+            } else {
+                formattedPhone = trimmed;
             }
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const myReferralCode = await referralController.generateReferralCode(contactName);
 
         const existingEmployer = await prisma.employer.findUnique({ where: { email } });
         if (existingEmployer) {
@@ -196,12 +238,21 @@ exports.registerEmployer = async (req, res) => {
             data: {
                 contactName,
                 email,
-                phone,
+                phone: formattedPhone,
                 password: hashedPassword,
+                passwordHint,
+                securityQuestion,
+                securityAnswer,
                 employerType: employerType || 'HOUSEHOLD',
-                address: address || 'Addis Ababa'
+                address: address || 'Addis Ababa',
+                referralCode: myReferralCode
             }
         });
+
+        // Track referral if used
+        if (referralCodeUsed) {
+            await referralController.trackReferral(referralCodeUsed, 'employer', newEmployer.id);
+        }
 
         res.status(201).json({
             message: "Employer registered successfully",
@@ -213,7 +264,9 @@ exports.registerEmployer = async (req, res) => {
 
     } catch (error) {
         console.error("Employer Registration error:", error);
-        res.status(500).json({ error: error.message || "Registration failed" });
+
+        // Let the global error handler handle the response formatting
+        return next(error);
     }
 };
 
@@ -242,6 +295,15 @@ exports.loginEmployer = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        // Just-in-Time Referral Code Generation for existing users
+        if (!employer.referralCode) {
+            employer.referralCode = await referralController.generateReferralCode(employer.contactName);
+            await prisma.employer.update({
+                where: { id: employer.id },
+                data: { referralCode: employer.referralCode }
+            });
+        }
+
         if (!employer.isActive) {
             return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
         }
@@ -254,7 +316,7 @@ exports.loginEmployer = async (req, res) => {
 
         res.status(200).json({
             token,
-            user: { id: employer.id, name: employer.contactName, role: 'EMPLOYER' }
+            user: { id: employer.id, name: employer.contactName, role: 'EMPLOYER', referralCode: employer.referralCode, referralCount: employer.referralCount }
         });
 
         // Audit Log

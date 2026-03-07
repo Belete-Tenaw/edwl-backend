@@ -1,6 +1,33 @@
 const prisma = require('../utils/prisma');
 const crypto = require('crypto');
 const { logAction } = require('../services/auditService');
+const { auth } = require('../utils/firebaseAdmin');
+
+exports.grantSuperAdminRole = async (req, res) => {
+    try {
+        const { uid } = req.body;
+        if (!uid) {
+            return res.status(400).json({ error: 'UID is required' });
+        }
+
+        // Use Firebase Admin SDK to set the custom claim
+        await auth.setCustomUserClaims(uid, { superAdmin: true });
+
+        // Log this critical action
+        await logAction(
+            'ADMIN_GRANT_SUPERADMIN',
+            req.user.id,
+            'ADMIN',
+            { targetUserId: uid }
+        );
+
+        res.status(200).json({ message: `Success! ${uid} is now a Super Admin.` });
+    } catch (error) {
+        console.error('Error granting superAdmin role:', error);
+        res.status(500).json({ error: 'Failed to assign Super Admin claim.' });
+    }
+};
+
 
 exports.getAllUsers = async (req, res) => {
     try {

@@ -6,6 +6,7 @@ const { authorize, Roles } = require('../middleware/rbac');
 
 const upload = require('../middleware/upload');
 
+router.get('/me/jobs', auth, authorize([Roles.EMPLOYER]), employerController.getMyJobPosts);
 router.get('/:id', auth, employerController.getEmployerProfile);
 router.put('/profile', auth, authorize([Roles.EMPLOYER]), upload.fields([
     { name: 'profilePhoto', maxCount: 1 },

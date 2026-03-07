@@ -29,6 +29,26 @@ body {
   line-height: 1.6;
 }
 
+/* Dual Background Layering for EDWL Logo */
+body::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80vmin;
+  height: 80vmin;
+  max-width: 600px;
+  max-height: 600px;
+  background-image: url('./assets/logo_circular.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.15;
+  z-index: -1;
+  pointer-events: none;
+}
+
 button {
   cursor: pointer;
   border: none;

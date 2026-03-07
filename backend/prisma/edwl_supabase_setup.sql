@@ -16,8 +16,9 @@ END $$;
 
 -- 2. Update JobSeeker Table (Ensure fields exist)
 ALTER TABLE "JobSeeker" 
-ADD COLUMN IF NOT EXISTS "nationalIdFayda" TEXT,
-ADD COLUMN IF NOT EXISTS "guarantorFayda" TEXT,
+ADD COLUMN IF NOT EXISTS "nationalIdUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "guarantorIdUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "guarantorPhone" TEXT,
 ADD COLUMN IF NOT EXISTS "healthCertificateUrl" TEXT,
 ADD COLUMN IF NOT EXISTS "policeClearanceUrl" TEXT;
 
@@ -73,11 +74,12 @@ SELECT
         WHEN (get_current_employer_tier() IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS')) THEN email
         ELSE '********'
     END as email,
-    -- Document Visibility based on cascade
-    CASE WHEN get_current_employer_tier() IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS') THEN "nationalIdFayda" ELSE NULL END as fayda,
-    CASE WHEN get_current_employer_tier() IN ('GOLD_ACCESS', 'PLATINUM_ACCESS') THEN "guarantorFayda" ELSE NULL END as guarantor,
-    CASE WHEN get_current_employer_tier() = 'PLATINUM_ACCESS' THEN "healthCertificateUrl" ELSE NULL END as health,
-    CASE WHEN get_current_employer_tier() = 'PLATINUM_ACCESS' THEN "policeClearanceUrl" ELSE NULL END as police
+    -- Document Visibility based on cascade AND Verification Status
+    CASE WHEN get_current_employer_tier() IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS') AND "verificationStatus" = 'APPROVED' THEN "nationalIdUrl" ELSE NULL END as fayda,
+    CASE WHEN get_current_employer_tier() IN ('GOLD_ACCESS', 'PLATINUM_ACCESS') AND "verificationStatus" = 'APPROVED' THEN "guarantorIdUrl" ELSE NULL END as guarantor,
+    CASE WHEN get_current_employer_tier() IN ('GOLD_ACCESS', 'PLATINUM_ACCESS') AND "verificationStatus" = 'APPROVED' THEN "guarantorPhone" ELSE NULL END as guarantor_phone,
+    CASE WHEN get_current_employer_tier() = 'PLATINUM_ACCESS' AND "verificationStatus" = 'APPROVED' THEN "healthCertificateUrl" ELSE NULL END as health,
+    CASE WHEN get_current_employer_tier() = 'PLATINUM_ACCESS' AND "verificationStatus" = 'APPROVED' THEN "policeClearanceUrl" ELSE NULL END as police
 FROM "JobSeeker";
 
 -- 7. Premium Code Activation RPC
@@ -122,6 +124,7 @@ RETURNS TABLE (
     email TEXT,
     fayda TEXT,
     guarantor TEXT,
+    guarantor_phone TEXT,
     health TEXT,
     police TEXT
 ) AS $$
@@ -146,12 +149,13 @@ BEGIN
             ELSE 'BRONZE'
         END as display_tier,
         CASE WHEN (emp_tier != 'FREE') THEN "preferredLocation" ELSE '********' END as address,
-        CASE WHEN (emp_tier IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS')) THEN phone ELSE '********' END as phone,
-        CASE WHEN (emp_tier IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS')) THEN email ELSE '********' END as email,
-        CASE WHEN emp_tier IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS') THEN "nationalIdFayda" ELSE NULL END as fayda,
-        CASE WHEN emp_tier IN ('GOLD_ACCESS', 'PLATINUM_ACCESS') THEN "guarantorFayda" ELSE NULL END as guarantor,
-        CASE WHEN emp_tier = 'PLATINUM_ACCESS' THEN "healthCertificateUrl" ELSE NULL END as health,
-        CASE WHEN emp_tier = 'PLATINUM_ACCESS' THEN "policeClearanceUrl" ELSE NULL END as police
+        CASE WHEN (emp_tier IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS')) AND "verificationStatus" = 'APPROVED' THEN phone ELSE '********' END as phone,
+        CASE WHEN (emp_tier IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS')) AND "verificationStatus" = 'APPROVED' THEN email ELSE '********' END as email,
+        CASE WHEN emp_tier IN ('SILVER_ACCESS', 'GOLD_ACCESS', 'PLATINUM_ACCESS') AND "verificationStatus" = 'APPROVED' THEN "nationalIdUrl" ELSE NULL END as fayda,
+        CASE WHEN emp_tier IN ('GOLD_ACCESS', 'PLATINUM_ACCESS') AND "verificationStatus" = 'APPROVED' THEN "guarantorIdUrl" ELSE NULL END as guarantor,
+        CASE WHEN emp_tier IN ('GOLD_ACCESS', 'PLATINUM_ACCESS') AND "verificationStatus" = 'APPROVED' THEN "guarantorPhone" ELSE NULL END as guarantor_phone,
+        CASE WHEN emp_tier = 'PLATINUM_ACCESS' AND "verificationStatus" = 'APPROVED' THEN "healthCertificateUrl" ELSE NULL END as health,
+        CASE WHEN emp_tier = 'PLATINUM_ACCESS' AND "verificationStatus" = 'APPROVED' THEN "policeClearanceUrl" ELSE NULL END as police
     FROM "JobSeeker";
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

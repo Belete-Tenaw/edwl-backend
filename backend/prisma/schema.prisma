@@ -114,7 +114,11 @@ model JobSeeker {
   phone                String?              @unique
   email                String?              @unique
   password             String
+  passwordHint         String?
+  securityQuestion     String?
+  securityAnswer       String?
   bio                  String?
+  videoBio             String?
   skills               String[]
   languages            String[]             @default([])
   experienceYears      Int
@@ -149,6 +153,12 @@ model JobSeeker {
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 
+  // Referral System
+  referralCode         String?              @unique
+  referredById         String?              // The ID of the user who referred this user
+  referredByType       String?              // 'seeker' or 'employer'
+  referralCount        Int                  @default(0)
+
   // Relations
   viewLogs             ViewLog[]
   sentMessages         Message[]            @relation("SentByJS")
@@ -160,6 +170,8 @@ model JobSeeker {
   disputes             Dispute[]            @relation("ReportedByJS")
   reportsSent          Report[]             @relation("JSReports")
   reportsReceived      Report[]             @relation("JSReported")
+  reviewsSent          Review[]             @relation("JSReviewsSent")
+  reviewsReceived      Review[]             @relation("JSReviewsReceived")
   auditLogs            AuditLog[]
 
   @@index([tier])
@@ -174,6 +186,9 @@ model Employer {
   phone              String?              @unique
   email              String?              @unique
   password           String
+  passwordHint       String?
+  securityQuestion   String?
+  securityAnswer     String?
   address            String
   familySize         Int?
   profilePhoto       String?
@@ -197,6 +212,12 @@ model Employer {
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 
+  // Referral System
+  referralCode       String?              @unique
+  referredById       String?              // The ID of the user who referred this user
+  referredByType     String?              // 'seeker' or 'employer'
+  referralCount      Int                  @default(0)
+
   // Relations
   jobPosts           JobPost[]
   viewLogs           ViewLog[]
@@ -209,6 +230,8 @@ model Employer {
   disputes           Dispute[]            @relation("ReportedByEmp")
   reportsSent        Report[]             @relation("EmpReports")
   reportsReceived    Report[]             @relation("EmpReported")
+  reviewsSent        Review[]             @relation("EmpReviewsSent")
+  reviewsReceived    Review[]             @relation("EmpReviewsReceived")
   auditLogs          AuditLog[]
   hiringRequirement HiringRequirement?
 
@@ -280,6 +303,10 @@ model ViewLog {
   jobSeeker         JobSeeker? @relation(fields: [jobSeekerId], references: [id])
   employer          Employer?  @relation(fields: [employerId], references: [id])
   targetJobPost     JobPost?   @relation(fields: [targetJobPostId], references: [id])
+
+  @@index([createdAt])
+  @@index([jobSeekerId, createdAt])
+  @@index([employerId, createdAt])
 }
 
 model SubscriptionTier {
@@ -393,6 +420,7 @@ model Contract {
   jobPost        JobPost?       @relation(fields: [jobPostId], references: [id])
   terms          ContractTerm[]
   disputes       Dispute[]
+  reviews        Review[]
 }
 
 model ContractTerm {
@@ -435,6 +463,31 @@ model Report {
   reporterEmp   Employer?  @relation("EmpReports", fields: [reporterEmpId], references: [id])
   reportedJS    JobSeeker? @relation("JSReported", fields: [reportedJSId], references: [id])
   reportedEmp   Employer?  @relation("EmpReported", fields: [reportedEmpId], references: [id])
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  rating        Int
+  comment       String?
+  createdAt     DateTime @default(now())
+
+  // Who is giving the review
+  reviewerJSId  String?
+  reviewerEmpId String?
+  reviewerJS    JobSeeker? @relation("JSReviewsSent", fields: [reviewerJSId], references: [id])
+  reviewerEmp   Employer?  @relation("EmpReviewsSent", fields: [reviewerEmpId], references: [id])
+
+  // Who is receiving the review
+  targetJSId    String?
+  targetEmpId   String?
+  targetJS      JobSeeker? @relation("JSReviewsReceived", fields: [targetJSId], references: [id])
+  targetEmp     Employer?  @relation("EmpReviewsReceived", fields: [targetEmpId], references: [id])
+
+  contractId    String?
+  contract      Contract? @relation(fields: [contractId], references: [id])
+
+  @@index([targetJSId])
+  @@index([targetEmpId])
 }
 
 model Admin {

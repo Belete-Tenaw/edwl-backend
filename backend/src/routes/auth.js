@@ -10,7 +10,8 @@ router.post('/seeker/register', upload.fields([
     { name: 'nationalIdUrl', maxCount: 1 },
     { name: 'guarantorIdUrl', maxCount: 1 },
     { name: 'policeClearanceUrl', maxCount: 1 },
-    { name: 'healthCertificateUrl', maxCount: 1 }
+    { name: 'healthCertificateUrl', maxCount: 1 },
+    { name: 'videoBio', maxCount: 1 }
 ]), authController.registerJobSeeker);
 
 router.post('/seeker/login', authController.loginJobSeeker);

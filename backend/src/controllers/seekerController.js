@@ -1,9 +1,13 @@
 const prisma = require('../utils/prisma');
+const { calculateWorkerRank } = require('../utils/rankLogic');
+
+// Removed local calculateSeekerTier as it's now handled by calculateWorkerRank in utils
 
 const maskPlatinumBadge = (seeker, employerTier) => {
     const maskedSeeker = { ...seeker };
 
-    if (employerTier === 'SILVER' || employerTier === 'FREEMIUM') {
+    // FIX: Using correct EmployerTier enum names (SILVER_ACCESS, etc.)
+    if (employerTier === 'SILVER_ACCESS' || employerTier === 'FREE') {
         // SILVER ACCESS (Base Subscription)
         maskedSeeker.phone = '********';
         maskedSeeker.email = '********';
@@ -18,7 +22,7 @@ const maskPlatinumBadge = (seeker, employerTier) => {
         if (maskedSeeker.badge === 'GOLD' || maskedSeeker.badge === 'PLATINUM') {
             maskedSeeker.badge = 'SILVER';
         }
-    } else if (employerTier === 'GOLD') {
+    } else if (employerTier === 'GOLD_ACCESS') {
         // GOLD ACCESS (Mid-Tier Upgrade)
         maskedSeeker.policeClearance = null;
         maskedSeeker.healthCertificate = null;
@@ -74,13 +78,13 @@ exports.updateProfile = async (req, res) => {
         const id = req.user.id;
         if (req.user.role !== 'JOB_SEEKER') return res.status(403).json({ error: 'Forbidden' });
 
-        const { fullName, bio, skills, experienceYears, expectedSalary, preferredLocation, preferredArrangement } = req.body;
+        const { fullName, bio, skills, experienceYears, expectedSalary, preferredLocation, preferredArrangement, guarantorPhone } = req.body;
 
         const updateData = {
             fullName, bio,
             experienceYears: experienceYears ? parseInt(experienceYears) : undefined,
             expectedSalary: expectedSalary ? parseInt(expectedSalary) : undefined,
-            preferredLocation, preferredArrangement
+            preferredLocation, preferredArrangement, guarantorPhone
         };
 
         if (skills) {
@@ -106,7 +110,42 @@ exports.updateProfile = async (req, res) => {
                 updateData.isVerified = false;
                 updateData.verificationStatus = 'PENDING';
             }
+            if (req.files.nationalIdUrl) {
+                updateData.nationalIdUrl = `uploads/nationalId/${req.files.nationalIdUrl[0].filename}`;
+            }
+            if (req.files.guarantorIdUrl) {
+                updateData.guarantorIdUrl = `uploads/guarantorId/${req.files.guarantorIdUrl[0].filename}`;
+            }
+            if (req.files.policeClearanceUrl) {
+                updateData.policeClearanceUrl = `uploads/policeClearance/${req.files.policeClearanceUrl[0].filename}`;
+            }
+            if (req.files.healthCertificateUrl) {
+                updateData.healthCertificateUrl = `uploads/healthCertificate/${req.files.healthCertificateUrl[0].filename}`;
+            }
         }
+
+        // Fetch current document status for tier calculation
+        const currentSeeker = await prisma.jobSeeker.findUnique({
+            where: { id },
+            select: {
+                nationalIdUrl: true,
+                idDocument: true,
+                profilePhoto: true,
+                guarantorIdUrl: true,
+                guarantorPhone: true,
+                policeClearanceUrl: true,
+                healthCertificateUrl: true
+            }
+        });
+
+        // Merged data for tier calculation
+        const mergedData = {
+            ...currentSeeker,
+            ...updateData
+        };
+
+        // Recalculate Tier using unified logic
+        updateData.tier = calculateWorkerRank(mergedData);
 
         const updated = await prisma.jobSeeker.update({
             where: { id },

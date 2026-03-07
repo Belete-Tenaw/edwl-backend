@@ -6,6 +6,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const keepAlive = require('./utils/keepAlive');
 
 const app = express();
@@ -83,6 +84,7 @@ app.use(helmet({
 // 🧾 MIDDLEWARE
 // ================================
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(compression()); // Compress all textual payload bodies
 app.use(express.json({ limit: '10mb' }));
 
 // ================================
@@ -167,6 +169,7 @@ app.use('/api/hiring', require('./routes/hiringRoutes'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/report', require('./routes/report'));
 app.use('/api/payments', require('./routes/payment'));
+app.use('/api/reviews', require('./routes/reviews'));
 
 // ================================
 // ❌ GLOBAL ERROR HANDLER

@@ -5,6 +5,8 @@ import authService from '../services/authService';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { compressImage } from '../utils/compression';
+import { validateAndFormatPhone } from '../utils/validation';
+import { processVideoBio } from '../utils/videoProcessor';
 
 const EditProfile = () => {
     const { t } = useTranslation();
@@ -84,6 +86,20 @@ const EditProfile = () => {
         }
     };
 
+    const handleVideoChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setSaving(true);
+        try {
+            const processed = await processVideoBio(file);
+            setFormData({ ...formData, videoBioFile: processed.file, videoBioPreview: URL.createObjectURL(processed.file) });
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSkillToggle = (skill) => {
         const currentSkills = [...(formData.skills || [])];
         const index = currentSkills.indexOf(skill);
@@ -116,6 +132,12 @@ const EditProfile = () => {
             if (user.role === 'JOB_SEEKER') {
                 endpoint = '/seekers/profile';
 
+                if (formData.phone) {
+                    const validation = validateAndFormatPhone(formData.phone);
+                    if (!validation.isValid) throw new Error(validation.error);
+                    formData.phone = validation.formatted;
+                }
+
                 let finalSkills = Array.isArray(formData.skills) ? [...formData.skills] : [];
                 if (finalSkills.includes('other') && formData.customSkill) {
                     finalSkills = finalSkills.filter(s => s !== 'other');
@@ -140,6 +162,10 @@ const EditProfile = () => {
                 dataToSend.append('preferredArrangement', formData.preferredArrangement || 'LIVE_IN');
                 dataToSend.append('preferredLocation', formData.preferredLocation);
                 dataToSend.append('bio', formData.bio || '');
+                dataToSend.append('guarantorPhone', formData.guarantorPhone || '');
+                dataToSend.append('passwordHint', formData.passwordHint || '');
+                dataToSend.append('securityQuestion', formData.securityQuestion || '');
+                dataToSend.append('securityAnswer', formData.securityAnswer || '');
 
                 if (formData.profilePhoto instanceof File) {
                     dataToSend.append('profilePhoto', formData.profilePhoto);
@@ -147,12 +173,37 @@ const EditProfile = () => {
                 if (formData.idDocument instanceof File) {
                     dataToSend.append('idDocument', formData.idDocument);
                 }
+                if (formData.nationalIdUrl instanceof File) {
+                    dataToSend.append('nationalIdUrl', formData.nationalIdUrl);
+                    // Explicitly track if this is a Fayda upgrade for rank calculation boost
+                }
+                if (formData.guarantorIdUrl instanceof File) {
+                    dataToSend.append('guarantorIdUrl', formData.guarantorIdUrl);
+                }
+                if (formData.policeClearanceUrl instanceof File) {
+                    dataToSend.append('policeClearanceUrl', formData.policeClearanceUrl);
+                }
+                if (formData.healthCertificateUrl instanceof File) {
+                    dataToSend.append('healthCertificateUrl', formData.healthCertificateUrl);
+                }
+                if (formData.videoBioFile instanceof File) {
+                    dataToSend.append('videoBio', formData.videoBioFile);
+                }
             } else {
                 endpoint = '/employers/profile';
+
+                if (formData.phone) {
+                    const validation = validateAndFormatPhone(formData.phone);
+                    if (!validation.isValid) throw new Error(validation.error);
+                    formData.phone = validation.formatted;
+                }
 
                 dataToSend.append('contactName', formData.contactName);
                 dataToSend.append('phone', formData.phone);
                 dataToSend.append('address', formData.address);
+                dataToSend.append('passwordHint', formData.passwordHint || '');
+                dataToSend.append('securityQuestion', formData.securityQuestion || '');
+                dataToSend.append('securityAnswer', formData.securityAnswer || '');
                 if (formData.familySize) dataToSend.append('familySize', formData.familySize);
 
                 if (formData.profilePhoto instanceof File) {
@@ -314,6 +365,15 @@ const EditProfile = () => {
                                 <label className="label">{t('bio_about_me')}</label>
                                 <textarea className="input" name="bio" value={formData.bio || ''} onChange={handleChange} style={{ minHeight: '100px' }} />
                             </div>
+
+                            <div style={{ gridColumn: '1 / -1' }}>
+                                <label className="label">{t('video_bio')} (Max 15s, 3MB) {t('optional')}</label>
+                                <input type="file" className="input" name="videoBio" accept="video/*" onChange={handleVideoChange} />
+                                {(formData.videoBioPreview || formData.videoBio) && (
+                                    <video src={formData.videoBioPreview || (formData.videoBio?.startsWith('http') ? formData.videoBio : `https://edwl-backend.onrender.com${formData.videoBio}`)} controls style={{ width: '100%', maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
+                                )}
+                            </div>
+
                             <div>
                                 <label className="label">{t('profile_photo')} (Image)</label>
                                 <input type="file" className="input" name="profilePhoto" accept="image/*" onChange={handleFileChange} />
@@ -322,6 +382,24 @@ const EditProfile = () => {
                                 <label className="label">{t('id_document')} (Image)</label>
                                 <input type="file" className="input" name="idDocument" accept="image/*" onChange={handleFileChange} />
                                 <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '5px' }}>{t('re_verify_hint') || "Updating your ID will require re-verification by admin."}</p>
+                            </div>
+
+                            <div style={{ gridColumn: '1 / -1' }}>
+                                <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '20px 0' }} />
+                                <h4 style={{ marginBottom: '15px' }}>{t('account_recovery')}</h4>
+                            </div>
+
+                            <div>
+                                <label className="label">{t('password_hint')} ({t('optional')})</label>
+                                <input className="input" name="passwordHint" value={formData.passwordHint || ''} onChange={handleChange} placeholder={t('hint_placeholder')} />
+                            </div>
+                            <div>
+                                <label className="label">{t('security_question')}</label>
+                                <input className="input" name="securityQuestion" value={formData.securityQuestion || ''} onChange={handleChange} placeholder="e.g. Your first pet?" />
+                            </div>
+                            <div>
+                                <label className="label">{t('security_answer')}</label>
+                                <input className="input" name="securityAnswer" value={formData.securityAnswer || ''} onChange={handleChange} type="password" />
                             </div>
                         </div>
                     ) : (
@@ -352,6 +430,24 @@ const EditProfile = () => {
                                 <label className="label">{t('id_document')} (Image)</label>
                                 <input type="file" className="input" name="idDocument" accept="image/*" onChange={handleFileChange} />
                                 <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '5px' }}>{t('re_verify_hint') || "Updating your ID will require re-verification by admin."}</p>
+                            </div>
+
+                            <div style={{ gridColumn: '1 / -1' }}>
+                                <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '20px 0' }} />
+                                <h4 style={{ marginBottom: '15px' }}>{t('account_recovery')}</h4>
+                            </div>
+
+                            <div>
+                                <label className="label">{t('password_hint')} ({t('optional')})</label>
+                                <input className="input" name="passwordHint" value={formData.passwordHint || ''} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className="label">{t('security_question')}</label>
+                                <input className="input" name="securityQuestion" value={formData.securityQuestion || ''} onChange={handleChange} />
+                            </div>
+                            <div>
+                                <label className="label">{t('security_answer')}</label>
+                                <input className="input" name="securityAnswer" value={formData.securityAnswer || ''} onChange={handleChange} type="password" />
                             </div>
                         </div>
                     )}

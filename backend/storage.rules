@@ -1,17 +1,33 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      // Allow read/write for verified users, but restrict sensitive paths
-      allow read, write: if request.auth != null;
+    
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.superAdmin == true;
+    }
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
     
-    // Platinum-Only Folders: Police and Health documents
-    match /documents/{userId}/{docType}/{fileName} {
-      allow read: if request.auth != null && 
-                  (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'PLATINUM' || 
-                   request.auth.uid == userId);
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // Context-Aware Validation
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') 
+             && request.resource.size < 5 * 1024 * 1024; // 5MB limit
+    }
+    function isValidVideo() {
+      return request.resource.contentType.matches('video/.*'); // 50MB restriction removed
+    }
+
+    // User Media Sandboxing
+    match /users/{userId}/{mediaType}/{fileName} {
+      allow read: if isOwner(userId) || isSuperAdmin();
+      
+      allow write: if isSuperAdmin() || (isOwner(userId) && (
+        (mediaType == 'images' && isValidImage()) ||
+        (mediaType == 'videos' && isValidVideo())
+      ));
+      
+      allow delete: if isOwner(userId) || isSuperAdmin();
     }
   }
 }

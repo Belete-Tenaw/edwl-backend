@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import authService from '../../services/authService';
-import { Briefcase, MapPin, DollarSign, Star, User, Settings, Shield } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Star, User, Settings, Shield, UserPlus, Copy, Check } from 'lucide-react';
 import JobDetailModal from '../../components/JobDetailModal';
+import RankProgress from '../../components/RankProgress';
 
 const SeekerDashboard = () => {
     const { t } = useTranslation();
@@ -14,6 +15,15 @@ const SeekerDashboard = () => {
     const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
     const navigate = useNavigate();
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyCode = () => {
+        if (user?.referralCode) {
+            navigator.clipboard.writeText(user.referralCode);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -61,6 +71,20 @@ const SeekerDashboard = () => {
                             </div>
                             <h3>{user?.fullName}</h3>
                             <p style={{ color: '#666', fontSize: '0.9rem' }}>{user?.role === 'JOB_SEEKER' ? t('worker') : user?.role}</p>
+
+                            {/* Profile Completeness */}
+                            <div style={{ padding: '20px', textAlign: 'left' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                                    <span>{t('profile_completeness') || 'Profile Completeness'}</span>
+                                    <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>75%</span>
+                                </div>
+                                <div style={{ height: '8px', background: '#eee', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div style={{ width: '75%', height: '100%', background: 'linear-gradient(90deg, var(--primary) 0%, #ff8c00 100%)' }}></div>
+                                </div>
+                                <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '8px' }}>
+                                    {t('completeness_tip') || 'Add a video bio to reach 100% and get verified!'}
+                                </p>
+                            </div>
                         </div>
                         <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '15px 0' }} />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -69,11 +93,45 @@ const SeekerDashboard = () => {
                             </Link>
                         </div>
                     </div>
+
+                    {/* Referral Card */}
+                    <div className="card" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', border: '1px solid #bbf7d0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                            <UserPlus size={20} color="#15803d" />
+                            <h3 style={{ fontSize: '1rem', color: '#166534', margin: 0 }}>{t('referral_program') || 'Referral Program'}</h3>
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: '#166534', marginBottom: '15px' }}>
+                            {t('referral_bonus_msg')}
+                        </p>
+
+                        <div style={{ background: 'white', padding: '10px', borderRadius: '8px', border: '1px dashed #22c55e', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ fontWeight: 'bold', letterSpacing: '1px', color: '#111' }}>{user?.referralCode || 'NOT_FOUND'}</span>
+                            <button
+                                onClick={handleCopyCode}
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#15803d', display: 'flex', alignItems: 'center' }}
+                            >
+                                {copied ? <Check size={16} /> : <Copy size={16} />}
+                            </button>
+                        </div>
+
+                        <div style={{ fontSize: '0.75rem', color: '#166534' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <span>{t('successful_referrals') || 'Invites'}:</span>
+                                <span style={{ fontWeight: 'bold' }}>{user?.referralCount || 0} / 3</span>
+                            </div>
+                            <div style={{ height: '6px', background: 'rgba(21, 128, 61, 0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{ width: `${Math.min(((user?.referralCount || 0) / 3) * 100, 100)}%`, height: '100%', background: '#22c55e' }}></div>
+                            </div>
+                        </div>
+                    </div>
                 </aside>
 
                 {/* Main Content */}
                 <main>
-                    <h2 style={{ marginBottom: '20px' }}>{t('jobs')}</h2>
+                    {/* Gamified Rank Progress */}
+                    <RankProgress user={user} />
+
+                    <h2 style={{ marginBottom: '20px' }}>{t('recommended_jobs') || 'Recommended for You'}</h2>
                     {error && <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '20px' }}>{error}</div>}
                     {loading ? (
                         <p>{t('loading_jobs')}</p>

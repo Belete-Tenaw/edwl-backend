@@ -34,7 +34,20 @@ exports.updateProfile = async (req, res) => {
 
         res.json(updated);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getMyJobPosts = async (req, res) => {
+    try {
+        const prisma = require('../utils/prisma');
+        const jobs = await prisma.jobPost.findMany({
+            where: { employerId: req.user.id },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(jobs);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 

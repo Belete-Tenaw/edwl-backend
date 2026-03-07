@@ -10,5 +10,6 @@ router.post('/status', auth, authorize([Roles.ADMIN]), adminController.updateAcc
 router.post('/generate-code', auth, authorize([Roles.ADMIN]), adminController.generateCode);
 router.post('/activate-subscription', auth, authorize([Roles.ADMIN]), adminController.activateSubscription);
 router.delete('/user/:type/:id', auth, authorize([Roles.ADMIN]), adminController.deleteUser);
+router.post('/grant-superadmin', auth, authorize([Roles.ADMIN]), adminController.grantSuperAdminRole);
 
 module.exports = router;
