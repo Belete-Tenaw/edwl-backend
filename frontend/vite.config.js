@@ -8,16 +8,31 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+            injectRegister: 'auto',
+            workbox: {
+                cleanupOutdatedCaches: true,
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,json,vue,txt,woff2}']
+            },
+            includeAssets: ['logo_circular.png'],
             manifest: {
                 name: 'Ethio Domestic Workers Link',
                 short_name: 'EDWL',
-                description: 'Connecting Quality Help to Your Home',
+                description: 'Connecting Quality Help to Your Home in Ethiopia',
                 theme_color: '#ff6600',
+                background_color: '#ffffff',
+                display: 'standalone',
+                orientation: 'portrait',
+                scope: '/',
+                start_url: '/',
                 icons: [
                     {
                         src: 'logo_circular.png',
                         sizes: '192x192',
+                        type: 'image/png'
+                    },
+                    {
+                        src: 'logo_circular.png',
+                        sizes: '512x512',
                         type: 'image/png'
                     },
                     {

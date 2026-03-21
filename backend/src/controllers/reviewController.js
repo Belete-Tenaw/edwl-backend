@@ -21,6 +21,23 @@ exports.createReview = async (req, res) => {
             contractId
         };
 
+        // --- Verified Hire Logic ---
+        if (contractId) {
+            const contract = await prisma.contract.findUnique({
+                where: { id: contractId }
+            });
+
+            if (contract && contract.status === 'COMPLETED') {
+                // Verify the reviewer was part of this contract
+                const isJSReviewer = reviewerRole === 'seeker' && contract.jobSeekerId === reviewerId;
+                const isEmpReviewer = reviewerRole === 'employer' && contract.employerId === reviewerId;
+
+                if (isJSReviewer || isEmpReviewer) {
+                    data.isVerified = true;
+                }
+            }
+        }
+
         // Set reviewer
         if (reviewerRole === 'seeker') {
             data.reviewerJSId = reviewerId;
@@ -37,7 +54,10 @@ exports.createReview = async (req, res) => {
 
         const newReview = await prisma.review.create({ data });
 
-        res.status(201).json({ message: "Review submitted successfully!", review: newReview });
+        res.status(201).json({ 
+            message: "Review submitted successfully!", 
+            review: newReview 
+        });
     } catch (error) {
         console.error("Error creating review:", error);
         res.status(500).json({ error: "Failed to submit review." });

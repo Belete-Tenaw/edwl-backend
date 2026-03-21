@@ -6,11 +6,9 @@
             "**/.*",
             "**/node_modules/**"
         ],
+        "cleanUrls": true,
+        "trailingSlash": false,
         "rewrites": [
-            {
-                "source": "/api/**",
-                "destination": "https://edwl-backend.onrender.com/api/**"
-            },
             {
                 "source": "**",
                 "destination": "/index.html"

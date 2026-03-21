@@ -1,7 +1,9 @@
 const prisma = require('../utils/prisma');
 const crypto = require('crypto');
 const { logAction } = require('../services/auditService');
+const { sendSMSAlert } = require('../services/notificationService');
 const { auth } = require('../utils/firebaseAdmin');
+const telegramService = require('../services/telegramService');
 
 exports.grantSuperAdminRole = async (req, res) => {
     try {
@@ -37,14 +39,24 @@ exports.getAllUsers = async (req, res) => {
                 isVerified: true, verificationStatus: true, tier: true, badge: true, createdAt: true,
                 profilePhoto: true, idDocument: true, isActive: true,
                 nationalIdUrl: true, policeClearanceUrl: true, healthCertificateUrl: true,
-                guarantorIdUrl: true, guarantorPhone: true
+                guarantorIdUrl: true, guarantorPhone: true,
+                verificationRequests: {
+                    where: { status: 'PENDING' },
+                    orderBy: { submittedAt: 'desc' },
+                    take: 1
+                }
             }
         });
         const employers = await prisma.employer.findMany({
             select: {
                 id: true, contactName: true, phone: true, email: true,
                 isVerified: true, verificationStatus: true, tier: true, badge: true, createdAt: true,
-                profilePhoto: true, idDocument: true, isActive: true
+                profilePhoto: true, idDocument: true, isActive: true,
+                verificationRequests: {
+                    where: { status: 'PENDING' },
+                    orderBy: { submittedAt: 'desc' },
+                    take: 1
+                }
             }
         });
         res.json({ seekers, employers });
@@ -53,47 +65,92 @@ exports.getAllUsers = async (req, res) => {
     }
 };
 
+exports.getPendingVerifications = async (req, res) => {
+    try {
+        const { getSignedUrlForFile } = require('../services/firebaseStorageService');
+
+        const pendingRequests = await prisma.verificationRequest.findMany({
+            where: { status: 'PENDING' },
+            include: {
+                jobSeeker: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        tier: true,
+                        phone: true,
+                        idDocument: true,
+                        nationalIdUrl: true,
+                        policeClearanceUrl: true,
+                        healthCertificateUrl: true,
+                        guarantorIdUrl: true
+                    }
+                },
+                employer: {
+                    select: {
+                        id: true,
+                        contactName: true,
+                        tier: true,
+                        phone: true,
+                        idDocument: true
+                    }
+                }
+            },
+            orderBy: { submittedAt: 'asc' }
+        });
+
+        // Enrich with short-lived Signed URLs (10 minutes) for Admin viewing
+        const enrichedRequests = await Promise.all(pendingRequests.map(async (req) => {
+            const enrichedReq = { ...req };
+            const user = req.jobSeeker || req.employer;
+
+            if (user) {
+                // Generate secure Signed URLs for private documents
+                if (user.idDocument) user.idDocumentUrl = await getSignedUrlForFile(user.idDocument, 10);
+                if (user.nationalIdUrl) user.nationalIdUrl_signed = await getSignedUrlForFile(user.nationalIdUrl, 10);
+                if (user.policeClearanceUrl) user.policeClearanceUrl_signed = await getSignedUrlForFile(user.policeClearanceUrl, 10);
+                if (user.healthCertificateUrl) user.healthCertificateUrl_signed = await getSignedUrlForFile(user.healthCertificateUrl, 10);
+                if (user.guarantorIdUrl) user.guarantorIdUrl_signed = await getSignedUrlForFile(user.guarantorIdUrl, 10);
+            }
+            return enrichedReq;
+        }));
+
+        res.json(enrichedRequests);
+    } catch (error) {
+        console.error('Error fetching pending verifications:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 exports.verifyUser = async (req, res) => {
     try {
-        const { id, type, status, notes, badge } = req.body; // status: APPROVED, REJECTED, PENDING; badge: SILVER, GOLD, PLATINUM
+        const { requestId, status, tier, reason } = req.body; 
+        const { processVerificationRequest } = require('../services/verificationService');
 
-        let priorityWeight = 0;
-        if (status === 'APPROVED' && type === 'seeker') {
-            if (badge === 'PLATINUM') priorityWeight = 100;
-            else if (badge === 'GOLD') priorityWeight = 50;
-            else if (badge === 'SILVER') priorityWeight = 10;
+        if (!requestId || !status) {
+            return res.status(400).json({ error: 'Missing required fields (requestId, status)' });
         }
 
-        let updated;
-        if (type === 'seeker') {
-            updated = await prisma.jobSeeker.update({
-                where: { id },
-                data: {
-                    verificationStatus: status,
-                    isVerified: status === 'APPROVED',
-                    badge: status === 'APPROVED' ? (badge || 'STANDARD') : 'STANDARD',
-                    priorityWeight
-                }
-            });
-        } else {
-            updated = await prisma.employer.update({
-                where: { id },
-                data: {
-                    verificationStatus: status,
-                    isVerified: status === 'APPROVED'
-                }
-            });
-        }
-
-        await logAction(
-            'ADMIN_VERIFY_USER',
+        const result = await processVerificationRequest(
             req.user.id,
-            'ADMIN',
-            { targetUserId: id, targetUserType: type, status, notes, badge, priorityWeight }
+            requestId,
+            status,
+            tier,
+            reason
         );
 
-        res.json({ message: `User verification status updated to ${status}`, user: { id: updated.id, status: updated.verificationStatus, badge: updated.badge } });
+        // Telegram Notification for Seeker Rank Upgrades (Keep this part in controller)
+        if (result.targetType === 'SEEKER' && status === 'APPROVED') {
+            const updated = await prisma.jobSeeker.findUnique({ where: { id: result.targetUserId }, select: { badge: true, telegramChatId: true }});
+            if (updated && updated.telegramChatId) {
+                const badgeName = updated.badge || 'STANDARD';
+                const message = `🎉 <b>Congratulation!</b>\n\nYour <b>${badgeName}</b> verification has been approved! Your profile is now more visible to employers.\n\nመልካም ዜና! የእርስዎ <b>${badgeName}</b> ማዕረግ ጸድቋል። አሁን ፕሮፋይልዎ ለአሰሪዎች በበለጠ ይታያል!`;
+                await telegramService.sendMessage(updated.telegramChatId, message);
+            }
+        }
+
+        res.json({ message: `Verification request ${status} successfully.`, result });
     } catch (error) {
+        console.error("verifyUser Admin Error:", error);
         res.status(400).json({ error: error.message });
     }
 };
@@ -170,9 +227,9 @@ exports.generateCode = async (req, res) => {
     }
 };
 
-exports.activateSubscription = async (req, res) => {
+exports.activatePremiumCode = async (req, res) => {
     try {
-        const { code, userId, userType, days } = req.body;
+        const { code, userId, targetType, days } = req.body;
 
         const subCode = await prisma.subscriptionCode.findUnique({
             where: { code }
@@ -185,21 +242,21 @@ exports.activateSubscription = async (req, res) => {
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + parseInt(days));
 
-        if (userType === 'JOB_SEEKER') {
+        if (targetType === 'JOB_SEEKER') {
             await prisma.jobSeeker.update({
                 where: { id: userId },
-                data: { tier: 'SILVER', subscriptionExpiry: expiryDate }
+                data: { tier: 'SILVER', subscriptionExpiry: expiryDate, premiumCode: code, isSubscribed: true }
             });
         } else {
             await prisma.employer.update({
                 where: { id: userId },
-                data: { tier: 'SILVER_ACCESS', subscriptionExpiry: expiryDate }
+                data: { tier: 'SILVER_ACCESS', subscriptionExpiry: expiryDate, premiumCode: code, isSubscribed: true }
             });
         }
 
         await prisma.subscriptionCode.update({
             where: { code },
-            data: { status: 'USED', assignedTo: userId, userType }
+            data: { status: 'USED', assignedTo: userId, userType: targetType }
         });
 
         // Audit Log
@@ -207,10 +264,23 @@ exports.activateSubscription = async (req, res) => {
             'ADMIN_MANUAL_ACTIVATE',
             req.user.id,
             'ADMIN',
-            { targetUserId: userId, targetUserType: userType, code, days }
+            { targetUserId: userId, targetUserType: targetType, code, days }
         );
 
-        res.json({ message: 'Subscription activated successfully', expiryDate });
+        // SMS Alert for Premium Activation
+        if (targetType === 'JOB_SEEKER') {
+            const seeker = await prisma.jobSeeker.findUnique({ where: { id: userId }, select: { phone: true } });
+            if (seeker && seeker.phone) {
+                sendSMSAlert(seeker.phone, `🎉 Your Premium Access has been activated! Valid for ${days} days. Thank you for using EDWL.`);
+            }
+        } else {
+            const employer = await prisma.employer.findUnique({ where: { id: userId }, select: { phone: true } });
+            if (employer && employer.phone) {
+                sendSMSAlert(employer.phone, `🎉 Your Premium Access has been activated! Valid for ${days} days. Thank you for using EDWL.`);
+            }
+        }
+
+        res.json({ message: 'Premium Access activated successfully', expiryDate, isSubscribed: true });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
@@ -242,5 +312,89 @@ exports.deleteUser = async (req, res) => {
         res.json({ message: 'User deleted' });
     } catch (error) {
         res.status(400).json({ error: error.message });
+    }
+};
+exports.getAdminStats = async (req, res) => {
+    try {
+        const [
+            totalSeekers,
+            approvedSeekers,
+            totalEmployers,
+            premiumEmployers,
+            totalJobs,
+            completedVerifications,
+            demandGroups,
+            supplyGroups
+        ] = await Promise.all([
+            prisma.jobSeeker.count(),
+            prisma.jobSeeker.count({ where: { verificationStatus: 'APPROVED' } }),
+            prisma.employer.count(),
+            prisma.employer.count({ where: { tier: { not: 'FREE' } } }),
+            prisma.jobPost.count(),
+            prisma.verificationRequest.findMany({
+                where: { status: 'APPROVED' },
+                select: { submittedAt: true, reviewedAt: true }
+            }),
+            prisma.jobPost.groupBy({
+                by: ['locationWoreda'],
+                _count: { id: true },
+                where: { locationWoreda: { not: null } }
+            }),
+            prisma.jobSeeker.groupBy({
+                by: ['locationWoreda'],
+                _count: { id: true },
+                where: { verificationStatus: 'APPROVED', locationWoreda: { not: null } }
+            })
+        ]);
+
+        // Calculate Heatmap (Demand vs Supply)
+        const heatmap = demandGroups.map(d => {
+            const supply = supplyGroups.find(s => s.locationWoreda === d.locationWoreda);
+            return {
+                woreda: d.locationWoreda,
+                demand: d._count.id,
+                supply: supply ? supply._count.id : 0,
+                shortage: d._count.id - (supply ? supply._count.id : 0)
+            };
+        }).sort((a, b) => b.shortage - a.shortage);
+
+        // Calculate Verification Velocity (Average hours)
+        let avgVelocityHours = 0;
+        if (completedVerifications.length > 0) {
+            const totalDuration = completedVerifications.reduce((acc, curr) => {
+                if (curr.reviewedAt && curr.submittedAt) {
+                    return acc + (new Date(curr.reviewedAt) - new Date(curr.submittedAt));
+                }
+                return acc;
+            }, 0);
+            avgVelocityHours = (totalDuration / completedVerifications.length) / (1000 * 60 * 60);
+        }
+
+        // Liquidity Ratio (Jobs per Approved Seeker)
+        const liquidityRatio = approvedSeekers > 0 ? (totalJobs / approvedSeekers).toFixed(2) : 0;
+
+        // Conversion Rate (Premium Employers %)
+        const conversionRate = totalEmployers > 0 ? ((premiumEmployers / totalEmployers) * 100).toFixed(1) : 0;
+
+        res.json({
+            metrics: {
+                verificationVelocity: avgVelocityHours.toFixed(1), // in hours
+                liquidityRatio,
+                conversionRate,
+                seedingProgress: approvedSeekers, // Target is 50
+                targetSeeding: 50,
+                heatmap: heatmap.slice(0, 5) // Top 5 shortages
+            },
+            counts: {
+                seekers: totalSeekers,
+                approvedSeekers,
+                employers: totalEmployers,
+                premiumEmployers,
+                jobs: totalJobs
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching admin stats:', error);
+        res.status(500).json({ error: 'Failed to fetch analytics' });
     }
 };

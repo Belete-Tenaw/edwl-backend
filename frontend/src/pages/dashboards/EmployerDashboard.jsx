@@ -19,6 +19,9 @@ const EmployerDashboard = () => {
     const [selectedJobForMatches, setSelectedJobForMatches] = useState(null);
     const [matches, setMatches] = useState([]);
     const [copied, setCopied] = useState(false);
+    const [premiumCode, setPremiumCode] = useState('');
+    const [redeemStatus, setRedeemStatus] = useState({ loading: false, error: null, success: null });
+    const [pendingVerification, setPendingVerification] = useState(false);
 
     const handleCopyCode = () => {
         if (user?.referralCode) {
@@ -31,12 +34,16 @@ const EmployerDashboard = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const [workersRes, jobsRes] = await Promise.all([
+                const [workersRes, jobsRes, profileRes] = await Promise.all([
                     api.get('/seekers'),
-                    api.get('/employers/me/jobs') // Need to ensure this exists or use general with filter
+                    api.get('/employers/me/jobs'),
+                    api.get(`/employers/${user.id}`)
                 ]);
                 setWorkers(workersRes.data);
                 setMyJobs(jobsRes.data || []);
+                if (profileRes.data.verificationStatus === 'PENDING') {
+                    setPendingVerification(true);
+                }
             } catch (err) {
                 console.error("Failed to fetch dashboard data", err);
                 setError(t('failed_to_load_data') || 'Failed to load data. Please refresh.');
@@ -66,6 +73,25 @@ const EmployerDashboard = () => {
         setShowJobModal(false);
     };
 
+    const handleRedeemCode = async () => {
+        if (!premiumCode.trim()) return;
+        setRedeemStatus({ loading: true, error: null, success: null });
+        try {
+            const res = await api.post('/employers/redeem-code', { code: premiumCode });
+            setRedeemStatus({ loading: false, error: null, success: res.data.message });
+            setPremiumCode('');
+            // Update local user state
+            const updatedUser = { ...user, tier: res.data.employer.tier, subscriptionExpiry: res.data.employer.subscriptionExpiry };
+            setUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+            // Clear success message after 5 seconds
+            setTimeout(() => setRedeemStatus(prev => ({ ...prev, success: null })), 5000);
+        } catch (err) {
+            console.error("Redeem error:", err);
+            setRedeemStatus({ loading: false, error: err.response?.data?.error || 'Failed to redeem code', success: null });
+        }
+    };
 
     return (
         <div className="container" style={{ padding: '40px 20px' }}>
@@ -96,13 +122,19 @@ const EmployerDashboard = () => {
             {error && <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '10px', borderRadius: '8px', marginBottom: '20px' }}>{error}</div>}
 
             {/* Tier Status Alert */}
-            {user?.tier === 'FREE' && (
+            {user?.tier === 'FREE' && !pendingVerification && (
                 <div style={{ background: 'linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%)', border: '1px solid #f59e0b', padding: '15px', borderRadius: '12px', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <h4 style={{ color: '#92400e', marginBottom: '5px' }}>✨ {t('upgrade_cta_title') || 'Unlock Elite Workers'}</h4>
                         <p style={{ color: '#b45309', fontSize: '0.9rem', margin: 0 }}>{t('upgrade_cta_msg') || 'Platinum and Gold workers are hidden from Free accounts. Upgrade to Platinum Access to see the best matches.'}</p>
                     </div>
                     <button className="btn-primary" onClick={() => navigate('/pricing')}>{t('see_plans')}</button>
+                </div>
+            )}
+            {pendingVerification && (
+                <div style={{ background: '#eff6ff', padding: '15px 25px', borderRadius: '12px', border: '1px solid #3b82f6', marginBottom: '30px' }}>
+                    <p style={{ color: '#1e40af', fontWeight: 'bold', marginBottom: '5px' }}>⏳ {t('verification_pending_title') || 'Verification in Progress'}</p>
+                    <p style={{ color: '#60a5fa', fontSize: '0.85rem', margin: 0 }}>{t('verification_pending_msg') || 'Our admins are reviewing your documents/receipt. This usually takes 2-4 hours.'}</p>
                 </div>
             )}
 
@@ -155,6 +187,51 @@ const EmployerDashboard = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Redeem Premium Code Card */}
+                    <div className="card" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', border: '1px solid #cbd5e1', marginTop: '30px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                            <Shield size={20} color="#0f172a" />
+                            <h3 style={{ fontSize: '1rem', color: '#0f172a', margin: 0 }}>Redeem Premium Code</h3>
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: '#475569', marginBottom: '15px' }}>
+                            Enter your activation code to unlock Platinum/Gold access or extend your subscription time.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                            <input
+                                type="text"
+                                placeholder="e.g. PLAT-X9Y2"
+                                value={premiumCode}
+                                onChange={(e) => setPremiumCode(e.target.value.toUpperCase())}
+                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', textTransform: 'uppercase' }}
+                            />
+                            <button
+                                onClick={handleRedeemCode}
+                                disabled={redeemStatus.loading || !premiumCode.trim()}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    background: premiumCode.trim() ? '#0f172a' : '#94a3b8',
+                                    color: 'white',
+                                    border: 'none',
+                                    cursor: premiumCode.trim() ? 'pointer' : 'not-allowed',
+                                    fontWeight: 'bold',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {redeemStatus.loading ? 'Redeeming...' : 'Apply Code'}
+                            </button>
+                        </div>
+
+                        {redeemStatus.error && (
+                            <p style={{ fontSize: '0.8rem', color: '#ef4444', marginTop: '10px', background: '#fef2f2', padding: '8px', borderRadius: '6px' }}>{redeemStatus.error}</p>
+                        )}
+                        {redeemStatus.success && (
+                            <p style={{ fontSize: '0.8rem', color: '#10b981', marginTop: '10px', background: '#ecfdf5', padding: '8px', borderRadius: '6px' }}>{redeemStatus.success}</p>
+                        )}
+                    </div>
                 </aside>
 
                 <main>
@@ -178,9 +255,29 @@ const EmployerDashboard = () => {
                                     <div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{worker.is_visible === false ? 'Hidden Profile' : (worker.fullName || worker.full_name)}</h3>
-                                            {(worker.badge === 'PLATINUM' || worker.tier === 'PLATINUM') && (
+                                            {(worker.badge === 'PLATINUM' || worker.tier === 'PLATINUM' || worker.display_tier === 'PLATINUM') && (
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '3px', background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold' }}>
-                                                    <Shield size={10} fill="white" /> {t('platinum')}
+                                                    <Shield size={10} fill="white" /> PLATINUM
+                                                </div>
+                                            )}
+                                            {(worker.nationalIdUrl || worker.national_id_url) && (
+                                                <div title="Fayda ID Verified" style={{ display: 'flex', alignItems: 'center', gap: '3px', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold', border: '1px solid #bbf7d0' }}>
+                                                    <Check size={10} /> FAYDA
+                                                </div>
+                                            )}
+                                            {(worker.policeClearanceUrl || worker.police_clearance_url) && (
+                                                <div title="Police Clearance Verified" style={{ display: 'flex', alignItems: 'center', gap: '3px', background: '#f0f9ff', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold', border: '1px solid #bae6fd' }}>
+                                                    <Activity size={10} /> POLICE
+                                                </div>
+                                            )}
+                                            {worker.match_score > 0 && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#dcfce7', color: '#15803d', padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid #bbf7d0' }}>
+                                                    🎯 {worker.match_score}% Match
+                                                </div>
+                                            )}
+                                            {(worker.isFeatured || worker.s_featured > 0) && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fff7ed', color: '#c2410c', padding: '3px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold', border: '1px solid #ffedd5' }}>
+                                                    ⭐ {t('featured') || 'Featured'}
                                                 </div>
                                             )}
                                         </div>

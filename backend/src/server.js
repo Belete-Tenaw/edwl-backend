@@ -1,5 +1,7 @@
 console.log('Starting server.js...');
 require('dotenv').config();
+// Initialize Telegram Bot Listener (Non-blocking)
+require('./services/telegramBot');
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -9,9 +11,41 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const keepAlive = require('./utils/keepAlive');
 
+// Initialize Cron Jobs
+require('./jobs/automationJobs');
+
 const app = express();
 // Google Cloud Run sets the PORT variable automatically to 8080
 const PORT = process.env.PORT || 8080;
+
+// ================================
+// 🔌 SOCKET.IO SETUP
+// ================================
+const http = require('http');
+const { Server } = require('socket.io');
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*", // Adjust for production security if needed
+    methods: ["GET", "POST"]
+  }
+});
+
+// Store io in app for access in controllers
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log('👤 User connected:', socket.id);
+
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`📡 User ${userId} joined their private room`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('👤 User disconnected');
+  });
+});
 
 // Start Keep-Alive (Zero-Cost Move)
 // if (process.env.NODE_ENV === 'production' && process.env.BASE_URL) {
@@ -168,8 +202,10 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/hiring', require('./routes/hiringRoutes'));
 app.use('/api/messages', require('./routes/messages'));
 app.use('/api/report', require('./routes/report'));
+app.use('/api/documents', require('./routes/documents'));
 app.use('/api/payments', require('./routes/payment'));
 app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/safety', require('./routes/safety'));
 
 // ================================
 // ❌ GLOBAL ERROR HANDLER
@@ -179,8 +215,8 @@ app.use(require('./middleware/errorHandler'));
 // ================================
 // 🚀 SERVER START
 // ================================
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ EDWL Backend is live on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ EDWL Backend is live on port ${PORT} (with WebSockets)`);
 });
 
 module.exports = app;

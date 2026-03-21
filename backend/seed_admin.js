@@ -2,8 +2,8 @@ const prisma = require('./src/utils/prisma');
 const bcrypt = require('bcrypt');
 
 async function main() {
-    const adminEmail = process.argv[2] || 'admin';
-    const adminPassword = process.argv[3] || 'admin123';
+    const adminEmail = process.argv[2] || 'EDWL2026';
+    const adminPassword = process.argv[3] || 'TwaBel2026';
 
     console.log(`Creating admin user: ${adminEmail}`);
 

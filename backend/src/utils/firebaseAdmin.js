@@ -1,16 +1,64 @@
 const admin = require('firebase-admin');
 
-// Ensure you have generated a service account key from the Firebase Console
-// (Project Settings > Service accounts > Generate new private key)
-// and saved it as backend/serviceAccountKey.json
-const serviceAccount = require('../../serviceAccountKey.json');
+function initialize() {
+    if (admin.apps.length > 0) return;
+    const fs = require('fs');
+    const path = require('path');
+    const serviceAccountPath = path.join(__dirname, '../../serviceAccountKey.json');
+    if (fs.existsSync(serviceAccountPath)) {
+        try {
+            const serviceAccount = require(serviceAccountPath);
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+                storageBucket: 'edwl-ethio-domesticworkerslink.firebasestorage.app'
+            });
+            console.log('[FirebaseAdmin] ✅ Success: Firebase initialized.');
+        } catch (e) {
+            console.error('[FirebaseAdmin] ❌ Error:', e.message);
+        }
+    } else {
+        console.warn('[FirebaseAdmin] ⚠️ Using Mock Services: no key found.');
+    }
+}
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: 'edwl-ethio-domesticworkerslink.firebasestorage.app'
-});
+const authMock = {
+    setCustomUserClaims: async (uid, claims) => {
+        console.log('[Mock 🔥] Claims set for', uid);
+    },
+    getUser: async (uid) => {
+        return { uid, email: 'mock@edwl.com' };
+    },
+    auth: () => authMock // Handle cases where admin.auth() is called on the object
+};
 
-const auth = admin.auth();
-const storage = admin.storage();
+const storageMock = {
+    bucket: () => ({
+        file: () => ({
+            save: async () => { },
+            getSignedUrl: async () => ['https://mock-url.com']
+        })
+    })
+};
+
+const auth = {
+    setCustomUserClaims: async (...args) => {
+        initialize();
+        const service = admin.apps.length > 0 ? admin.auth() : authMock;
+        return service.setCustomUserClaims(...args);
+    },
+    getUser: async (...args) => {
+        initialize();
+        const service = admin.apps.length > 0 ? admin.auth() : authMock;
+        return service.getUser(...args);
+    }
+};
+
+const storage = {
+    bucket: (...args) => {
+        initialize();
+        const service = admin.apps.length > 0 ? admin.storage() : storageMock;
+        return service.bucket(...args);
+    }
+};
 
 module.exports = { admin, auth, storage };

@@ -59,6 +59,28 @@ const WorkerProfileModal = ({ worker, onClose }) => {
     const isGold = user?.tier === 'GOLD_ACCESS';
     const isPlatinum = user?.tier === 'PLATINUM_ACCESS';
 
+    const hasFayda = !!worker.nationalIdUrl && worker.nationalIdUrl !== 'undefined';
+    const hasPolice = !!worker.policeClearanceUrl && worker.policeClearanceUrl !== 'undefined';
+    const hasHealth = !!worker.healthCertificateUrl && worker.healthCertificateUrl !== 'undefined';
+    const hasGuarantor = !!worker.guarantorIdUrl && worker.guarantorIdUrl !== 'undefined';
+
+    const Badge = ({ icon: Icon, label, color, bgColor }) => (
+        <div title={label} style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: bgColor || 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)',
+            color: color || 'white',
+            padding: '3px 10px',
+            borderRadius: '20px',
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+            <Icon size={14} fill="white" /> {label.toUpperCase()}
+        </div>
+    );
+
     return (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(2px)' }}>
             <div className="card" style={{ width: '90%', maxWidth: '650px', maxHeight: '90vh', overflowY: 'auto', position: 'relative', padding: '0' }}>
@@ -86,21 +108,13 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
                             <h2 style={{ color: '#111', margin: 0, fontSize: '1.6rem' }}>{worker.fullName}</h2>
-                            {worker.badge === 'PLATINUM' && (
-                                <div title="Platinum Verified" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', color: 'white', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                    <Shield size={14} fill="white" /> PLATINUM
-                                </div>
-                            )}
-                            {worker.badge === 'GOLD' && (
-                                <div title="Gold Verified" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#f59e0b', color: 'white', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                    <Shield size={14} fill="white" /> GOLD
-                                </div>
-                            )}
-                            {worker.badge === 'SILVER' && (
-                                <div title="Silver Verified" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#94a3b8', color: 'white', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                    <Shield size={14} fill="white" /> SILVER
-                                </div>
-                            )}
+                            {worker.badge === 'PLATINUM' && <Badge icon={Shield} label="Platinum" />}
+                            {worker.badge === 'GOLD' && <Badge icon={Shield} label="Gold" bgColor="#f59e0b" />}
+                            {worker.badge === 'SILVER' && <Badge icon={Shield} label="Silver" bgColor="#94a3b8" />}
+
+                            {hasFayda && <Badge icon={Shield} label="Fayda Verified" bgColor="#10b981" />}
+                            {hasPolice && <Badge icon={Activity} label="Police Cleared" bgColor="#059669" />}
+
                             {worker.rating >= 4.5 && reviews.length >= 3 && (
                                 <div title="Top Rated Provider" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold' }}>
                                     <Star size={14} fill="white" /> TOP RATED
@@ -124,8 +138,8 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                                     isSilver || isGold || isPlatinum ? (
                                         <span style={{ color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>({t('verification_pending')})</span>
                                     ) : (
-                                        <span onClick={() => handleRestrictedAction('GOLD')} style={{ color: '#f59e0b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <Lock size={12} /> {t('gold_required') || 'Gold Access'}
+                                        <span onClick={() => handleRestrictedAction('GOLD')} style={{ color: '#f59e0b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', background: '#fef3c7', padding: '4px 8px', borderRadius: '6px' }}>
+                                            <Lock size={12} /> {t('unlock_contact') || 'Unlock Contact Details'}
                                         </span>
                                     )
                                 ) : worker.phone}
@@ -255,10 +269,17 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                                                 {review.reviewerEmp?.contactName || review.reviewerJS?.fullName || 'Anonymous User'}
                                             </span>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                                            {[...Array(5)].map((_, i) => (
-                                                <Star key={i} size={12} fill={i < review.rating ? "#f59e0b" : "transparent"} color={i < review.rating ? "#f59e0b" : "#ccc"} />
-                                            ))}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star key={i} size={12} fill={i < review.rating ? "#f59e0b" : "transparent"} color={i < review.rating ? "#f59e0b" : "#ccc"} />
+                                                ))}
+                                            </div>
+                                            {review.isVerified && (
+                                                <div title="Verified Hire" style={{ display: 'flex', alignItems: 'center', gap: '3px', background: '#ecfdf5', color: '#059669', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 'bold', border: '1px solid #10b981' }}>
+                                                    <Shield size={10} fill="#059669" /> VERIFIED HIRE
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <p style={{ margin: 0, fontSize: '0.9rem', color: '#444' }}>{review.comment}</p>

@@ -21,6 +21,7 @@ const Footer = () => {
                     <ul style={{ listStyle: 'none', padding: 0 }}>
                         <li style={{ marginBottom: '10px' }}><Link to="/" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('home')}</Link></li>
                         <li style={{ marginBottom: '10px' }}><Link to="/about" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('about_us')}</Link></li>
+                        <li style={{ marginBottom: '10px' }}><Link to="/login" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('login')}</Link></li>
                         <li style={{ marginBottom: '10px' }}><Link to="/safety" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('safety')}</Link></li>
                         <li style={{ marginBottom: '10px' }}><Link to="/pricing" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('pricing')}</Link></li>
                     </ul>

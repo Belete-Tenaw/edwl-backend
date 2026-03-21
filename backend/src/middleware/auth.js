@@ -1,10 +1,11 @@
 const jwt = require('jsonwebtoken');
+const prisma = require('../utils/prisma');
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
     throw new Error('JWT_SECRET must be defined');
 }
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
@@ -14,6 +15,26 @@ module.exports = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded;
+
+        // Security Audit Improvement: Check real-time user status in DB
+        // This solves the "Stale JWT" problem where users didn't see premium features after paying
+        let user;
+        const selectFields = { isActive: true, tier: true, subscriptionExpiry: true };
+        
+        if (decoded.role === 'JOB_SEEKER') {
+            user = await prisma.jobSeeker.findUnique({ where: { id: decoded.id }, select: selectFields });
+        } else if (decoded.role === 'EMPLOYER') {
+            user = await prisma.employer.findUnique({ where: { id: decoded.id }, select: selectFields });
+        }
+
+        if (user) {
+            if (!user.isActive) {
+                return res.status(403).json({ error: 'Account is deactivated. Please contact support.' });
+            }
+            // Attach latest status to request
+            req.user = { ...decoded, ...user };
+        }
+
         next();
     } catch (error) {
         res.status(401).json({ error: 'Invalid token' });

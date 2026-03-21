@@ -5,7 +5,7 @@ import authService from '../services/authService';
 import { compressImage } from '../utils/compression';
 import { validateAndFormatPhone } from '../utils/validation';
 import { processVideoBio } from '../utils/videoProcessor';
-import { Camera, Video } from 'lucide-react';
+import { Camera, Video, LogIn } from 'lucide-react';
 import MediaUploader from '../components/MediaUploader';
 
 const Register = () => {
@@ -15,6 +15,8 @@ const Register = () => {
     const [loading, setLoading] = useState(false);
     const [compressing, setCompressing] = useState(false);
     const [error, setError] = useState('');
+    const [isDuplicate, setIsDuplicate] = useState(false);
+    const [duplicateField, setDuplicateField] = useState('');
     const [success, setSuccess] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
     const [showCamera, setShowCamera] = useState(false);
@@ -88,6 +90,16 @@ const Register = () => {
         setSeekerData(prev => ({ ...prev, [name]: value }));
     }, []);
 
+    const handleSeekerBlur = useCallback((e) => {
+        const { name, value } = e.target;
+        if (name === 'phone' && value) {
+            const validation = validateAndFormatPhone(value);
+            if (validation.isValid) {
+                setSeekerData(prev => ({ ...prev, phone: validation.formatted }));
+            }
+        }
+    }, []);
+
     const handleMediaCapture = useCallback(async (name, file, previewUrl) => {
         if (!file) return;
 
@@ -155,6 +167,16 @@ const Register = () => {
     const handleEmployerChange = useCallback((e) => {
         const { name, value } = e.target;
         setEmployerData(prev => ({ ...prev, [name]: value }));
+    }, []);
+
+    const handleEmployerBlur = useCallback((e) => {
+        const { name, value } = e.target;
+        if (name === 'phone' && value) {
+            const validation = validateAndFormatPhone(value);
+            if (validation.isValid) {
+                setEmployerData(prev => ({ ...prev, phone: validation.formatted }));
+            }
+        }
     }, []);
 
     const handleRegister = async (e) => {
@@ -305,9 +327,18 @@ const Register = () => {
             }
         } catch (err) {
             console.error("Full Registration Error Object:", err);
-            const backendError = err.response?.data?.error || err.response?.data?.message;
-            const message = backendError || err.message || 'Registration failed.';
-            setError(message);
+            // Detect duplicate account (409)
+            if (err.response?.status === 409) {
+                const field = err.response?.data?.duplicateField || 'email';
+                setIsDuplicate(true);
+                setDuplicateField(field);
+                setError('');
+            } else {
+                const backendError = err.response?.data?.error || err.response?.data?.message;
+                const message = backendError || err.message || 'Registration failed.';
+                setIsDuplicate(false);
+                setError(message);
+            }
             window.scrollTo(0, 0);
         } finally {
             setLoading(false);
@@ -340,8 +371,33 @@ const Register = () => {
 
     return (
         <div className="container" style={{ padding: '40px 20px', maxWidth: '800px' }}>
-
             <h2 style={{ textAlign: 'center', marginBottom: '30px', color: 'var(--primary)' }}>{t('create_account_title')}</h2>
+
+            {/* Returning User Nudge */}
+            <div style={{ 
+                background: '#fff', 
+                padding: '20px', 
+                borderRadius: '16px', 
+                marginBottom: '40px', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+                border: '1px solid #f0f0f0'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div style={{ background: '#fff0e6', padding: '10px', borderRadius: '12px' }}>
+                        <LogIn size={24} color="var(--primary)" />
+                    </div>
+                    <div>
+                        <h4 style={{ margin: 0, fontSize: '1.1rem' }}>{t('returning_user') || 'Already have an account?'}</h4>
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>{t('signin_to_continue') || 'Sign in to access your profile instantly.'}</p>
+                    </div>
+                </div>
+                <Link to="/login" className="btn-login" style={{ padding: '12px 30px' }}>
+                    {t('login')}
+                </Link>
+            </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>
                 <div className="tabs-container" style={{ display: 'flex', background: '#f0f0f0', borderRadius: '12px', padding: '5px', width: '100%', maxWidth: '400px' }}>
@@ -374,7 +430,50 @@ const Register = () => {
                 </div>
             </div>
 
-            {error && (
+            {/* Duplicate account banner — polite guidance with action buttons */}
+            {isDuplicate && (
+                <div className="duplicate-banner">
+                    <h4>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        {t('duplicate_account_title') || 'Account Already Exists'}
+                    </h4>
+                    <p>
+                        {duplicateField === 'phone'
+                            ? (t('duplicate_phone_msg') || 'This phone number is already registered in EDWL.')
+                            : (t('duplicate_email_msg') || 'This email address is already registered in EDWL.')}
+                        <br />
+                        {t('duplicate_account_guidance') || 'Please log in to your account or reset your password if you forgot it.'}
+                    </p>
+                    <div className="duplicate-banner-actions">
+                        <Link
+                            to={`/login?duplicate=1&field=${duplicateField}&identifier=${activeTab === 'seeker' ? (duplicateField === 'email' ? seekerData.email : seekerData.phone) : (duplicateField === 'email' ? employerData.email : employerData.phone)}`}
+                            className="btn-login"
+                            id="dup-login-btn"
+                            style={{ padding: '12px 24px', fontSize: '1rem', border: 'none' }}
+                        >
+                            {t('login_instead') || 'Log In'}
+                        </Link>
+                        <Link
+                            to="/forgot-password"
+                            className="btn-ghost"
+                            id="dup-forgot-btn"
+                            style={{ 
+                                padding: '12px 24px', 
+                                fontSize: '1rem', 
+                                background: '#f8f9fa', 
+                                color: '#333', 
+                                border: '1px solid #ddd',
+                                borderRadius: '8px'
+                            }}
+                        >
+                            {t('forgot_password') || 'Forgot Password?'}
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* Generic error */}
+            {!isDuplicate && error && (
                 <div style={{ background: '#ffeeee', color: '#cc0000', padding: '15px', borderRadius: '8px', marginBottom: '30px', textAlign: 'center' }}>
                     {error}
                 </div>
@@ -390,7 +489,7 @@ const Register = () => {
                             </div>
                             <div>
                                 <label className="label">{t('phone_number')}</label>
-                                <input className="input" name="phone" value={seekerData.phone} onChange={handleSeekerChange} placeholder="+251..." autoComplete="off" />
+                                <input className="input" name="phone" value={seekerData.phone} onChange={handleSeekerChange} onBlur={handleSeekerBlur} placeholder="+251..." autoComplete="off" />
                             </div>
                             <div>
                                 <label className="label">{t('email_address')}</label>
@@ -662,7 +761,7 @@ const Register = () => {
                             </div>
                             <div>
                                 <label className="label">{t('phone_number')}</label>
-                                <input className="input" name="phone" value={employerData.phone} onChange={handleEmployerChange} placeholder="+251..." autoComplete="off" />
+                                <input className="input" name="phone" value={employerData.phone} onChange={handleEmployerChange} onBlur={handleEmployerBlur} placeholder="+251..." autoComplete="off" />
                             </div>
                             <div>
                                 <label className="label">{t('email_address')}</label>
@@ -719,6 +818,15 @@ const Register = () => {
                     <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={loading}>
                         {loading ? t('creating_account') : t('register_now')}
                     </button>
+                    
+                    <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                        <p style={{ color: '#666', fontSize: '0.95rem' }}>
+                            {t('returning_user') || 'Already have an account?'}{' '}
+                            <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '700', textDecoration: 'none' }}>
+                                {t('login')}
+                            </Link>
+                        </p>
+                    </div>
                 </form>
             </div>
 

@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "result": {
+    "sites": [
+      {
+        "name": "projects/edwl-ethio-domesticworkerslink/sites/edwl-ethio-domesticworkerslink",
+        "defaultUrl": "https://edwl-ethio-domesticworkerslink.web.app",
+        "appId": "1:274209810616:web:30534059ff3867ffa42c4d",
+        "type": "DEFAULT_SITE"
+      }
+    ]
+  }
+}

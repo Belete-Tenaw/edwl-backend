@@ -49,6 +49,17 @@ const authService = {
             localStorage.removeItem('user'); // Clean up corrupted data
         }
         return null;
+    },
+
+    forgotPassword: async (identifier) => {
+        const response = await api.post('/auth/forgot-password', { identifier });
+        return response.data;
+    },
+
+    resetPassword: async (data) => {
+        // data: { identifier, token, newPassword }
+        const response = await api.post('/auth/reset-password', data);
+        return response.data;
     }
 };
 

@@ -40,6 +40,8 @@ const TermsAndConditions = lazyWithRetry(() => import('./pages/TermsAndCondition
 const About = lazyWithRetry(() => import('./pages/About'));
 const Safety = lazyWithRetry(() => import('./pages/Safety'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
+const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'));
+const PaymentSuccess = lazyWithRetry(() => import('./pages/PaymentSuccess'));
 
 const Loading = () => (
     <div style={{
@@ -90,10 +92,11 @@ function App() {
                             <Route path="/about" element={<About />} />
                             <Route path="/safety" element={<Safety />} />
                             <Route path="/contact" element={<Contact />} />
-                            <Route path="*" element={<NotFound />} />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/payment-success" element={<PaymentSuccess />} />
 
                             <Route path="/messages" element={
-                                <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER']}>
+                                <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER', 'ADMIN']}>
                                     <Messages />
                                 </ProtectedRoute>
                             } />
@@ -121,6 +124,8 @@ function App() {
                                     <AdminDashboard />
                                 </AdminRoute>
                             } />
+
+                            <Route path="*" element={<NotFound />} />
                         </Routes>
                     </main>
                     <Footer />

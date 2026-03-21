@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma');
+const { uploadFileToFirebase } = require('../services/firebaseStorageService');
 
 // Upload certificate
 exports.uploadCertificate = async (req, res) => {
@@ -14,7 +15,8 @@ exports.uploadCertificate = async (req, res) => {
             return res.status(400).json({ error: 'No file uploaded' });
         }
 
-        const certificateUrl = `/uploads/certificate/${req.file.filename}`;
+        const result = await uploadFileToFirebase(req.file, 'legal-docs', false);
+        const certificateUrl = result.storagePath;
 
         // Add to certificates array
         const seeker = await prisma.jobSeeker.update({
@@ -50,7 +52,9 @@ exports.requestVerification = async (req, res) => {
             return res.status(400).json({ error: 'ID document is required for verification' });
         }
 
-        const idDocumentUrl = `/uploads/idDocument/${req.file.filename}`;
+        // Upload to Firebase
+        const result = await uploadFileToFirebase(req.file, 'legal-docs', false);
+        const idDocumentUrl = result.storagePath;
 
         // Update seeker with ID document
         await prisma.jobSeeker.update({
@@ -74,6 +78,42 @@ exports.requestVerification = async (req, res) => {
         res.json({
             message: 'Verification request submitted successfully',
             request
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Upload Live Selfie (Trust & Safety Betterment)
+exports.uploadLiveSelfie = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const role = req.user.role;
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Selfie image is required' });
+        }
+
+        // Upload to Firebase (stored in 'selfies' folder)
+        const result = await uploadFileToFirebase(req.file, 'selfies', false);
+        const selfieUrl = result.storagePath;
+
+        // Update user record based on role
+        if (role === 'JOB_SEEKER') {
+            await prisma.jobSeeker.update({
+                where: { id: userId },
+                data: { liveSelfieUrl: selfieUrl }
+            });
+        } else if (role === 'EMPLOYER') {
+            await prisma.employer.update({
+                where: { id: userId },
+                data: { liveSelfieUrl: selfieUrl }
+            });
+        }
+
+        res.json({
+            message: 'Live selfie uploaded successfully',
+            selfieUrl
         });
     } catch (error) {
         res.status(500).json({ error: error.message });

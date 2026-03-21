@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { compressImage } from '../utils/compression';
 import { validateAndFormatPhone } from '../utils/validation';
 import { processVideoBio } from '../utils/videoProcessor';
+import CameraCapture from '../components/CameraCapture';
+import { Camera } from 'lucide-react';
 
 const EditProfile = () => {
     const { t } = useTranslation();
@@ -15,6 +17,8 @@ const EditProfile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState({});
+    const [showCamera, setShowCamera] = useState(false);
+    const [uploadingSelfie, setUploadingSelfie] = useState(false);
 
     useEffect(() => {
         if (!user) {
@@ -97,6 +101,28 @@ const EditProfile = () => {
             alert(err.message);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSelfieCapture = async (blob) => {
+        setUploadingSelfie(true);
+        try {
+            const selfieFile = new File([blob], `selfie_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const uploadData = new FormData();
+            uploadData.append('selfie', selfieFile);
+
+            const res = await api.post('/upload/live-selfie', uploadData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setFormData(prev => ({ ...prev, liveSelfieUrl: res.data.selfieUrl }));
+            alert(t('selfie_upload_success') || 'Live selfie captured successfully!');
+        } catch (err) {
+            console.error("Selfie upload error:", err);
+            alert(t('selfie_upload_failed') || 'Failed to upload selfie.');
+        } finally {
+            setUploadingSelfie(false);
+            setShowCamera(false);
         }
     };
 
@@ -456,9 +482,17 @@ const EditProfile = () => {
                         <button type="submit" className="btn-primary" disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {saving ? t('saving') : t('save_changes')} <Save size={18} />
                         </button>
-                    </div>
+                     </div>
                 </form>
             </div>
+
+            {showCamera && (
+                <CameraCapture 
+                    onCapture={handleSelfieCapture} 
+                    onClose={() => setShowCamera(false)} 
+                />
+            )}
+
             <style>{`
         .label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; }
         .input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; font-family: inherit; }

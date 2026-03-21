@@ -75,22 +75,38 @@ exports.trackReferral = async (referralCode, newUserType, newUserId) => {
  * Reward: 3 referrals = 7 days GOLD status
  */
 exports.processRewards = async (userId, userType, count) => {
-    // Check if exactly 3 referrals (to prevent re-awarding every time after 3, 
-    // though in a real SaaS we'd handle multiples of 3)
-    // For now: 3 referrals = reward
+    // Reward every 3 referrals
     if (count % 3 === 0 && count > 0) {
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 7);
 
         if (userType === 'seeker') {
-            await prisma.jobSeeker.update({
+            const seeker = await prisma.jobSeeker.findUnique({
                 where: { id: userId },
-                data: {
-                    tier: 'GOLD',
-                    subscriptionExpiry: expiryDate
-                }
+                select: { tier: true }
             });
+
+            if (seeker.tier === 'GOLD' || seeker.tier === 'PLATINUM') {
+                // High-tier workers get "Featured" boost instead of status upgrade
+                await prisma.jobSeeker.update({
+                    where: { id: userId },
+                    data: {
+                        isFeatured: true,
+                        featuredExpiry: expiryDate
+                    }
+                });
+            } else {
+                // Lower-tier workers get upgraded to GOLD
+                await prisma.jobSeeker.update({
+                    where: { id: userId },
+                    data: {
+                        tier: 'GOLD',
+                        subscriptionExpiry: expiryDate
+                    }
+                });
+            }
         } else {
+            // Employers get GOLD_ACCESS (Time Access)
             await prisma.employer.update({
                 where: { id: userId },
                 data: {
@@ -99,6 +115,15 @@ exports.processRewards = async (userId, userType, count) => {
                 }
             });
         }
-        // Future: Add notification/audit log for reward
+
+        // Audit Log
+        await prisma.auditLog.create({
+            data: {
+                action: 'REFERRAL_REWARD_CLAIMED',
+                userId,
+                userType: userType === 'seeker' ? 'JOB_SEEKER' : 'EMPLOYER',
+                details: { referralCount: count, rewardType: userType === 'seeker' ? 'FEATURED_OR_GOLD' : 'GOLD_ACCESS' }
+            }
+        });
     }
 };

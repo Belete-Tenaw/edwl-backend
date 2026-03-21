@@ -4,10 +4,10 @@ const seekerController = require('../controllers/seekerController');
 const auth = require('../middleware/auth');
 const checkLimits = require('../middleware/checkLimits');
 const { authorize, Roles } = require('../middleware/rbac');
-
+const checkPremiumAccess = require('../middleware/checkPremiumAccess');
 const upload = require('../middleware/upload');
 
-router.get('/', auth, authorize([Roles.EMPLOYER, Roles.ADMIN]), async (req, res, next) => {
+router.get('/', auth, authorize([Roles.EMPLOYER, Roles.ADMIN]), checkPremiumAccess, async (req, res, next) => {
     // Log browsing action for audit trail
     const { logAction } = require('../services/auditService');
     await logAction('BROWSE_SEEKER_LIST', req.user.id, req.user.role);
@@ -20,7 +20,7 @@ router.get('/:id', auth, (req, res, next) => {
         return res.status(403).json({ error: 'Permission denied', message: 'Seekers can only view their own profile.' });
     }
     next();
-}, checkLimits, seekerController.getSeekerProfile);
+}, checkLimits, checkPremiumAccess, seekerController.getSeekerProfile);
 
 router.put('/profile', auth, authorize([Roles.SEEKER]), upload.fields([
     { name: 'profilePhoto', maxCount: 1 },
@@ -30,5 +30,8 @@ router.put('/profile', auth, authorize([Roles.SEEKER]), upload.fields([
     { name: 'policeClearanceUrl', maxCount: 1 },
     { name: 'healthCertificateUrl', maxCount: 1 }
 ]), seekerController.updateProfile);
+
+router.post('/fayda/request-otp', auth, authorize([Roles.SEEKER]), seekerController.requestFaydaOTP);
+router.post('/fayda/verify', auth, authorize([Roles.SEEKER]), seekerController.verifyFayda);
 
 module.exports = router;

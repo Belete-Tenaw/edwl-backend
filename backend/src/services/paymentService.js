@@ -1,5 +1,7 @@
 const prisma = require('../utils/prisma');
 const { logAction } = require('./auditService');
+const chapaService = require('./chapaService');
+const telegramService = require('./telegramService');
 
 class PaymentService {
     /**
@@ -38,6 +40,15 @@ class PaymentService {
         if (!tier) throw new Error('Subscription tier not found');
 
         const transactionReference = `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        
+        // Fetch user info for Chapa
+        let user;
+        if (userType === 'seeker') {
+            user = await prisma.jobSeeker.findUnique({ where: { id: userId } });
+        } else {
+            user = await prisma.employer.findUnique({ where: { id: userId } });
+        }
+
         const payment = await prisma.payment.create({
             data: {
                 amount: tier.priceETB,
@@ -49,7 +60,33 @@ class PaymentService {
             }
         });
 
-        // Add payment URL to the response for mobile/web redirects
+        // If using CHAPA (which handles Telebirr/CBE too)
+        if (provider === 'CHAPA' || provider === 'TELEBIRR') {
+            const chapaData = {
+                amount: tier.priceETB.toString(),
+                currency: 'ETB',
+                email: user.email || 'customer@edwl.et',
+                first_name: (user.fullName || user.contactName || 'Customer').split(' ')[0],
+                last_name: (user.fullName || user.contactName || 'Customer').split(' ')[1] || 'User',
+                tx_ref: transactionReference,
+                callback_url: `${process.env.BASE_URL}/api/payments/complete`,
+                return_url: `${process.env.FRONTEND_URL || 'https://edwl.et'}/payment-success?ref=${transactionReference}`,
+                customization: {
+                    title: `EDWL ${tier.tier} Subscription`,
+                    description: `Subscription for ${tier.durationDays} days`
+                }
+            };
+
+            const chapaRes = await chapaService.initialize(chapaData);
+            if (chapaRes.status === 'success') {
+                return {
+                    ...payment,
+                    paymentUrl: chapaRes.data.checkout_url
+                };
+            }
+        }
+
+        // Fallback or other providers
         return {
             ...payment,
             paymentUrl: this.getPaymentURL(provider, tier.priceETB, transactionReference)
@@ -70,7 +107,13 @@ class PaymentService {
         if (!payment) throw new Error('Payment not found');
         if (payment.status === 'COMPLETED') return payment;
 
-        // In a real scenario, we would verify with Telebirr/Chapa API here
+        // Verify with Chapa if necessary
+        if (payment.provider === 'CHAPA' || payment.provider === 'TELEBIRR') {
+            const verification = await chapaService.verify(payment.transactionReference);
+            if (verification.status !== 'success') {
+                throw new Error('Payment verification failed with provider');
+            }
+        }
 
         return await prisma.$transaction(async (tx) => {
             // 1. Update Payment Status
@@ -87,8 +130,8 @@ class PaymentService {
             if (!tier) throw new Error('Tier not found for this payment');
 
             // 3. Create/Update Subscription
-            const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + tier.durationDays);
+            const durationMs = (tier.durationDays || 30) * 24 * 60 * 60 * 1000;
+            const expiryDate = new Date(Date.now() + durationMs);
 
             const subscription = await tx.subscription.create({
                 data: {
@@ -100,16 +143,17 @@ class PaymentService {
                 }
             });
 
-            // 4. Update User Tier (SILVER, GOLD, or PLATINUM)
+            // 4. Update User Tier
+            const userName = payment.jobSeeker?.fullName || payment.employer?.contactName || 'User';
             if (payment.jobSeekerId) {
                 await tx.jobSeeker.update({
                     where: { id: payment.jobSeekerId },
-                    data: { tier: tier.tier, subscriptionExpiry: expiryDate }
+                    data: { tier: tier.tier, subscriptionExpiry: expiryDate, isSubscribed: true }
                 });
             } else {
                 await tx.employer.update({
                     where: { id: payment.employerId },
-                    data: { tier: tier.tier, subscriptionExpiry: expiryDate }
+                    data: { tier: tier.tier, subscriptionExpiry: expiryDate, isSubscribed: true }
                 });
             }
 
@@ -128,6 +172,10 @@ class PaymentService {
                 payment.jobSeekerId ? 'JOB_SEEKER' : 'EMPLOYER',
                 { paymentId, tierId: tier.id, provider: payment.provider }
             );
+
+            // 7. Telegram Revenue Alert for Admin
+            const adminNotifyText = `💹 <b>New Subscription!</b>\n\nUser: <b>${userName}</b>\nTier: <b>${tier.tier}</b>\nAmount: <b>${tier.priceETB} ETB</b>\nProvider: <b>${payment.provider}</b>\nRef: <code>${payment.transactionReference}</code>`;
+            await telegramService.notifyAdmin(adminNotifyText);
 
             return updatedPayment;
         });
@@ -156,19 +204,36 @@ class PaymentService {
             });
 
             // Update user tier and expiry
-            const expiryDate = new Date();
-            expiryDate.setDate(expiryDate.getDate() + subCode.durationDays);
+            // Robust 30-day calculation (or subCode.durationDays) using UTC
+            const durationMs = (subCode.durationDays || 30) * 24 * 60 * 60 * 1000;
+            const expiryDate = new Date(Date.now() + durationMs);
+
+            // Determine the tier to apply
+            // If code has a tierUpgrade, use it. Otherwise default to SILVER (legacy support)
+            const tierToApply = subCode.tierUpgrade || 'SILVER';
 
             let updatedUser;
             if (userType === 'seeker') {
                 updatedUser = await tx.jobSeeker.update({
                     where: { id: userId },
-                    data: { tier: 'SILVER', subscriptionExpiry: expiryDate }
+                    data: { 
+                        tier: tierToApply === 'SILVER_ACCESS' ? 'SILVER' : 
+                              tierToApply === 'GOLD_ACCESS' ? 'GOLD' : 
+                              tierToApply === 'PLATINUM_ACCESS' ? 'PLATINUM' : 'SILVER', 
+                        subscriptionExpiry: expiryDate,
+                        isSubscribed: true,
+                        premiumCode: code
+                    }
                 });
             } else {
                 updatedUser = await tx.employer.update({
                     where: { id: userId },
-                    data: { tier: 'SILVER', subscriptionExpiry: expiryDate }
+                    data: { 
+                        tier: tierToApply, 
+                        subscriptionExpiry: expiryDate,
+                        isSubscribed: true,
+                        premiumCode: code
+                    }
                 });
             }
 
@@ -182,6 +247,34 @@ class PaymentService {
 
             return updatedUser;
         });
+    }
+
+    /**
+     * Validate a code (check if exists, unused, and not expired)
+     */
+    async validateCode(code) {
+        const subCode = await prisma.subscriptionCode.findUnique({
+            where: { code }
+        });
+
+        if (!subCode) {
+            return { valid: false, message: 'Invalid code' };
+        }
+
+        if (subCode.status !== 'UNUSED') {
+            return { valid: false, message: 'Code already used' };
+        }
+
+        if (subCode.expiresAt < new Date()) {
+            return { valid: false, message: 'Code has expired' };
+        }
+
+        return { 
+            valid: true, 
+            message: 'Code is valid',
+            durationDays: subCode.durationDays,
+            tierUpgrade: subCode.tierUpgrade
+        };
     }
 }
 

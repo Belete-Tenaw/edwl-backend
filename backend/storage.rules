@@ -20,14 +20,22 @@ service firebase.storage {
 
     // User Media Sandboxing
     match /users/{userId}/{mediaType}/{fileName} {
-      allow read: if isOwner(userId) || isSuperAdmin();
+      allow read: if isOwner(userId) || isSuperAdmin() || (mediaType == 'profilePhoto');
       
       allow write: if isSuperAdmin() || (isOwner(userId) && (
+        (mediaType == 'profilePhoto' && isValidImage()) ||
+        (mediaType == 'idDocument' && isValidImage()) ||
         (mediaType == 'images' && isValidImage()) ||
         (mediaType == 'videos' && isValidVideo())
       ));
       
       allow delete: if isOwner(userId) || isSuperAdmin();
+    }
+
+    // Support for top-level uploads directory if used by backend
+    match /uploads/{mediaType}/{fileName} {
+      allow read: if (mediaType == 'profilePhoto') || isSuperAdmin();
+      allow write: if isSuperAdmin();
     }
   }
 }

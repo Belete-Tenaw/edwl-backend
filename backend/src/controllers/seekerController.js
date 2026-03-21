@@ -1,5 +1,7 @@
 const prisma = require('../utils/prisma');
 const { calculateWorkerRank } = require('../utils/rankLogic');
+const { uploadFileToFirebase } = require('../services/firebaseStorageService');
+const faydaService = require('../services/faydaService');
 
 // Removed local calculateSeekerTier as it's now handled by calculateWorkerRank in utils
 
@@ -57,7 +59,15 @@ exports.getSeekerProfile = async (req, res) => {
             `;
 
             if (!seekers || seekers.length === 0) return res.status(404).json({ error: 'Seeker not found' });
-            return res.json(seekers[0]);
+
+            const seeker = seekers[0];
+            
+            // Double-Key Access Control Masking
+            seeker.phone = req.hasPremiumAccess ? seeker.phone : '********';
+            seeker.email = req.hasPremiumAccess ? seeker.email : '********';
+            seeker.locationKebele = req.hasPremiumAccess ? seeker.locationKebele : '********';
+
+            return res.json(seeker);
         }
 
         // For Seekers/Admins, return the full profile
@@ -100,27 +110,29 @@ exports.updateProfile = async (req, res) => {
         }
 
         if (req.files) {
-            if (req.files.profilePhoto) {
-                // FIXED: Removed leading /
-                updateData.profilePhoto = `uploads/profilePhoto/${req.files.profilePhoto[0].filename}`;
-            }
-            if (req.files.idDocument) {
-                // FIXED: Removed leading /
-                updateData.idDocument = `uploads/idDocument/${req.files.idDocument[0].filename}`;
-                updateData.isVerified = false;
-                updateData.verificationStatus = 'PENDING';
-            }
-            if (req.files.nationalIdUrl) {
-                updateData.nationalIdUrl = `uploads/nationalId/${req.files.nationalIdUrl[0].filename}`;
-            }
-            if (req.files.guarantorIdUrl) {
-                updateData.guarantorIdUrl = `uploads/guarantorId/${req.files.guarantorIdUrl[0].filename}`;
-            }
-            if (req.files.policeClearanceUrl) {
-                updateData.policeClearanceUrl = `uploads/policeClearance/${req.files.policeClearanceUrl[0].filename}`;
-            }
-            if (req.files.healthCertificateUrl) {
-                updateData.healthCertificateUrl = `uploads/healthCertificate/${req.files.healthCertificateUrl[0].filename}`;
+            try {
+                if (req.files.profilePhoto) {
+                    updateData.profilePhoto = (await uploadFileToFirebase(req.files.profilePhoto[0], 'profile-photos', true)).publicUrl;
+                }
+                if (req.files.idDocument) {
+                    updateData.idDocument = (await uploadFileToFirebase(req.files.idDocument[0], 'legal-docs', false)).storagePath;
+                    updateData.isVerified = false;
+                    updateData.verificationStatus = 'PENDING';
+                }
+                if (req.files.nationalIdUrl) {
+                    updateData.nationalIdUrl = (await uploadFileToFirebase(req.files.nationalIdUrl[0], 'legal-docs', false)).storagePath;
+                }
+                if (req.files.guarantorIdUrl) {
+                    updateData.guarantorIdUrl = (await uploadFileToFirebase(req.files.guarantorIdUrl[0], 'legal-docs', false)).storagePath;
+                }
+                if (req.files.policeClearanceUrl) {
+                    updateData.policeClearanceUrl = (await uploadFileToFirebase(req.files.policeClearanceUrl[0], 'legal-docs', false)).storagePath;
+                }
+                if (req.files.healthCertificateUrl) {
+                    updateData.healthCertificateUrl = (await uploadFileToFirebase(req.files.healthCertificateUrl[0], 'legal-docs', false)).storagePath;
+                }
+            } catch (err) {
+                return res.status(500).json({ error: "File upload failed: " + err.message });
             }
         }
 
@@ -178,6 +190,67 @@ exports.getAllSeekers = async (req, res) => {
         }
 
         res.json(seekers);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.requestFaydaOTP = async (req, res) => {
+    try {
+        const { faydaId } = req.body;
+        const userId = req.user.id;
+
+        if (!faydaId || faydaId.length !== 12) {
+            return res.status(400).json({ error: "Invalid Fayda ID. Must be 12 digits." });
+        }
+
+        // Check if Fayda ID is already linked to another account
+        const existing = await prisma.jobSeeker.findUnique({
+            where: { faydaId }
+        });
+
+        if (existing && existing.id !== userId) {
+            return res.status(409).json({ error: "This Fayda ID is already linked to another account." });
+        }
+
+        const result = await faydaService.requestOTP(faydaId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.verifyFayda = async (req, res) => {
+    try {
+        const { faydaId, otpCode } = req.body;
+        const userId = req.user.id;
+
+        const verification = await faydaService.verifyOTP(faydaId, otpCode);
+        if (!verification.success) {
+            return res.status(400).json({ error: verification.message });
+        }
+
+        // Update seeker
+        const seeker = await prisma.jobSeeker.findUnique({ where: { id: userId } });
+        
+        const updatedData = {
+            faydaId: faydaId,
+            isFaydaVerified: true
+        };
+
+        // Recalculate rank
+        const mergedData = { ...seeker, ...updatedData };
+        updatedData.tier = calculateWorkerRank(mergedData);
+
+        const updatedSeeker = await prisma.jobSeeker.update({
+            where: { id: userId },
+            data: updatedData
+        });
+
+        res.json({
+            message: "Fayda ID verified successfully! You have been promoted to " + updatedSeeker.tier + " rank.",
+            tier: updatedSeeker.tier
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

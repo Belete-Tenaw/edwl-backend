@@ -43,4 +43,13 @@ router.post('/complete', paymentController.complete);
  */
 router.post('/activate-code', auth, paymentController.activateCode);
 
+/**
+ * @swagger
+ * /api/payments/verify-code/{code}:
+ *   get:
+ *     summary: Verify if a premium code is valid and unused
+ *     tags: [Payments]
+ */
+router.get('/verify-code/:code', paymentController.verifyCode);
+
 module.exports = router;

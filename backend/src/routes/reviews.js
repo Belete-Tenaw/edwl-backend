@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const reviewController = require('../controllers/reviewController');
-const { auth } = require('../middleware/auth');
+const auth = require('../middleware/auth');
 
 // Protected routes
 router.post('/', auth, reviewController.createReview);

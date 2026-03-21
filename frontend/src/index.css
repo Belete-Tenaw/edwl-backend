@@ -58,6 +58,10 @@ button {
   transition: var(--transition);
 }
 
+.nav-logo:hover {
+  transform: scale(1.05);
+}
+
 .btn-primary {
   background-color: var(--primary);
   color: var(--white);
@@ -68,6 +72,94 @@ button {
   background-color: var(--primary-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+}
+
+/* Global Login button — prominent, 44px min-height */
+.btn-login {
+  min-height: 44px;
+  padding: 10px 28px;
+  background-color: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255, 69, 0, 0.2);
+}
+
+.btn-login:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 69, 0, 0.35);
+}
+
+/* Ghost button for dark hero backgrounds */
+.btn-ghost {
+  min-height: 44px;
+  padding: 10px 28px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  backdrop-filter: blur(5px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  background-color: rgba(255, 255, 255, 0.95);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Duplicate account warning banner */
+.duplicate-banner {
+  background: white;
+  border: 1px solid #ff4500;
+  border-left: 5px solid #ff4500;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 30px;
+  text-align: left;
+  box-shadow: 0 4px 15px rgba(255, 69, 0, 0.1);
+}
+
+.duplicate-banner h4 {
+  color: #ff4500;
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.duplicate-banner p {
+  color: #444;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.duplicate-banner-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .card {
@@ -137,6 +229,24 @@ button {
   nav a>div>div:last-child {
     font-size: 0.75rem !important;
   }
+}
+
+/* Active Navigation Link */
+.nav-link-active {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+  position: relative;
+}
+
+.nav-link-active::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--primary);
+  border-radius: 2px;
 }
 
 @media (max-width: 400px) {

@@ -10,4 +10,7 @@ router.post('/certificate', auth, upload.single('certificate'), uploadController
 // Request verification (upload National ID or Fayda)
 router.post('/verification', auth, upload.single('idDocument'), uploadController.requestVerification);
 
+// Upload Live Selfie (Trust & Safety Betterment)
+router.post('/live-selfie', auth, upload.single('selfie'), uploadController.uploadLiveSelfie);
+
 module.exports = router;

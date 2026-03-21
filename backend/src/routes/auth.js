@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const upload = require('../middleware/upload');
+const { authRateLimiter, registerRateLimiter } = require('../middleware/rateLimiter');
 
 // Job Seeker Routes
-router.post('/seeker/register', upload.fields([
+router.post('/seeker/register', registerRateLimiter, upload.fields([
     { name: 'profilePhoto', maxCount: 1 },
     { name: 'idDocument', maxCount: 1 },
     { name: 'nationalIdUrl', maxCount: 1 },
@@ -14,16 +15,23 @@ router.post('/seeker/register', upload.fields([
     { name: 'videoBio', maxCount: 1 }
 ]), authController.registerJobSeeker);
 
-router.post('/seeker/login', authController.loginJobSeeker);
+router.post('/seeker/login', authRateLimiter, authController.loginJobSeeker);
 
 // Employer Routes
-router.post('/employer/register', upload.none(), authController.registerEmployer);
-router.post('/employer/login', authController.loginEmployer);
+router.post('/employer/register', registerRateLimiter, upload.none(), authController.registerEmployer);
+router.post('/employer/login', authRateLimiter, authController.loginEmployer);
 
 // Admin Routes
-router.post('/admin/login', authController.loginAdmin);
+router.post('/admin/login', authRateLimiter, authController.loginAdmin);
 
 // Firebase integration
 router.post('/firebase-login', authController.firebaseLogin);
+
+// Password reset
+router.post('/forgot-password', authRateLimiter, authController.forgotPassword);
+router.post('/reset-password', authRateLimiter, authController.resetPassword);
+
+// Pre-flight duplicate check (phone or email, no auth required)
+router.get('/check-duplicate', authController.checkDuplicate);
 
 module.exports = router;

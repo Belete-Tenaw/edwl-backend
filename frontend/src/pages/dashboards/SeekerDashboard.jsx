@@ -14,6 +14,7 @@ const SeekerDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedJob, setSelectedJob] = useState(null);
+    const [pendingVerification, setPendingVerification] = useState(false);
     const navigate = useNavigate();
     const [copied, setCopied] = useState(false);
 
@@ -26,18 +27,24 @@ const SeekerDashboard = () => {
     };
 
     useEffect(() => {
-        const fetchJobs = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get('/jobs');
-                setJobs(res.data);
+                const [jobsRes, profileRes] = await Promise.all([
+                    api.get('/jobs'),
+                    api.get(`/seekers/${user.id}`)
+                ]);
+                setJobs(jobsRes.data);
+                if (profileRes.data.verificationStatus === 'PENDING') {
+                    setPendingVerification(true);
+                }
             } catch (err) {
-                console.error("Failed to fetch jobs", err);
+                console.error("Failed to fetch dashboard data", err);
                 setError(t('failed_to_load_data') || 'Failed to load data. Please refresh.');
             } finally {
                 setLoading(false);
             }
         };
-        fetchJobs();
+        fetchData();
     }, []);
 
     return (
@@ -47,12 +54,18 @@ const SeekerDashboard = () => {
                     <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>{t('welcome')}, {user?.fullName}</h1>
                     <p style={{ color: '#666' }}>{t('welcome_msg')}</p>
                 </div>
-                {user?.tier === 'BRONZE' && (
+                {user?.tier === 'BRONZE' && !pendingVerification && (
                     <div style={{ background: '#fff4e5', padding: '15px 25px', borderRadius: '12px', border: '1px solid #ffcc80' }}>
                         <p style={{ color: '#e65100', fontWeight: 'bold', marginBottom: '5px' }}>{t('free_account')}</p>
                         <button className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.9rem' }} onClick={() => navigate('/pricing')}>
                             {t('upgrade_premium')}
                         </button>
+                    </div>
+                )}
+                {pendingVerification && (
+                    <div style={{ background: '#eff6ff', padding: '15px 25px', borderRadius: '12px', border: '1px solid #3b82f6' }}>
+                        <p style={{ color: '#1e40af', fontWeight: 'bold', marginBottom: '5px' }}>⏳ {t('verification_pending_title') || 'Verification in Progress'}</p>
+                        <p style={{ color: '#60a5fa', fontSize: '0.85rem', margin: 0 }}>{t('verification_pending_msg') || 'Our admins are reviewing your documents/receipt. This usually takes 2-4 hours.'}</p>
                     </div>
                 )}
             </header>

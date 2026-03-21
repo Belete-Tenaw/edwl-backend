@@ -14,16 +14,17 @@ const calculateWorkerRank = (worker) => {
     const hasBaseId = !!worker.idDocument; // Used for Kebele ID or Passport
 
     // Mandatory check for Bronze
+    // Mandatory check for Bronze
     if (!hasPhoto || !hasBaseId) {
-        return 'BRONZE'; // In practice, registration should be blocked if these are missing
+        return 'BRONZE';
     }
 
-    const hasFayda = !!worker.nationalIdUrl;
-    const hasGuarantor = !!worker.guarantorIdUrl && !!worker.guarantorPhone;
-    const hasHealthCert = !!worker.healthCertificateUrl;
-    const hasPoliceClearance = !!worker.policeClearanceUrl;
+    const hasFayda = (!!worker.nationalIdUrl && worker.nationalIdUrl !== '') || worker.isFaydaVerified === true;
+    const hasGuarantor = !!worker.guarantorIdUrl && !!worker.guarantorPhone && worker.guarantorIdUrl !== '';
+    const hasHealthCert = !!worker.healthCertificateUrl && worker.healthCertificateUrl !== '';
+    const hasPoliceClearance = !!worker.policeClearanceUrl && worker.policeClearanceUrl !== '';
 
-    // Rank Progression
+    // Rank Progression (Strict waterfall)
     if (hasFayda && hasGuarantor && hasHealthCert && hasPoliceClearance) {
         return 'PLATINUM';
     }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import api from '../services/api';
-import { X, Check } from 'lucide-react';
+import { X, Check, Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { transliterate } from '../utils/amharicTranslit';
 
 const JobPostModal = ({ onClose, onJobPosted }) => {
     const [loading, setLoading] = useState(false);
@@ -16,11 +17,26 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
         preferredArrangement: 'LIVE_IN',
         address: ''
     });
+    const [amharicMode, setAmharicMode] = useState({ title: false, description: false, customSkill: false });
 
     const { t } = useTranslation();
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (amharicMode[name] && value.length > (formData[name]?.length || 0)) {
+            // Only transliterate if adding text
+            const lastChar = value.slice(-1);
+            if (/[a-zA-Z]/.test(lastChar)) {
+                const transliterated = transliterate(value);
+                setFormData({ ...formData, [name]: transliterated });
+                return;
+            }
+        }
+        setFormData({ ...formData, [name]: value });
+    };
+
+    const toggleAmharic = (field) => {
+        setAmharicMode({ ...amharicMode, [field]: !amharicMode[field] });
     };
 
     const handleSkillToggle = (skill) => {
@@ -76,7 +92,16 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
 
                 <form onSubmit={handleSubmit}>
                     <div style={{ marginBottom: '15px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('job_title')}</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                            <label style={{ fontWeight: '500' }}>{t('job_title')}</label>
+                            <button
+                                type="button"
+                                onClick={() => toggleAmharic('title')}
+                                style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', border: amharicMode.title ? '1px solid var(--primary)' : '1px solid #ddd', background: amharicMode.title ? '#fff7ed' : 'white', color: amharicMode.title ? 'var(--primary)' : '#666', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                                <Keyboard size={12} /> {amharicMode.title ? 'Amharic ON' : 'Easy Amharic'}
+                            </button>
+                        </div>
                         <input
                             required
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
@@ -179,7 +204,16 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
                     </div>
 
                     <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('description')}</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                            <label style={{ fontWeight: '500' }}>{t('description')}</label>
+                            <button
+                                type="button"
+                                onClick={() => toggleAmharic('description')}
+                                style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', border: amharicMode.description ? '1px solid var(--primary)' : '1px solid #ddd', background: amharicMode.description ? '#fff7ed' : 'white', color: amharicMode.description ? 'var(--primary)' : '#666', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                                <Keyboard size={12} /> {amharicMode.description ? 'Amharic ON' : 'Easy Amharic'}
+                            </button>
+                        </div>
                         <textarea
                             required
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', minHeight: '100px', fontFamily: 'inherit' }}

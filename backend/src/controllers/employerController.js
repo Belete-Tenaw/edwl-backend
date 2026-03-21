@@ -59,12 +59,27 @@ exports.getEmployerProfile = async (req, res) => {
             select: {
                 id: true,
                 contactName: true,
+                phone: true,
+                email: true,
                 employerType: true,
                 address: true,
                 createdAt: true,
-                tier: true
+                tier: true,
+                verificationStatus: true,
+                isVerified: true,
+                liveSelfieUrl: true
             }
         });
+
+        if (!employer) return res.status(404).json({ error: 'Employer not found' });
+
+        // Double-Key Access Control Masking
+        if (!req.hasPremiumAccess && req.user.id !== id) {
+            employer.contactName = "HIDDEN (Requires Premium Access)";
+            employer.phone = "HIDDEN";
+            employer.email = "HIDDEN";
+        }
+
         res.json(employer);
     } catch (error) {
         res.status(500).json({ error: error.message });

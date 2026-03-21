@@ -2,8 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 import authService from '../services/authService';
-import { Send, User, MessageSquare } from 'lucide-react';
+import { Send, User, MessageSquare, Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { transliterate } from '../utils/amharicTranslit';
+import PanicButton from '../components/PanicButton';
 
 const Messages = () => {
     const { t } = useTranslation();
@@ -16,6 +18,7 @@ const Messages = () => {
     const [sendError, setSendError] = useState('');
     const currentUser = authService.getCurrentUser();
     const scrollRef = useRef(null);
+    const [amharicMode, setAmharicMode] = useState(false);
 
     // Fetch all messages and group them by user to form "conversations"
     useEffect(() => {
@@ -159,6 +162,18 @@ const Messages = () => {
         }
     };
 
+    const handleMessageChange = (e) => {
+        const val = e.target.value;
+        if (amharicMode && val.length > newMessage.length) {
+            const lastChar = val.slice(-1);
+            if (/[a-zA-Z]/.test(lastChar)) {
+                setNewMessage(transliterate(val));
+                return;
+            }
+        }
+        setNewMessage(val);
+    };
+
     return (
         <div className="container" style={{ padding: '20px', height: '85vh', display: 'flex', gap: '20px' }}>
             {/* Sidebar */}
@@ -227,8 +242,9 @@ const Messages = () => {
             <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0' }}>
                 {selectedUser ? (
                     <>
-                        <div style={{ padding: '15px 20px', borderBottom: '1px solid #eee', background: '#fafafa', borderRadius: '12px 12px 0 0' }}>
-                            <h3 style={{ fontSize: '1.1rem' }}>{t('conversation_with')} {selectedUser.fullName}</h3>
+                        <div style={{ padding: '15px 20px', borderBottom: '1px solid #eee', background: '#fafafa', borderRadius: '12px 12px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{t('conversation_with')} {selectedUser.fullName}</h3>
+                            <PanicButton contractId={selectedUser.contractId} />
                         </div>
 
                         <div ref={scrollRef} style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -264,16 +280,27 @@ const Messages = () => {
                                     {sendError}
                                 </div>
                             )}
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <input
-                                    style={{ flex: 1, padding: '12px', borderRadius: '25px', border: '1px solid #ddd', outline: 'none' }}
-                                    placeholder={t('type_message')}
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                />
-                                <button disabled={!newMessage.trim()} type="submit" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'var(--primary)', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                    <Send size={20} />
-                                </button>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setAmharicMode(!amharicMode)}
+                                        style={{ fontSize: '0.75rem', padding: '2px 10px', borderRadius: '15px', border: amharicMode ? '1px solid var(--primary)' : '1px solid #ddd', background: amharicMode ? '#fff7ed' : 'white', color: amharicMode ? 'var(--primary)' : '#666', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    >
+                                        <Keyboard size={12} /> {amharicMode ? 'Amharic ON' : 'Easy Amharic'}
+                                    </button>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <input
+                                        style={{ flex: 1, padding: '12px', borderRadius: '25px', border: '1px solid #ddd', outline: 'none' }}
+                                        placeholder={t('type_message')}
+                                        value={newMessage}
+                                        onChange={handleMessageChange}
+                                    />
+                                    <button disabled={!newMessage.trim()} type="submit" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'var(--primary)', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                        <Send size={20} />
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </>
