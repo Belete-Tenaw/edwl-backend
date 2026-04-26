@@ -1,14 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Facebook, Twitter, Instagram, Mail } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Mail, ShieldCheck, Lock } from 'lucide-react';
 import logo from '../assets/logo_modern.png';
 
 const Footer = () => {
     const { t } = useTranslation();
 
     return (
-        <footer style={{ background: '#2c3e50', color: 'white', padding: '60px 20px 20px' }}>
+        <footer style={{ background: 'var(--navy)', color: 'white', padding: '60px 20px 20px', borderTop: '4px solid var(--primary)' }}>
             <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', marginBottom: '40px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -29,6 +29,7 @@ const Footer = () => {
                         <li style={{ marginBottom: '10px' }}><Link to="/about" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('about_us')}</Link></li>
                         <li style={{ marginBottom: '10px' }}><Link to="/login" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('login')}</Link></li>
                         <li style={{ marginBottom: '10px' }}><Link to="/safety" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('safety')}</Link></li>
+                        <li style={{ marginBottom: '10px' }}><Link to="/academy" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('academy') || 'Training Academy'}</Link></li>
                         <li style={{ marginBottom: '10px' }}><Link to="/pricing" style={{ color: '#bdc3c7', textDecoration: 'none' }}>{t('pricing')}</Link></li>
                     </ul>
                 </div>
@@ -51,6 +52,24 @@ const Footer = () => {
                         <Facebook size={24} color="#bdc3c7" style={{ cursor: 'pointer' }} />
                         <Twitter size={24} color="#bdc3c7" style={{ cursor: 'pointer' }} />
                         <Instagram size={24} color="#bdc3c7" style={{ cursor: 'pointer' }} />
+                    </div>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <h3 style={{ fontSize: '1.1rem', marginBottom: '20px' }}>{t('verified_platform') || 'Verified Platform'}</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <ShieldCheck size={32} color="var(--primary)" />
+                        <div>
+                            <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{t('secure_escrow_footer') || 'Secure Escrow'}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#bdc3c7' }}>{t('escrow_desc_footer') || 'Payments are held safely until work is done.'}</div>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <Lock size={32} color="#10b981" />
+                        <div>
+                            <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{t('data_protection_footer') || 'Data Protection'}</div>
+                            <div style={{ fontSize: '0.75rem', color: '#bdc3c7' }}>{t('data_desc_footer') || 'Your personal data is encrypted and secure.'}</div>
+                        </div>
                     </div>
                 </div>
             </div>

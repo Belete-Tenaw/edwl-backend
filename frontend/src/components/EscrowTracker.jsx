@@ -1,21 +1,25 @@
 import React, { useState } from 'react';
 import { Shield, ArrowRight, CheckCircle2, AlertCircle, Info } from 'lucide-react';
 import api from '../services/api';
+import { useTranslation } from 'react-i18next';
+import { useToast } from './Toast';
 
 const EscrowTracker = ({ escrow, userRole, onUpdate }) => {
+    const { t } = useTranslation();
+    const addToast = useToast();
     const [releasing, setReleasing] = useState(false);
 
     const handleRelease = async () => {
-        if (!window.confirm("CONFIRM RELEASE: This will pay the worker immediately. Only do this if the work is completed to your satisfaction.")) return;
+        if (!window.confirm(t('confirm_escrow_release') || "CONFIRM RELEASE: This will pay the worker immediately. Only do this if the work is completed to your satisfaction.")) return;
         
         setReleasing(true);
         try {
             await api.put(`/escrow/${escrow.id}/release`);
-            alert("Funds released successfully!");
+            addToast(t('escrow_release_success') || "Funds released successfully!", 'success');
             if (onUpdate) onUpdate();
         } catch (err) {
             console.error("Release error:", err);
-            alert("Failed to release funds.");
+            addToast(t('escrow_release_failed') || "Failed to release funds.", 'error');
         } finally {
             setReleasing(false);
         }

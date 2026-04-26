@@ -20,7 +20,8 @@ if (process.env.NODE_ENV !== 'test') {
 
 const app = express();
 // Google Cloud Run sets the PORT variable automatically to 8080
-const PORT = process.env.PORT || 8080;
+// Defaulting to 5000 to match vite.config.js and api.js in dev
+const PORT = process.env.PORT || 5000;
 
 // ================================
 // 🔌 SOCKET.IO SETUP

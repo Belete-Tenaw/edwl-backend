@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import authService from '../services/authService';
-import { toast } from 'react-toastify';
+import { useToast } from '../components/Toast';
+import { useTranslation } from 'react-i18next';
+import { BookOpen, CheckCircle, Play, Sparkles } from 'lucide-react';
 import '../index.css'; // Use existing global styles
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
-
 const Academy = () => {
+    const { t } = useTranslation();
+    const addToast = useToast();
     const [modules, setModules] = useState([]);
     const [loading, setLoading] = useState(true);
     const user = authService.getCurrentUser();
@@ -17,8 +19,7 @@ const Academy = () => {
 
     const fetchModules = async () => {
         try {
-            const headers = user ? { Authorization: `Bearer ${user.token}` } : {};
-            const res = await axios.get(`${API_URL}/training`, { headers });
+            const res = await api.get('/training');
             setModules(res.data);
             setLoading(false);
         } catch (error) {
@@ -29,85 +30,125 @@ const Academy = () => {
 
     const handleComplete = async (moduleId) => {
         if (!user || user.role !== 'JOB_SEEKER') {
-            toast.error("Only Job Seekers can complete modules and earn badges.");
+            addToast(t('only_seekers_academy') || "Only Job Seekers can complete modules and earn badges.", 'error');
             return;
         }
         try {
-            await axios.post(`${API_URL}/training/${moduleId}/complete`, {}, {
-                headers: { Authorization: `Bearer ${user.token}` }
-            });
-            toast.success("Module marked as completed! Keep going!");
-            fetchModules(); // Refresh list to get completed status
+            await api.post(`/training/${moduleId}/complete`);
+            addToast(t('module_completed_success') || "Module marked as completed! Keep going!", 'success');
+            fetchModules(); 
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Failed to complete module');
+            addToast(error.response?.data?.error || 'Failed to complete module', 'error');
         }
     };
 
-    if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Loading EDWL Academy Modules...</div>;
+    if (loading) return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+            <div className="spinner"></div>
+        </div>
+    );
 
     return (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
-            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                <h1 style={{ color: 'var(--primary)', fontSize: '2.5rem', marginBottom: '10px' }}>EDWL Academy 🎓</h1>
-                <p style={{ color: '#666', fontSize: '1.2rem' }}>Complete training modules to upskill and earn the <b>Certified</b> badge for your profile!</p>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }} className="reveal">
+            <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+                <div style={{ 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '10px', 
+                    background: 'rgba(0, 128, 128, 0.05)', 
+                    color: 'var(--primary)', 
+                    padding: '8px 20px', 
+                    borderRadius: '30px', 
+                    fontSize: '0.9rem', 
+                    fontWeight: '800',
+                    marginBottom: '20px'
+                }}>
+                    <BookOpen size={18} /> {t('academy_tag') || 'SKILLS & TRAINING'}
+                </div>
+                <h1 style={{ color: 'var(--text)', fontSize: '3rem', fontWeight: '900', marginBottom: '15px', letterSpacing: '-0.03em' }}>
+                    {t('academy_title') || 'EDWL Academy'}
+                </h1>
+                <p style={{ color: 'var(--text-light)', fontSize: '1.25rem', maxWidth: '700px', margin: '0 auto' }}>
+                    {t('academy_desc') || 'Complete training modules to upskill and earn elite badges for your profile.'}
+                </p>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '30px' }}>
-                {modules.map(mod => (
-                    <div key={mod.id} style={{ 
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '32px' }}>
+                {modules.map((mod, index) => (
+                    <div key={mod.id} className={`card reveal delay-${(index % 4) + 1}`} style={{ 
                         background: 'white', 
-                        borderRadius: '12px', 
+                        borderRadius: '24px', 
                         overflow: 'hidden',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        border: mod.isCompleted ? '2px solid #28a745' : '1px solid #eee',
+                        border: mod.isCompleted ? '2px solid #10b981' : '1px solid #f1f5f9',
                         display: 'flex',
-                        flexDirection: 'column'
+                        flexDirection: 'column',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease'
                     }}>
                         <div style={{ 
-                            height: '180px', 
-                            background: '#f8f9fa', 
+                            height: '200px', 
+                            background: mod.isCompleted ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#f8fafc', 
                             display: 'flex', 
                             alignItems: 'center', 
                             justifyContent: 'center',
-                            borderBottom: '1px solid #eee'
-                            }}>
-                            {/* In production, embed video if mod.videoUrl is valid */}
-                            <span style={{ color: '#aaa', fontSize: '3rem' }}>▶️</span>
+                            borderBottom: '1px solid #f1f5f9',
+                            position: 'relative'
+                        }}>
+                            {mod.isCompleted ? (
+                                <CheckCircle size={60} color="#10b981" />
+                            ) : (
+                                <div style={{ 
+                                    width: '60px', height: '60px', borderRadius: '50%', background: 'white', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)', color: 'var(--primary)' 
+                                }}>
+                                    <Play size={24} fill="currentColor" />
+                                </div>
+                            )}
+                            <div style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(255,255,255,0.9)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '800', color: '#64748b' }}>
+                                {mod.category || 'Basic'}
+                            </div>
                         </div>
-                        <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                            <h3 style={{ margin: '0 0 10px', color: '#333' }}>{mod.title}</h3>
-                            <p style={{ color: '#666', marginBottom: '20px', flexGrow: 1 }}>{mod.description}</p>
+                        <div style={{ padding: '28px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                            <h3 style={{ margin: '0 0 12px', color: 'var(--text)', fontSize: '1.3rem', fontWeight: '800' }}>{mod.title}</h3>
+                            <p style={{ color: 'var(--text-light)', marginBottom: '24px', flexGrow: 1, lineHeight: '1.6', fontSize: '0.95rem' }}>{mod.description}</p>
+                            
                             <div style={{ marginTop: 'auto' }}>
                                 {mod.isCompleted ? (
-                                    <button disabled style={{ 
-                                        width: '100%', padding: '12px', borderRadius: '6px', 
-                                        border: 'none', background: '#d4edda', color: '#155724', 
-                                        fontWeight: 'bold', cursor: 'not-allowed' 
+                                    <div style={{ 
+                                        width: '100%', padding: '14px', borderRadius: '16px', 
+                                        textAlign: 'center', background: '#f0fdf4', color: '#166534', 
+                                        fontWeight: '800', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                                     }}>
-                                        ✅ Completed
-                                    </button>
+                                        <CheckCircle size={18} /> {t('completed') || 'Completed'}
+                                    </div>
                                 ) : (
                                     <button 
                                         onClick={() => handleComplete(mod.id)}
+                                        className="btn-primary"
                                         style={{ 
-                                            width: '100%', padding: '12px', borderRadius: '6px', 
-                                            border: 'none', background: 'var(--primary)', color: 'white', 
-                                            fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' 
+                                            width: '100%', padding: '14px', borderRadius: '16px', 
+                                            fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                                         }}
-                                        onMouseOver={(e) => e.target.style.opacity = 0.9}
-                                        onMouseOut={(e) => e.target.style.opacity = 1}
                                     >
-                                        Mark as Complete
+                                        <Sparkles size={18} /> {t('start_training') || 'Start Training'}
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
                 ))}
+                
                 {modules.length === 0 && (
-                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', background: '#f8f9fa', borderRadius: '12px' }}>
-                        <h3 style={{ color: '#666' }}>More modules are coming soon!</h3>
-                        <p>Check back later to advance your skills.</p>
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '80px 40px', background: '#f8fafc', borderRadius: '32px', border: '2px dashed #e2e8f0' }}>
+                        <div style={{ width: '80px', height: '80px', background: 'white', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+                            <BookOpen size={32} color="#94a3b8" />
+                        </div>
+                        <h3 style={{ color: 'var(--text)', fontSize: '1.5rem', fontWeight: '800', marginBottom: '10px' }}>
+                            {t('more_modules_coming') || 'More modules are coming soon!'}
+                        </h3>
+                        <p style={{ color: 'var(--text-light)', fontSize: '1.1rem' }}>
+                            {t('academy_empty_desc') || 'We are currently preparing more training content to help you advance your career.'}
+                        </p>
                     </div>
                 )}
             </div>

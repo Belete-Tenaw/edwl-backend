@@ -3,23 +3,25 @@ import { FileText, Check, Clock, AlertTriangle, ShieldCheck, Star } from 'lucide
 import { useTranslation } from 'react-i18next';
 import api from '../services/api';
 import ReviewForm from './ReviewForm';
+import { useToast } from './Toast';
 
 const DigitalContractViewer = ({ contract, userRole, onUpdate }) => {
     const { t } = useTranslation();
+    const addToast = useToast();
     const [signing, setSigning] = useState(false);
     const [showReview, setShowReview] = useState(false);
 
     const handleSign = async () => {
-        if (!window.confirm("By clicking confirm, you are digitally signing this contract and agreeing to all terms and conditions.")) return;
+        if (!window.confirm(t('confirm_sign_contract') || "By clicking confirm, you are digitally signing this contract and agreeing to all terms and conditions.")) return;
         
         setSigning(true);
         try {
             await api.put(`/contracts/${contract.id}/sign`);
-            alert("Contract signed successfully!");
+            addToast(t('contract_signed_success') || "Contract signed successfully!", 'success');
             if (onUpdate) onUpdate();
         } catch (err) {
             console.error("Signing error:", err);
-            alert("Failed to sign contract.");
+            addToast(t('contract_sign_failed') || "Failed to sign contract.", 'error');
         } finally {
             setSigning(false);
         }
@@ -61,13 +63,13 @@ const DigitalContractViewer = ({ contract, userRole, onUpdate }) => {
             </div>
 
             <div style={{ padding: '25px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-                    <div style={{ padding: '15px', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #dcfce7' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '30px' }}>
+                    <div style={{ flex: '1 1 250px', padding: '15px', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #dcfce7' }}>
                         <div style={{ fontSize: '0.75rem', color: '#166534', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px' }}>Employer</div>
                         <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{contract.employer?.contactName}</div>
                         <div style={{ fontSize: '0.85rem', color: '#166534' }}>{contract.employer?.phone}</div>
                     </div>
-                    <div style={{ padding: '15px', background: '#eff6ff', borderRadius: '12px', border: '1px solid #dbeafe' }}>
+                    <div style={{ flex: '1 1 250px', padding: '15px', background: '#eff6ff', borderRadius: '12px', border: '1px solid #dbeafe' }}>
                         <div style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px' }}>Worker</div>
                         <div style={{ fontWeight: 'bold', fontSize: '1rem' }}>{contract.jobSeeker?.fullName}</div>
                         <div style={{ fontSize: '0.85rem', color: '#1e40af' }}>{contract.jobSeeker?.phone}</div>
