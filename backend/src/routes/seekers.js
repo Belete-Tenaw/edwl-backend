@@ -6,6 +6,7 @@ const checkLimits = require('../middleware/checkLimits');
 const { authorize, Roles } = require('../middleware/rbac');
 const checkPremiumAccess = require('../middleware/checkPremiumAccess');
 const upload = require('../middleware/upload');
+const { authRateLimiter } = require('../middleware/rateLimiter');
 
 router.get('/', auth, authorize([Roles.EMPLOYER, Roles.ADMIN]), checkPremiumAccess, async (req, res, next) => {
     // Log browsing action for audit trail
@@ -28,10 +29,11 @@ router.put('/profile', auth, authorize([Roles.SEEKER]), upload.fields([
     { name: 'nationalIdUrl', maxCount: 1 },
     { name: 'guarantorIdUrl', maxCount: 1 },
     { name: 'policeClearanceUrl', maxCount: 1 },
-    { name: 'healthCertificateUrl', maxCount: 1 }
+    { name: 'healthCertificateUrl', maxCount: 1 },
+    { name: 'videoBio', maxCount: 1 }
 ]), seekerController.updateProfile);
 
-router.post('/fayda/request-otp', auth, authorize([Roles.SEEKER]), seekerController.requestFaydaOTP);
-router.post('/fayda/verify', auth, authorize([Roles.SEEKER]), seekerController.verifyFayda);
+router.post('/fayda/request-otp', auth, authorize([Roles.SEEKER]), authRateLimiter, seekerController.requestFaydaOTP);
+router.post('/fayda/verify', auth, authorize([Roles.SEEKER]), authRateLimiter, seekerController.verifyFayda);
 
 module.exports = router;

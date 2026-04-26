@@ -107,7 +107,7 @@ const Login = () => {
                 )}
 
                 {activeTab !== 'admin' ? (
-                    <SmartAuth activeTab={activeTab} onSuccess={handleLoginSuccess} onError={setError} />
+                    <SmartAuth activeTab={activeTab} onSuccess={handleLoginSuccess} onError={setError} initialIdentifier={initialIdentifier} />
                 ) : (
                     <form onSubmit={handleAdminSubmit}>
                         <div style={{ marginBottom: '20px' }}>

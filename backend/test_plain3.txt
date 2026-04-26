@@ -1,0 +1,356 @@
+(node:5348) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/tests/sanity.test.js
+  √ sanity check (65 ms)
+
+(node:6188) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/tests/rankLogic.test.js
+  calculateWorkerRank
+    √ should return BRONZE if photo or main ID is missing (15 ms)
+    √ should return BRONZE if only mandatory docs are present (1 ms)
+    √ should return SILVER if Fayda ID is present (1 ms)
+    √ should return GOLD if Fayda and Guarantor info are present (1 ms)
+    √ should NOT return GOLD if guarantor phone is missing (2 ms)
+    √ should return PLATINUM if all documents are present (2 ms)
+    √ should stay GOLD if health cert is missing but police clearance is present (1 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (8) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (8) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.error
+    [TelegramBot] TELEGRAM_BOT_TOKEN missing in .env. Bot listener failed to start.
+
+    [0m [90m  5 |[39m
+     [90m  6 |[39m [36mif[39m ([33m![39mtoken) {
+    [31m[1m>[22m[39m[90m  7 |[39m     console[33m.[39merror([32m'[TelegramBot] TELEGRAM_BOT_TOKEN missing in .env. Bot listener failed to start.'[39m)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m  8 |[39m } [36melse[39m {
+     [90m  9 |[39m     [36mconst[39m bot [33m=[39m [36mnew[39m [33mTelegramBot[39m(token[33m,[39m { polling[33m:[39m [36mtrue[39m })[33m;[39m
+     [90m 10 |[39m[0m
+
+      at Object.error (src/services/telegramBot.js:7:13)
+      at Object.require (src/server.js:4:1)
+      at Object.require (src/tests/freemium.test.js:2:13)
+
+  console.warn
+    [FirebaseAdmin] ⚠️ Using Mock Services: no key found.
+
+    [0m [90m 18 |[39m         }
+     [90m 19 |[39m     } [36melse[39m {
+    [31m[1m>[22m[39m[90m 20 |[39m         console[33m.[39mwarn([32m'[FirebaseAdmin] ⚠️ Using Mock Services: no key found.'[39m)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 21 |[39m     }
+     [90m 22 |[39m }
+     [90m 23 |[39m[0m
+
+      at warn (src/utils/firebaseAdmin.js:20:17)
+      at Object.initialize [as bucket] (src/utils/firebaseAdmin.js:58:9)
+      at Object.bucket (src/services/firebaseStorageService.js:5:24)
+      at Object.require (src/controllers/authController.js:7:34)
+      at Object.require (src/routes/auth.js:3:24)
+      at Object.require (tests/duplicate.test.js:10:20)
+
+  console.error
+    [TelegramBot] TELEGRAM_BOT_TOKEN missing in .env. Bot listener failed to start.
+
+    [0m [90m  5 |[39m
+     [90m  6 |[39m [36mif[39m ([33m![39mtoken) {
+    [31m[1m>[22m[39m[90m  7 |[39m     console[33m.[39merror([32m'[TelegramBot] TELEGRAM_BOT_TOKEN missing in .env. Bot listener failed to start.'[39m)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m  8 |[39m } [36melse[39m {
+     [90m  9 |[39m     [36mconst[39m bot [33m=[39m [36mnew[39m [33mTelegramBot[39m(token[33m,[39m { polling[33m:[39m [36mtrue[39m })[33m;[39m
+     [90m 10 |[39m[0m
+
+      at Object.error (src/services/telegramBot.js:7:13)
+      at Object.require (src/server.js:4:1)
+      at Object.require (src/tests/auth.test.js:2:13)
+
+(node:19244) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/duplicate.test.js
+  Backend Duplicate Detection and Normalization
+    √ normalizePhone should correctly format Ethiopian numbers (28 ms)
+    √ Login should work with non-normalized phone identification (169 ms)
+
+FAIL src/tests/freemium.test.js
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation, specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    SyntaxError: C:\Users\belet\EDWL-Project\backend\src\utils\keepAlive.js: Missing semicolon. (21:27)
+
+    [0m [90m 19 |[39m             [32m`);[39m
+     [90m 20 |[39m [32m        } catch (err) {[39m
+    [31m[1m>[22m[39m[90m 21 |[39m [32m            console.error(`[39m[33mKeep[39m[33m-[39malive ping failed[33m:[39m ${err[33m.[39mmessage}[32m`);[39m
+     [90m    |[39m                            [31m[1m^[22m[39m
+     [90m 22 |[39m [32m        }[39m
+     [90m 23 |[39m [32m    }, intervalMs);[39m
+     [90m 24 |[39m [32m};[39m[0m
+
+      at constructor (node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at Parser.toParseError [as raise] (node_modules/@babel/parser/src/tokenizer/index.ts:1504:19)
+      at Parser.raise [as semicolon] (node_modules/@babel/parser/src/parser/util.ts:149:10)
+      at Parser.semicolon [as parseExpressionStatement] (node_modules/@babel/parser/src/parser/statement.ts:1363:10)
+      at Parser.parseExpressionStatement [as parseStatementContent] (node_modules/@babel/parser/src/parser/statement.ts:702:19)
+      at Parser.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseStatementListItem] (node_modules/@babel/parser/src/parser/statement.ts:431:17)
+      at Parser.parseStatementListItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1444:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseBlock] (node_modules/@babel/parser/src/parser/statement.ts:1385:10)
+      at Parser.parseBlock [as parseTryStatement] (node_modules/@babel/parser/src/parser/statement.ts:1205:23)
+      at Parser.parseTryStatement [as parseStatementContent] (node_modules/@babel/parser/src/parser/statement.ts:549:21)
+      at Parser.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseStatementListItem] (node_modules/@babel/parser/src/parser/statement.ts:431:17)
+      at Parser.parseStatementListItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1444:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseBlock] (node_modules/@babel/parser/src/parser/statement.ts:1385:10)
+      at Parser.parseBlock [as parseFunctionBody] (node_modules/@babel/parser/src/parser/expression.ts:2618:24)
+      at Parser.parseFunctionBody [as parseArrowExpression] (node_modules/@babel/parser/src/parser/expression.ts:2559:10)
+      at Parser.parseArrowExpression [as parseAsyncArrowFromCallExpression] (node_modules/@babel/parser/src/parser/expression.ts:1067:10)
+      at Parser.parseAsyncArrowFromCallExpression [as parseCoverCallAndAsyncArrowHead] (node_modules/@babel/parser/src/parser/expression.ts:942:27)
+      at Parser.parseCoverCallAndAsyncArrowHead [as parseSubscript] (node_modules/@babel/parser/src/parser/expression.ts:804:19)
+      at Parser.parseSubscript [as parseSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:763:19)
+      at Parser.parseSubscripts [as parseExprSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:748:17)
+      at Parser.parseExprSubscripts [as parseUpdate] (node_modules/@babel/parser/src/parser/expression.ts:721:21)
+      at Parser.parseUpdate [as parseMaybeUnary] (node_modules/@babel/parser/src/parser/expression.ts:683:23)
+      at Parser.parseMaybeUnary [as parseMaybeUnaryOrPrivate] (node_modules/@babel/parser/src/parser/expression.ts:417:14)
+      at Parser.parseMaybeUnaryOrPrivate [as parseExprOps] (node_modules/@babel/parser/src/parser/expression.ts:429:23)
+      at Parser.parseExprOps [as parseMaybeConditional] (node_modules/@babel/parser/src/parser/expression.ts:384:23)
+      at Parser.parseMaybeConditional [as parseMaybeAssign] (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at parseMaybeAssign (node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at Parser.callback [as allowInAnd] (node_modules/@babel/parser/src/parser/expression.ts:3194:12)
+      at Parser.allowInAnd [as parseMaybeAssignAllowIn] (node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at Parser.parseMaybeAssignAllowIn [as parseMaybeAssignAllowInOrVoidPattern] (node_modules/@babel/parser/src/parser/expression.ts:3308:17)
+      at Parser.parseMaybeAssignAllowInOrVoidPattern [as parseExprListItem] (node_modules/@babel/parser/src/parser/expression.ts:2790:18)
+      at Parser.parseExprListItem [as parseCallExpressionArguments] (node_modules/@babel/parser/src/parser/expression.ts:1042:14)
+      at Parser.parseCallExpressionArguments [as parseCoverCallAndAsyncArrowHead] (node_modules/@babel/parser/src/parser/expression.ts:922:29)
+      at Parser.parseCoverCallAndAsyncArrowHead [as parseSubscript] (node_modules/@babel/parser/src/parser/expression.ts:804:19)
+      at Parser.parseSubscript [as parseSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:763:19)
+      at Parser.parseSubscripts [as parseExprSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:748:17)
+      at Parser.parseExprSubscripts [as parseUpdate] (node_modules/@babel/parser/src/parser/expression.ts:721:21)
+      at Parser.parseUpdate [as parseMaybeUnary] (node_modules/@babel/parser/src/parser/expression.ts:683:23)
+      at Parser.parseMaybeUnary [as parseMaybeUnaryOrPrivate] (node_modules/@babel/parser/src/parser/expression.ts:417:14)
+      at Parser.parseMaybeUnaryOrPrivate [as parseExprOps] (node_modules/@babel/parser/src/parser/expression.ts:429:23)
+      at Parser.parseExprOps [as parseMaybeConditional] (node_modules/@babel/parser/src/parser/expression.ts:384:23)
+      at Parser.parseMaybeConditional [as parseMaybeAssign] (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at Parser.parseMaybeAssign [as parseExpressionBase] (node_modules/@babel/parser/src/parser/expression.ts:226:23)
+      at parseExpressionBase (node_modules/@babel/parser/src/parser/expression.ts:217:39)
+      at Parser.callback [as allowInAnd] (node_modules/@babel/parser/src/parser/expression.ts:3189:16)
+      at Parser.allowInAnd [as parseExpression] (node_modules/@babel/parser/src/parser/expression.ts:217:17)
+      at Parser.parseExpression [as parseStatementContent] (node_modules/@babel/parser/src/parser/statement.ts:688:23)
+      at Parser.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseStatementListItem] (node_modules/@babel/parser/src/parser/statement.ts:431:17)
+      at Parser.parseStatementListItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1444:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseBlock] (node_modules/@babel/parser/src/parser/statement.ts:1385:10)
+      at Parser.parseBlock [as parseFunctionBody] (node_modules/@babel/parser/src/parser/expression.ts:2618:24)
+      at Parser.parseFunctionBody [as parseArrowExpression] (node_modules/@babel/parser/src/parser/expression.ts:2559:10)
+      at Parser.parseArrowExpression [as parseParenAndDistinguishExpression] (node_modules/@babel/parser/src/parser/expression.ts:1847:12)
+      at Parser.parseParenAndDistinguishExpression [as parseExprAtom] (node_modules/@babel/parser/src/parser/expression.ts:1170:21)
+      at Parser.parseExprAtom [as parseExprSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:742:23)
+      at Parser.parseExprSubscripts [as parseUpdate] (node_modules/@babel/parser/src/parser/expression.ts:721:21)
+      at Parser.parseUpdate [as parseMaybeUnary] (node_modules/@babel/parser/src/parser/expression.ts:683:23)
+      at Parser.parseMaybeUnary [as parseMaybeUnaryOrPrivate] (node_modules/@babel/parser/src/parser/expression.ts:417:14)
+      at Parser.parseMaybeUnaryOrPrivate [as parseExprOps] (node_modules/@babel/parser/src/parser/expression.ts:429:23)
+      at Parser.parseExprOps [as parseMaybeConditional] (node_modules/@babel/parser/src/parser/expression.ts:384:23)
+      at Parser.parseMaybeConditional [as parseMaybeAssign] (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at parseMaybeAssign (node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at Parser.callback [as allowInAnd] (node_modules/@babel/parser/src/parser/expression.ts:3189:16)
+      at Parser.allowInAnd [as parseMaybeAssignAllowIn] (node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at Parser.parseMaybeAssignAllowIn [as parseVar] (node_modules/@babel/parser/src/parser/statement.ts:1587:18)
+      at Parser.parseVar [as parseVarStatement] (node_modules/@babel/parser/src/parser/statement.ts:1251:10)
+      at Parser.parseVarStatement [as parseStatementContent] (node_modules/@babel/parser/src/parser/statement.ts:612:21)
+      at Parser.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseModuleItem] (node_modules/@babel/parser/src/parser/statement.ts:419:17)
+      at Parser.parseModuleItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1443:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseProgram] (node_modules/@babel/parser/src/parser/statement.ts:229:10)
+      at Parser.parseProgram [as parseTopLevel] (node_modules/@babel/parser/src/parser/statement.ts:203:25)
+      at Parser.parseTopLevel [as parse] (node_modules/@babel/parser/src/parser/index.ts:83:25)
+      at parse (node_modules/@babel/parser/src/index.ts:86:38)
+      at parser (node_modules/@babel/core/src/parser/index.ts:29:19)
+          at parser.next (<anonymous>)
+      at normalizeFile (node_modules/@babel/core/src/transformation/normalize-file.ts:50:24)
+          at normalizeFile.next (<anonymous>)
+      at run (node_modules/@babel/core/src/transformation/index.ts:41:36)
+          at run.next (<anonymous>)
+      at transform (node_modules/@babel/core/src/transform.ts:29:20)
+          at transform.next (<anonymous>)
+      at evaluateSync (node_modules/gensync/index.js:251:28)
+      at sync (node_modules/gensync/index.js:89:14)
+      at fn (node_modules/@babel/core/src/errors/rewrite-stack-trace.ts:99:14)
+      at transformSync (node_modules/@babel/core/src/transform.ts:66:52)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/index.js:422:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/index.js:519:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/index.js:558:19)
+
+(node:3648) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL src/tests/auth.test.js
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use ECMAScript Modules, see https://jestjs.io/docs/ecmascript-modules for how to enable it.
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation, specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    SyntaxError: C:\Users\belet\EDWL-Project\backend\src\utils\keepAlive.js: Missing semicolon. (21:27)
+
+    [0m [90m 19 |[39m             [32m`);[39m
+     [90m 20 |[39m [32m        } catch (err) {[39m
+    [31m[1m>[22m[39m[90m 21 |[39m [32m            console.error(`[39m[33mKeep[39m[33m-[39malive ping failed[33m:[39m ${err[33m.[39mmessage}[32m`);[39m
+     [90m    |[39m                            [31m[1m^[22m[39m
+     [90m 22 |[39m [32m        }[39m
+     [90m 23 |[39m [32m    }, intervalMs);[39m
+     [90m 24 |[39m [32m};[39m[0m
+
+      at constructor (node_modules/@babel/parser/src/parse-error.ts:95:45)
+      at Parser.toParseError [as raise] (node_modules/@babel/parser/src/tokenizer/index.ts:1504:19)
+      at Parser.raise [as semicolon] (node_modules/@babel/parser/src/parser/util.ts:149:10)
+      at Parser.semicolon [as parseExpressionStatement] (node_modules/@babel/parser/src/parser/statement.ts:1363:10)
+      at Parser.parseExpressionStatement [as parseStatementContent] (node_modules/@babel/parser/src/parser/statement.ts:702:19)
+      at Parser.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseStatementListItem] (node_modules/@babel/parser/src/parser/statement.ts:431:17)
+      at Parser.parseStatementListItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1444:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseBlock] (node_modules/@babel/parser/src/parser/statement.ts:1385:10)
+      at Parser.parseBlock [as parseTryStatement] (node_modules/@babel/parser/src/parser/statement.ts:1205:23)
+      at Parser.parseTryStatement [as parseStatementContent] (node_modules/@babel/parser/src/parser/statement.ts:549:21)
+      at Parser.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseStatementListItem] (node_modules/@babel/parser/src/parser/statement.ts:431:17)
+      at Parser.parseStatementListItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1444:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseBlock] (node_modules/@babel/parser/src/parser/statement.ts:1385:10)
+      at Parser.parseBlock [as parseFunctionBody] (node_modules/@babel/parser/src/parser/expression.ts:2618:24)
+      at Parser.parseFunctionBody [as parseArrowExpression] (node_modules/@babel/parser/src/parser/expression.ts:2559:10)
+      at Parser.parseArrowExpression [as parseAsyncArrowFromCallExpression] (node_modules/@babel/parser/src/parser/expression.ts:1067:10)
+      at Parser.parseAsyncArrowFromCallExpression [as parseCoverCallAndAsyncArrowHead] (node_modules/@babel/parser/src/parser/expression.ts:942:27)
+      at Parser.parseCoverCallAndAsyncArrowHead [as parseSubscript] (node_modules/@babel/parser/src/parser/expression.ts:804:19)
+      at Parser.parseSubscript [as parseSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:763:19)
+      at Parser.parseSubscripts [as parseExprSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:748:17)
+      at Parser.parseExprSubscripts [as parseUpdate] (node_modules/@babel/parser/src/parser/expression.ts:721:21)
+      at Parser.parseUpdate [as parseMaybeUnary] (node_modules/@babel/parser/src/parser/expression.ts:683:23)
+      at Parser.parseMaybeUnary [as parseMaybeUnaryOrPrivate] (node_modules/@babel/parser/src/parser/expression.ts:417:14)
+      at Parser.parseMaybeUnaryOrPrivate [as parseExprOps] (node_modules/@babel/parser/src/parser/expression.ts:429:23)
+      at Parser.parseExprOps [as parseMaybeConditional] (node_modules/@babel/parser/src/parser/expression.ts:384:23)
+      at Parser.parseMaybeConditional [as parseMaybeAssign] (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at parseMaybeAssign (node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at Parser.callback [as allowInAnd] (node_modules/@babel/parser/src/parser/expression.ts:3194:12)
+      at Parser.allowInAnd [as parseMaybeAssignAllowIn] (node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at Parser.parseMaybeAssignAllowIn [as parseMaybeAssignAllowInOrVoidPattern] (node_modules/@babel/parser/src/parser/expression.ts:3308:17)
+      at Parser.parseMaybeAssignAllowInOrVoidPattern [as parseExprListItem] (node_modules/@babel/parser/src/parser/expression.ts:2790:18)
+      at Parser.parseExprListItem [as parseCallExpressionArguments] (node_modules/@babel/parser/src/parser/expression.ts:1042:14)
+      at Parser.parseCallExpressionArguments [as parseCoverCallAndAsyncArrowHead] (node_modules/@babel/parser/src/parser/expression.ts:922:29)
+      at Parser.parseCoverCallAndAsyncArrowHead [as parseSubscript] (node_modules/@babel/parser/src/parser/expression.ts:804:19)
+      at Parser.parseSubscript [as parseSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:763:19)
+      at Parser.parseSubscripts [as parseExprSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:748:17)
+      at Parser.parseExprSubscripts [as parseUpdate] (node_modules/@babel/parser/src/parser/expression.ts:721:21)
+      at Parser.parseUpdate [as parseMaybeUnary] (node_modules/@babel/parser/src/parser/expression.ts:683:23)
+      at Parser.parseMaybeUnary [as parseMaybeUnaryOrPrivate] (node_modules/@babel/parser/src/parser/expression.ts:417:14)
+      at Parser.parseMaybeUnaryOrPrivate [as parseExprOps] (node_modules/@babel/parser/src/parser/expression.ts:429:23)
+      at Parser.parseExprOps [as parseMaybeConditional] (node_modules/@babel/parser/src/parser/expression.ts:384:23)
+      at Parser.parseMaybeConditional [as parseMaybeAssign] (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at Parser.parseMaybeAssign [as parseExpressionBase] (node_modules/@babel/parser/src/parser/expression.ts:226:23)
+      at parseExpressionBase (node_modules/@babel/parser/src/parser/expression.ts:217:39)
+      at Parser.callback [as allowInAnd] (node_modules/@babel/parser/src/parser/expression.ts:3189:16)
+      at Parser.allowInAnd [as parseExpression] (node_modules/@babel/parser/src/parser/expression.ts:217:17)
+      at Parser.parseExpression [as parseStatementContent] (node_modules/@babel/parser/src/parser/statement.ts:688:23)
+      at Parser.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseStatementListItem] (node_modules/@babel/parser/src/parser/statement.ts:431:17)
+      at Parser.parseStatementListItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1444:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseBlock] (node_modules/@babel/parser/src/parser/statement.ts:1385:10)
+      at Parser.parseBlock [as parseFunctionBody] (node_modules/@babel/parser/src/parser/expression.ts:2618:24)
+      at Parser.parseFunctionBody [as parseArrowExpression] (node_modules/@babel/parser/src/parser/expression.ts:2559:10)
+      at Parser.parseArrowExpression [as parseParenAndDistinguishExpression] (node_modules/@babel/parser/src/parser/expression.ts:1847:12)
+      at Parser.parseParenAndDistinguishExpression [as parseExprAtom] (node_modules/@babel/parser/src/parser/expression.ts:1170:21)
+      at Parser.parseExprAtom [as parseExprSubscripts] (node_modules/@babel/parser/src/parser/expression.ts:742:23)
+      at Parser.parseExprSubscripts [as parseUpdate] (node_modules/@babel/parser/src/parser/expression.ts:721:21)
+      at Parser.parseUpdate [as parseMaybeUnary] (node_modules/@babel/parser/src/parser/expression.ts:683:23)
+      at Parser.parseMaybeUnary [as parseMaybeUnaryOrPrivate] (node_modules/@babel/parser/src/parser/expression.ts:417:14)
+      at Parser.parseMaybeUnaryOrPrivate [as parseExprOps] (node_modules/@babel/parser/src/parser/expression.ts:429:23)
+      at Parser.parseExprOps [as parseMaybeConditional] (node_modules/@babel/parser/src/parser/expression.ts:384:23)
+      at Parser.parseMaybeConditional [as parseMaybeAssign] (node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at parseMaybeAssign (node_modules/@babel/parser/src/parser/expression.ts:257:12)
+      at Parser.callback [as allowInAnd] (node_modules/@babel/parser/src/parser/expression.ts:3189:16)
+      at Parser.allowInAnd [as parseMaybeAssignAllowIn] (node_modules/@babel/parser/src/parser/expression.ts:256:17)
+      at Parser.parseMaybeAssignAllowIn [as parseVar] (node_modules/@babel/parser/src/parser/statement.ts:1587:18)
+      at Parser.parseVar [as parseVarStatement] (node_modules/@babel/parser/src/parser/statement.ts:1251:10)
+      at Parser.parseVarStatement [as parseStatementContent] (node_modules/@babel/parser/src/parser/statement.ts:612:21)
+      at Parser.parseStatementContent [as parseStatementLike] (node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseModuleItem] (node_modules/@babel/parser/src/parser/statement.ts:419:17)
+      at Parser.parseModuleItem [as parseBlockOrModuleBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1443:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseProgram] (node_modules/@babel/parser/src/parser/statement.ts:229:10)
+      at Parser.parseProgram [as parseTopLevel] (node_modules/@babel/parser/src/parser/statement.ts:203:25)
+      at Parser.parseTopLevel [as parse] (node_modules/@babel/parser/src/parser/index.ts:83:25)
+      at parse (node_modules/@babel/parser/src/index.ts:86:38)
+      at parser (node_modules/@babel/core/src/parser/index.ts:29:19)
+          at parser.next (<anonymous>)
+      at normalizeFile (node_modules/@babel/core/src/transformation/normalize-file.ts:50:24)
+          at normalizeFile.next (<anonymous>)
+      at run (node_modules/@babel/core/src/transformation/index.ts:41:36)
+          at run.next (<anonymous>)
+      at transform (node_modules/@babel/core/src/transform.ts:29:20)
+          at transform.next (<anonymous>)
+      at evaluateSync (node_modules/gensync/index.js:251:28)
+      at sync (node_modules/gensync/index.js:89:14)
+      at fn (node_modules/@babel/core/src/errors/rewrite-stack-trace.ts:99:14)
+      at transformSync (node_modules/@babel/core/src/transform.ts:66:52)
+      at ScriptTransformer.transformSource (node_modules/@jest/transform/build/index.js:422:31)
+      at ScriptTransformer._transformAndBuildScript (node_modules/@jest/transform/build/index.js:519:40)
+      at ScriptTransformer.transform (node_modules/@jest/transform/build/index.js:558:19)
+
+(node:21972) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+Test Suites: 2 failed, 3 passed, 5 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        7.666 s
+Ran all test suites.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

@@ -53,9 +53,52 @@ export const UniversalUploader = ({ targetContext = 'image' /* 'image' | 'video'
         }
     };
 
-    const handleStandardUpload = (e) => {
+    const compressImage = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_SIZE = 1200; // Max dimension
+                    
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob((blob) => {
+                        resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                    }, 'image/jpeg', 0.85); // 85% quality
+                };
+            };
+        });
+    };
+
+    const handleStandardUpload = async (e) => {
         if (e.target.files && e.target.files.length > 0) {
-            onFileReady(e.target.files[0]);
+            const file = e.target.files[0];
+            if (targetContext === 'image' && file.type.startsWith('image/')) {
+                const compressed = await compressImage(file);
+                onFileReady(compressed);
+            } else {
+                onFileReady(file);
+            }
         }
     };
 

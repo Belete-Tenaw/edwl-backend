@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
@@ -39,6 +39,10 @@ const Register = () => {
         expectedSalary: '',
         preferredArrangement: 'LIVE_IN',
         preferredLocation: '',
+        locationRegion: '',
+        locationZone: '',
+        locationWoreda: '',
+        locationKebele: '',
         bio: '',
         profilePhoto: null,
         profilePhotoPreview: null,
@@ -65,9 +69,18 @@ const Register = () => {
         email: '',
         password: '',
         address: '',
+        locationRegion: '',
+        locationZone: '',
+        locationWoreda: '',
+        locationKebele: '',
         familySize: '',
         referralCodeUsed: ''
     });
+
+    const seekerDataRef = useRef(seekerData);
+    useEffect(() => {
+        seekerDataRef.current = seekerData;
+    }, [seekerData]);
 
     // Memory cleanup for preview URLs on unmount ONLY
     useEffect(() => {
@@ -78,12 +91,12 @@ const Register = () => {
                 'videoBioPreview'
             ];
             previewFields.forEach(field => {
-                if (seekerData[field]) {
-                    URL.revokeObjectURL(seekerData[field]);
+                if (seekerDataRef.current[field]) {
+                    URL.revokeObjectURL(seekerDataRef.current[field]);
                 }
             });
         };
-    }, []); // Only on unmount. Individual revokes happen in handleMediaCapture when choosing new files.
+    }, []); // Clean up references using stable ref
 
     const handleSeekerChange = useCallback((e) => {
         const { name, value } = e.target;
@@ -107,29 +120,33 @@ const Register = () => {
             let processedFile = file;
             let processedPreview = previewUrl;
 
-            // Revoke old preview to prevent memory leaks
-            if (seekerData[`${name}Preview`]) {
-                URL.revokeObjectURL(seekerData[`${name}Preview`]);
-            }
 
             if (file.type.startsWith('image/')) {
                 setCompressing(true);
                 processedFile = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
+                if (processedFile !== file) URL.revokeObjectURL(previewUrl);
                 processedPreview = URL.createObjectURL(processedFile);
                 setCompressing(false);
             } else if (file.type.startsWith('video/')) {
                 setLoading(true);
                 const result = await processVideoBio(file);
+                if (result.file !== file) URL.revokeObjectURL(previewUrl);
                 processedFile = result.file;
                 processedPreview = URL.createObjectURL(processedFile);
                 setLoading(false);
             }
 
-            setSeekerData(prev => ({
-                ...prev,
-                [name]: processedFile,
-                [`${name}Preview`]: processedPreview
-            }));
+            setSeekerData(prev => {
+                // Ensure we clean up the previous object URL safely using functional state update
+                if (prev[`${name}Preview`] && prev[`${name}Preview`] !== processedPreview) {
+                    URL.revokeObjectURL(prev[`${name}Preview`]);
+                }
+                return {
+                    ...prev,
+                    [name]: processedFile,
+                    [`${name}Preview`]: processedPreview
+                };
+            });
         } catch (err) {
             console.error(`Error processing ${name}:`, err);
             setError(err.message || "Failed to process media.");
@@ -185,7 +202,7 @@ const Register = () => {
         setLoading(true);
 
         try {
-            console.log("Registration process started...");
+            
 
             if (!termsAccepted) {
                 setError(t('must_accept_terms'));
@@ -279,7 +296,7 @@ const Register = () => {
                 if (seekerData.videoBio) formData.append('videoBio', seekerData.videoBio);
                 if (seekerData.guarantorPhone) formData.append('guarantorPhone', seekerData.guarantorPhone);
 
-                console.log("Sending Seeker Registration FormData...");
+                
                 await authService.register(formData, 'seeker');
                 setSuccess(true);
                 setTimeout(() => navigate('/dashboard/seeker'), 3000);
@@ -320,7 +337,7 @@ const Register = () => {
                     }
                 });
 
-                console.log("Sending Employer Registration FormData...");
+                
                 await authService.register(formData, 'employer');
                 setSuccess(true);
                 setTimeout(() => navigate('/dashboard/employer'), 3000);
@@ -492,7 +509,7 @@ const Register = () => {
                                 <input className="input" name="phone" value={seekerData.phone} onChange={handleSeekerChange} onBlur={handleSeekerBlur} placeholder="+251..." autoComplete="off" />
                             </div>
                             <div>
-                                <label className="label">{t('email_address')}</label>
+                                <label className="label">{t('email_address')} {t('optional')}</label>
                                 <input type="email" className="input" name="email" value={seekerData.email} onChange={handleSeekerChange} placeholder="email@example.com" autoComplete="off" />
                             </div>
                             <div>
@@ -610,8 +627,18 @@ const Register = () => {
                                     <option value="PART_TIME">{t('part_time')}</option>
                                 </select>
                             </div>
+                            <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label className="label">{t('region') || 'Region'}</label>
+                                    <input className="input" name="locationRegion" value={seekerData.locationRegion} onChange={handleSeekerChange} placeholder="e.g. Addis Ababa" />
+                                </div>
+                                <div>
+                                    <label className="label">{t('woreda') || 'Woreda'}</label>
+                                    <input className="input" name="locationWoreda" value={seekerData.locationWoreda} onChange={handleSeekerChange} placeholder="e.g. Bole" />
+                                </div>
+                            </div>
                             <div>
-                                <label className="label">{t('preferred_location')}</label>
+                                <label className="label">{t('preferred_location') || 'General Preferred Location'}</label>
                                 <input required className="input" name="preferredLocation" value={seekerData.preferredLocation} onChange={handleSeekerChange} placeholder={t('location_placeholder')} />
                             </div>
                             <div style={{ gridColumn: '1 / -1' }}>
@@ -642,6 +669,7 @@ const Register = () => {
                                     label={t('profile_photo')}
                                     id="profilePhoto"
                                     required={true}
+                                    captureMode="user"
                                     previewUrl={seekerData.profilePhotoPreview}
                                     onFileSelect={(file, url) => handleMediaCapture('profilePhoto', file, url)}
                                 />
@@ -764,15 +792,25 @@ const Register = () => {
                                 <input className="input" name="phone" value={employerData.phone} onChange={handleEmployerChange} onBlur={handleEmployerBlur} placeholder="+251..." autoComplete="off" />
                             </div>
                             <div>
-                                <label className="label">{t('email_address')}</label>
+                                <label className="label">{t('email_address')} {t('optional')}</label>
                                 <input type="email" className="input" name="email" value={employerData.email} onChange={handleEmployerChange} placeholder="email@example.com" autoComplete="off" />
                             </div>
                             <div>
                                 <label className="label">{t('password')}</label>
                                 <input required type="password" className="input" name="password" value={employerData.password} onChange={handleEmployerChange} placeholder={t('create_password')} autoComplete="new-password" />
                             </div>
+                            <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div>
+                                    <label className="label">{t('region') || 'Region'}</label>
+                                    <input className="input" name="locationRegion" value={employerData.locationRegion} onChange={handleEmployerChange} placeholder="Addis Ababa" />
+                                </div>
+                                <div>
+                                    <label className="label">{t('woreda') || 'Woreda'}</label>
+                                    <input className="input" name="locationWoreda" value={employerData.locationWoreda} onChange={handleEmployerChange} placeholder="Bole" />
+                                </div>
+                            </div>
                             <div>
-                                <label className="label">{t('address_location')}</label>
+                                <label className="label">{t('exact_address_landmark') || 'Exact Address / Landmark'}</label>
                                 <input required className="input" name="address" value={employerData.address} onChange={handleEmployerChange} placeholder={t('city_subcity')} />
                             </div>
                             {employerData.employerType === 'HOUSEHOLD' && (
@@ -859,3 +897,4 @@ const Register = () => {
 };
 
 export default Register;
+

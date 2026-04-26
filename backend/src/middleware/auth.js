@@ -5,6 +5,11 @@ if (!JWT_SECRET) {
     throw new Error('JWT_SECRET must be defined');
 }
 
+// Simple in-memory cache for user deactivation/tier status (60s TTL)
+// Key: userId, Value: { data, expiry }
+const statusCache = new Map();
+const CACHE_TTL = 60 * 1000; 
+
 module.exports = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 
@@ -17,22 +22,32 @@ module.exports = async (req, res, next) => {
         req.user = decoded;
 
         // Security Audit Improvement: Check real-time user status in DB
-        // This solves the "Stale JWT" problem where users didn't see premium features after paying
-        let user;
-        const selectFields = { isActive: true, tier: true, subscriptionExpiry: true };
-        
-        if (decoded.role === 'JOB_SEEKER') {
-            user = await prisma.jobSeeker.findUnique({ where: { id: decoded.id }, select: selectFields });
-        } else if (decoded.role === 'EMPLOYER') {
-            user = await prisma.employer.findUnique({ where: { id: decoded.id }, select: selectFields });
-        }
+        // Optimized with in-memory caching to prevent DB bottlenecks
+        const cached = statusCache.get(decoded.id);
+        const now = Date.now();
 
-        if (user) {
-            if (!user.isActive) {
-                return res.status(403).json({ error: 'Account is deactivated. Please contact support.' });
+        if (cached && cached.expiry > now) {
+            req.user = { ...decoded, ...cached.data };
+        } else {
+            let user;
+            const selectFields = { isActive: true, tier: true, subscriptionExpiry: true };
+            
+            if (decoded.role === 'JOB_SEEKER') {
+                user = await prisma.jobSeeker.findUnique({ where: { id: decoded.id }, select: selectFields });
+            } else if (decoded.role === 'EMPLOYER') {
+                user = await prisma.employer.findUnique({ where: { id: decoded.id }, select: selectFields });
             }
-            // Attach latest status to request
-            req.user = { ...decoded, ...user };
+
+            if (user) {
+                // Update Cache
+                statusCache.set(decoded.id, { data: user, expiry: now + CACHE_TTL });
+                
+                if (!user.isActive) {
+                    return res.status(403).json({ error: 'Account is deactivated. Please contact support.' });
+                }
+                // Attach latest status to request
+                req.user = { ...decoded, ...user };
+            }
         }
 
         next();

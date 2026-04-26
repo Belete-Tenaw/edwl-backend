@@ -27,7 +27,7 @@ describe('Freemium Limits', () => {
     });
 
     it('should allow viewing if under limit', async () => {
-        prisma.jobSeeker.findUnique.mockResolvedValue({ id: 'user-123', tier: 'FREEMIUM' });
+        prisma.jobSeeker.findUnique.mockResolvedValue({ id: 'user-123', tier: 'BRONZE', isActive: true });
         prisma.viewLog.count.mockResolvedValue(2); // 2 views today
         prisma.jobPost.findUnique.mockResolvedValue({
             id: 'job-1',
@@ -43,7 +43,7 @@ describe('Freemium Limits', () => {
     });
 
     it('should block viewing if limit reached', async () => {
-        prisma.jobSeeker.findUnique.mockResolvedValue({ id: 'user-123', tier: 'FREEMIUM' });
+        prisma.jobSeeker.findUnique.mockResolvedValue({ id: 'user-123', tier: 'BRONZE', isActive: true });
         prisma.viewLog.count.mockResolvedValue(5); // 5 views already
 
         const res = await request(app)
@@ -55,7 +55,7 @@ describe('Freemium Limits', () => {
     });
 
     it('should not block subscribers', async () => {
-        prisma.jobSeeker.findUnique.mockResolvedValue({ id: 'user-123', tier: 'SUBSCRIBER' });
+        prisma.jobSeeker.findUnique.mockResolvedValue({ id: 'user-123', tier: 'GOLD', isActive: true });
         prisma.jobPost.findUnique.mockResolvedValue({
             id: 'job-1',
             employer: { phone: '123', email: 'test@test.com' }

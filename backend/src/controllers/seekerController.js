@@ -1,5 +1,5 @@
 const prisma = require('../utils/prisma');
-const { calculateWorkerRank } = require('../utils/rankLogic');
+const { calculateWorkerRank, calculateTrustScore } = require('../utils/rankLogic');
 const { uploadFileToFirebase } = require('../services/firebaseStorageService');
 const faydaService = require('../services/faydaService');
 
@@ -53,7 +53,7 @@ exports.getSeekerProfile = async (req, res) => {
 
             // Fetch masked data from the view function for this specific seeker
             const seekers = await prisma.$queryRaw`
-                SELECT * FROM get_seeker_visibility_with_id(${userId})
+                SELECT * FROM get_seeker_visibility_with_id(${userId}::uuid)
                 WHERE id = ${id}::uuid
                 LIMIT 1
             `;
@@ -61,6 +61,9 @@ exports.getSeekerProfile = async (req, res) => {
             if (!seekers || seekers.length === 0) return res.status(404).json({ error: 'Seeker not found' });
 
             const seeker = seekers[0];
+            
+            // Calculate Trust Score on the fly for consistency
+            seeker.trustScore = calculateTrustScore(seeker);
             
             // Double-Key Access Control Masking
             seeker.phone = req.hasPremiumAccess ? seeker.phone : '********';
@@ -88,13 +91,13 @@ exports.updateProfile = async (req, res) => {
         const id = req.user.id;
         if (req.user.role !== 'JOB_SEEKER') return res.status(403).json({ error: 'Forbidden' });
 
-        const { fullName, bio, skills, experienceYears, expectedSalary, preferredLocation, preferredArrangement, guarantorPhone } = req.body;
+        const { fullName, bio, skills, experienceYears, expectedSalary, preferredLocation, preferredArrangement, guarantorPhone, videoBio } = req.body;
 
         const updateData = {
             fullName, bio,
             experienceYears: experienceYears ? parseInt(experienceYears) : undefined,
             expectedSalary: expectedSalary ? parseInt(expectedSalary) : undefined,
-            preferredLocation, preferredArrangement, guarantorPhone
+            preferredLocation, preferredArrangement, guarantorPhone, videoBio
         };
 
         if (skills) {
@@ -116,8 +119,6 @@ exports.updateProfile = async (req, res) => {
                 }
                 if (req.files.idDocument) {
                     updateData.idDocument = (await uploadFileToFirebase(req.files.idDocument[0], 'legal-docs', false)).storagePath;
-                    updateData.isVerified = false;
-                    updateData.verificationStatus = 'PENDING';
                 }
                 if (req.files.nationalIdUrl) {
                     updateData.nationalIdUrl = (await uploadFileToFirebase(req.files.nationalIdUrl[0], 'legal-docs', false)).storagePath;
@@ -130,6 +131,14 @@ exports.updateProfile = async (req, res) => {
                 }
                 if (req.files.healthCertificateUrl) {
                     updateData.healthCertificateUrl = (await uploadFileToFirebase(req.files.healthCertificateUrl[0], 'legal-docs', false)).storagePath;
+                }
+                if (req.files.videoBio) {
+                    updateData.videoBio = (await uploadFileToFirebase(req.files.videoBio[0], 'videos', false)).storagePath;
+                }
+                
+                if (req.files.idDocument || req.files.nationalIdUrl || req.files.guarantorIdUrl || req.files.policeClearanceUrl || req.files.healthCertificateUrl) {
+                    updateData.isVerified = false;
+                    updateData.verificationStatus = 'PENDING';
                 }
             } catch (err) {
                 return res.status(500).json({ error: "File upload failed: " + err.message });
@@ -179,7 +188,7 @@ exports.getAllSeekers = async (req, res) => {
         if (userRole === 'EMPLOYER') {
             // Use the database-level masking function for employers
             seekers = await prisma.$queryRaw`
-                SELECT * FROM get_seeker_visibility_with_id(${userId})
+                SELECT * FROM get_seeker_visibility_with_id(${userId}::uuid)
                 ORDER BY "fullName" ASC
             `;
         } else {
@@ -189,7 +198,12 @@ exports.getAllSeekers = async (req, res) => {
             });
         }
 
-        res.json(seekers);
+        const enrichedSeekers = seekers.map(s => ({
+            ...s,
+            trustScore: calculateTrustScore(s)
+        }));
+
+        res.json(enrichedSeekers);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

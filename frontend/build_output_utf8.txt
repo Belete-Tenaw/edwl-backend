@@ -1,0 +1,116 @@
+﻿
+> frontend@1.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 4 modules transformed.
+node.exe : 
+[31mΓ£ù[39m Build 
+failed in 99ms
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ([31mΓ£ù[39m   
+  Build failed in 9    
+9ms:String) [], Re    
+moteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+[31merror during 
+build:
+[31m[vite-plugin-pwa:b
+uild] There was an 
+error during the build:
+  src/locales/i18n.js 
+(9:0): Expression 
+expected
+Additionally, handling 
+the error in the 
+'buildEnd' hook caused 
+the following error:
+  src/locales/i18n.js 
+(9:0): Expression 
+expected[31m
+file: [36mC:/Users/bel
+et/EDWL-Project/fronten
+d/src/locales/i18n.js:9
+:0[31m
+[33m
+ 7: const 
+storedLanguage = localS
+torage.getItem('i18next
+Lng') || 'en';
+ 8: 
+ 9: .length, 'am 
+keys:', Object.keys(am)
+.length);
+    ^
+10: 
+11: i18n
+[31m
+    at getRollupError (
+file:///C:/Users/belet/
+EDWL-Project/frontend/n
+ode_modules/vite/node_m
+odules/rollup/dist/es/s
+hared/parseAst.js:402:4
+1)
+    at file:///C:/Users
+/belet/EDWL-Project/fro
+ntend/node_modules/vite
+/node_modules/rollup/di
+st/es/shared/node-entry
+.js:23467:39
+    at async catchUnfin
+ishedHookActions (file:
+///C:/Users/belet/EDWL-
+Project/frontend/node_m
+odules/vite/node_module
+s/rollup/dist/es/shared
+/node-entry.js:22925:16
+)
+    at async 
+rollupInternal (file://
+/C:/Users/belet/EDWL-Pr
+oject/frontend/node_mod
+ules/vite/node_modules/
+rollup/dist/es/shared/n
+ode-entry.js:23450:5)
+    at async 
+buildEnvironment (file:
+///C:/Users/belet/EDWL-
+Project/frontend/node_m
+odules/vite/dist/node/c
+hunks/config.js:33541:1
+2)
+    at async 
+Object.build (file:///C
+:/Users/belet/EDWL-Proj
+ect/frontend/node_modul
+es/vite/dist/node/chunk
+s/config.js:33900:19)
+    at async 
+Object.buildApp (file:/
+//C:/Users/belet/EDWL-P
+roject/frontend/node_mo
+dules/vite/dist/node/ch
+unks/config.js:33897:15
+3)
+    at async 
+CAC.<anonymous> (file:/
+//C:/Users/belet/EDWL-P
+roject/frontend/node_mo
+dules/vite/dist/node/cl
+i.js:629:3)[39m

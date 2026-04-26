@@ -60,7 +60,22 @@ const Activate = () => {
 
         try {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            await api.post('/payments/activate-code', { code });
+            const response = await api.post('/payments/activate-code', { code });
+            
+            // Use the updated user object directly from the response
+            if (response.data.user) {
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+            } else {
+                // Fallback: Fetch updated profile if backend didn't return it
+                if (user?.role === 'EMPLOYER') {
+                    const profileRes = await api.get(`/employers/${user.id}`);
+                    localStorage.setItem('user', JSON.stringify({ ...user, tier: profileRes.data.tier, subscriptionExpiry: profileRes.data.subscriptionExpiry }));
+                } else if (user?.role === 'JOB_SEEKER') {
+                    const profileRes = await api.get(`/seekers/${user.id}`);
+                    localStorage.setItem('user', JSON.stringify({ ...user, tier: profileRes.data.tier, badge: profileRes.data.badge, subscriptionExpiry: profileRes.data.subscriptionExpiry }));
+                }
+            }
+
             setSuccess(t('subscription_activated_success') || 'Subscription activated successfully!');
             setValidationStatus('VALID');
             setTimeout(() => {

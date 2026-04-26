@@ -15,7 +15,10 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
         salaryOffered: '',
         jobType: 'Full-time',
         preferredArrangement: 'LIVE_IN',
-        address: ''
+        address: '',
+        locationRegion: '',
+        locationZone: '',
+        locationWoreda: ''
     });
     const [amharicMode, setAmharicMode] = useState({ title: false, description: false, customSkill: false });
 
@@ -125,17 +128,42 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
                                 placeholder="3000"
                             />
                         </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                         <div>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('location')}</label>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('region') || 'Region'}</label>
                             <input
                                 required
                                 style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                                name="address"
-                                value={formData.address}
+                                name="locationRegion"
+                                value={formData.locationRegion}
                                 onChange={handleChange}
-                                placeholder={t('location_placeholder')}
+                                placeholder="e.g. Addis Ababa"
                             />
                         </div>
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('woreda') || 'Woreda'}</label>
+                            <input
+                                required
+                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                                name="locationWoreda"
+                                value={formData.locationWoreda}
+                                onChange={handleChange}
+                                placeholder="e.g. Bole"
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('exact_address') || 'Exact Address / Landmark'}</label>
+                        <input
+                            required
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                            name="address"
+                            value={formData.address}
+                            onChange={handleChange}
+                            placeholder={t('location_placeholder')}
+                        />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>

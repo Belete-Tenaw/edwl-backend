@@ -60,13 +60,14 @@ BEGIN
                   WHEN js."locationZone" = v_job_zone THEN 12
                   WHEN js."locationRegion" = v_job_region THEN 5
                   ELSE 0 END) as score_loc,
-            -- E. TRUST & TIER (10 pts)
+            -- E. TRUST & TIER (15 pts expanded)
             (
                 CASE WHEN js.tier = 'PLATINUM' THEN 6
                      WHEN js.tier = 'GOLD' THEN 4
                      WHEN js.tier = 'SILVER' THEN 2
                      ELSE 0 END
                 + CASE WHEN js."isVerified" = true THEN 4 ELSE 0 END
+                + CASE WHEN js."isFaydaVerified" = true THEN 5 ELSE 0 END
             ) as score_trust,
             -- F. RECENCY BOOST (10 pts) - Freshness is key (LinkedIn/Indeed style)
             (
@@ -74,11 +75,12 @@ BEGIN
                      WHEN js."updatedAt" > (NOW() - INTERVAL '7 days') THEN 5
                      ELSE 0 END
             ) as score_recency,
-            -- G. ENGAGEMENT SCORE (5 pts) - LinkedIn Style: Reward active responders
+            -- G. ENGAGEMENT & BEHAVIOR SCORE (10 pts) - LinkedIn Style: Reward active responders
             (
-                SELECT LEAST((COUNT(*)::FLOAT * 2)::INT, 5)
+                (SELECT LEAST((COUNT(*)::FLOAT * 2)::INT, 5)
                 FROM "Message" m
-                WHERE m."senderJSId" = js.id AND m.timestamp > (NOW() - INTERVAL '48 hours')
+                WHERE m."senderJSId" = js.id AND m.timestamp > (NOW() - INTERVAL '48 hours'))
+                + LEAST((COALESCE(js."behaviorScore", 50) / 20)::INT, 5)
             ) as score_engagement,
             -- H. FEATURED & PRIORITY (5 pts)
             (

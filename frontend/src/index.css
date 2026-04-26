@@ -1,33 +1,57 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=Noto+Sans+Ethiopic:wght@400;700&display=swap');
 
 :root {
-  --primary: #FF4500;
-  --primary-dark: #E63E00;
-  --secondary: #F7F7F7;
-  --bg: #FFFFFF;
-  --text: #333333;
-  --text-light: #666666;
-  --white: #FFFFFF;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --radius: 12px;
-  --transition: all 0.3s ease;
+  /* Ultra-Premium HSL Palettes */
+  --primary: hsl(180, 100%, 25%); /* Deep Teal */
+  --primary-light: hsl(180, 100%, 45%);
+  --primary-glow: hsla(180, 100%, 25%, 0.15);
+  --secondary: hsl(210, 40%, 98%); /* Soft Blue-Grey Bg */
+  --accent: hsl(14, 100%, 57%); /* Energetic Orange for CTAs */
+  
+  --navy: hsl(210, 29%, 24%); /* Professional Navy */
+  --white: #ffffff;
+  --text: hsl(215, 25%, 27%); /* Sophisticated Dark Slate */
+  --text-light: hsl(215, 16%, 47%);
+  --text-muted: hsl(215, 13%, 63%);
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  
+  /* Sophisticated Soft Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  --shadow-primary: 0 10px 20px -5px hsla(180, 100%, 25%, 0.3);
+  
+  --radius: 20px;
+  --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', 'Noto Sans Ethiopic', system-ui, -apple-system, sans-serif;
   background-color: var(--secondary);
-  background-image: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url('./assets/hero-bg.jpg');
-  background-attachment: fixed;
-  background-size: cover;
   color: var(--text);
   line-height: 1.6;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', 'Noto Sans Ethiopic', sans-serif;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+}
+
+/* Specific attractive colors for headings */
+h1 { color: var(--primary); }
+h2 { color: var(--navy); }
+h3 { color: hsl(180, 100%, 20%); } /* Darker Teal */
 
 /* Dual Background Layering for EDWL Logo */
 body::before {
@@ -40,13 +64,20 @@ body::before {
   height: 80vmin;
   max-width: 600px;
   max-height: 600px;
-  background-image: url('./assets/logo_circular.png');
+  background-image: url('./assets/logo_2024.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  opacity: 0.15;
+  opacity: 0.07;
+
   z-index: -1;
   pointer-events: none;
+}
+
+.text-bold-brand {
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
 }
 
 button {
@@ -63,41 +94,44 @@ button {
 }
 
 .btn-primary {
-  background-color: var(--primary);
-  color: var(--white);
-  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 12px 32px;
+  box-shadow: var(--shadow-primary);
+  border: 1px solid hsla(180, 100%, 10%, 0.1);
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 69, 0, 0.3);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 24px -5px hsla(180, 100%, 25%, 0.4);
 }
 
-/* Global Login button — prominent, 44px min-height */
 .btn-login {
-  min-height: 44px;
-  padding: 10px 28px;
-  background-color: var(--primary);
-  color: var(--white);
-  border: none;
-  border-radius: 8px;
+  min-height: 48px;
+  padding: 12px 32px;
+  background-color: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
   font-weight: 700;
   font-size: 1rem;
-  letter-spacing: 0.01em;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
   transition: var(--transition);
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(255, 69, 0, 0.2);
 }
 
 .btn-login:hover {
-  background-color: var(--primary-dark);
+  background-color: var(--primary);
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(255, 69, 0, 0.35);
+  box-shadow: var(--shadow-primary);
+}
+
+p {
+  color: var(--text-light);
+}
+
+strong {
+  color: var(--navy);
+  font-weight: 700;
 }
 
 /* Ghost button for dark hero backgrounds */
@@ -129,17 +163,17 @@ button {
 /* Duplicate account warning banner */
 .duplicate-banner {
   background: white;
-  border: 1px solid #ff4500;
-  border-left: 5px solid #ff4500;
+  border: 1px solid var(--primary);
+  border-left: 5px solid var(--primary);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 30px;
   text-align: left;
-  box-shadow: 0 4px 15px rgba(255, 69, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 128, 128, 0.1);
 }
 
 .duplicate-banner h4 {
-  color: #ff4500;
+  color: var(--primary);
   margin: 0 0 10px 0;
   font-size: 1.1rem;
   font-weight: 700;
@@ -163,25 +197,62 @@ button {
 }
 
 .card {
-  background: var(--white);
+  background: white;
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 32px;
   box-shadow: var(--shadow);
+  transition: var(--transition);
+  border: 1px solid hsla(210, 40%, 90%, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-light));
+  opacity: 0;
   transition: var(--transition);
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transform: translateY(-12px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-glow);
+}
+
+.card:hover::after {
+  opacity: 1;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
-/* Mobile-first responsive utils */
 @media (max-width: 768px) {
   .hero {
     padding: 60px 20px;
@@ -231,6 +302,23 @@ button {
   }
 }
 
+.nav-link {
+  text-decoration: none;
+  color: var(--text-light);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.nav-link:hover {
+  color: var(--primary);
+  background: var(--primary-glow);
+}
+
 /* Active Navigation Link */
 .nav-link-active {
   color: var(--primary) !important;
@@ -241,18 +329,48 @@ button {
 .nav-link-active::after {
   content: '';
   position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
+  bottom: -4px;
+  left: 12px;
+  right: 12px;
+  height: 3px;
   background-color: var(--primary);
   border-radius: 2px;
+  transform-origin: center;
+  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideIn {
+  from { transform: scaleX(0); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+
+/* Page Entry Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+
+/* Refined App Entry Animation */
+.app {
+  animation: fadeIn 0.8s ease-out;
 }
 
 @media (max-width: 400px) {
-
-  nav a>div>div:first-child,
-  nav a>div>div:last-child {
+  nav a > div > div:first-child,
+  nav a > div > div:last-child {
     font-size: 0.65rem !important;
   }
 }

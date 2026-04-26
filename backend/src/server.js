@@ -1,7 +1,9 @@
-console.log('Starting server.js...');
+
 require('dotenv').config();
-// Initialize Telegram Bot Listener (Non-blocking)
-require('./services/telegramBot');
+// Initialize Telegram Bot Listener (Non-blocking) - Only outside tests
+if (process.env.NODE_ENV !== 'test') {
+  require('./services/telegramBot');
+}
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -11,8 +13,10 @@ const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const keepAlive = require('./utils/keepAlive');
 
-// Initialize Cron Jobs
-require('./jobs/automationJobs');
+// Initialize Cron Jobs - Only outside tests
+if (process.env.NODE_ENV !== 'test') {
+  require('./jobs/automationJobs');
+}
 
 const app = express();
 // Google Cloud Run sets the PORT variable automatically to 8080
@@ -21,12 +25,28 @@ const PORT = process.env.PORT || 8080;
 // ================================
 // 🔌 SOCKET.IO SETUP
 // ================================
+// Socket.IO uses the same allowedOrigins as the REST API (configured below)
 const http = require('http');
 const { Server } = require('socket.io');
 const server = http.createServer(app);
+
+// Note: allowedOrigins is defined after CORS middleware - io is re-configured there
 const io = new Server(server, {
   cors: {
-    origin: "*", // Adjust for production security if needed
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      const socketAllowed = [
+        'https://edwl-ethio-domesticworkerslink.web.app',
+        'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
+        'http://localhost:3000',
+        ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [])
+      ];
+      if (socketAllowed.includes(origin) || process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+      } else {
+        callback(new Error('Socket.IO connection not allowed from: ' + origin));
+      }
+    },
     methods: ["GET", "POST"]
   }
 });
@@ -35,15 +55,15 @@ const io = new Server(server, {
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  console.log('👤 User connected:', socket.id);
+  
 
   socket.on('join', (userId) => {
     socket.join(userId);
-    console.log(`📡 User ${userId} joined their private room`);
+    
   });
 
   socket.on('disconnect', () => {
-    console.log('👤 User disconnected');
+    
   });
 });
 
@@ -129,6 +149,7 @@ const allowedOrigins = [
   'https://edwl-ethio-domesticworkerslink.web.app',
   'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
   'http://localhost:3000',
+  'http://localhost:3001',
   ...envOrigins
 ];
 
@@ -162,8 +183,10 @@ app.use(limiter);
 // ================================
 const uploadsPath = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsPath, {
+  maxAge: '1d', // Cache static uploads for 1 day
   setHeaders: (res) => {
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Cache-Control', 'public, max-age=86400');
   }
 }));
 
@@ -206,6 +229,10 @@ app.use('/api/documents', require('./routes/documents'));
 app.use('/api/payments', require('./routes/payment'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/safety', require('./routes/safety'));
+app.use('/api/training', require('./routes/trainingRoutes'));
+app.use('/api/contracts', require('./routes/contracts'));
+app.use('/api/escrow', require('./routes/escrow'));
+app.use('/api/upload', require('./routes/upload'));
 
 // ================================
 // ❌ GLOBAL ERROR HANDLER
@@ -215,8 +242,11 @@ app.use(require('./middleware/errorHandler'));
 // ================================
 // 🚀 SERVER START
 // ================================
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ EDWL Backend is live on port ${PORT} (with WebSockets)`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
+}
+
 
 module.exports = app;

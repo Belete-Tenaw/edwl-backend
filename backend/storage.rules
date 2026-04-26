@@ -15,21 +15,25 @@ service firebase.storage {
              && request.resource.size < 5 * 1024 * 1024; // 5MB limit
     }
     function isValidVideo() {
-      return request.resource.contentType.matches('video/.*'); // 50MB restriction removed
+      return request.resource.contentType.matches('video/.*')
+             && request.resource.size <= 15 * 1024 * 1024; // 15MB limit
     }
 
     // User Media Sandboxing
     match /users/{userId}/{mediaType}/{fileName} {
-      allow read: if isOwner(userId) || isSuperAdmin() || (mediaType == 'profilePhoto');
+      // Profile Photos remain public for thumbnails. ID documents require Admin or backend proxy.
+      allow read: if mediaType == 'profilePhoto' || (request.auth != null && request.auth.token.superAdmin == true);
       
-      allow write: if isSuperAdmin() || (isOwner(userId) && (
+      // Strict write conditions based on valid media
+      allow write: if (request.auth != null && request.auth.uid == userId) && (
         (mediaType == 'profilePhoto' && isValidImage()) ||
         (mediaType == 'idDocument' && isValidImage()) ||
+        (mediaType == 'liveSelfie' && isValidImage()) ||
         (mediaType == 'images' && isValidImage()) ||
         (mediaType == 'videos' && isValidVideo())
-      ));
+      );
       
-      allow delete: if isOwner(userId) || isSuperAdmin();
+      allow delete: if request.auth != null && (request.auth.uid == userId || request.auth.token.superAdmin == true);
     }
 
     // Support for top-level uploads directory if used by backend

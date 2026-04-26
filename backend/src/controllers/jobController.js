@@ -1,5 +1,6 @@
 const prisma = require('../utils/prisma');
 const telegramService = require('../services/telegramService');
+const { calculateTrustScore } = require('../utils/rankLogic');
 
 exports.createJobPost = async (req, res) => {
     try {
@@ -138,7 +139,7 @@ exports.getJobById = async (req, res) => {
             user = await prisma.employer.findUnique({ where: { id: userId } });
         }
 
-        if (user.tier === 'FREE') {
+        if (user.tier === 'FREE' || user.tier === 'BRONZE') {
             // Masking employer details
             job.employer.phone = '********';
             job.employer.email = '********';
@@ -170,48 +171,45 @@ exports.getMatchesForJob = async (req, res) => {
             return res.json([]);
         }
 
-        const employerId = req.user.id;
+        // Fetch full masked profiles using the new SQL function
         const matchedIds = matches.map(m => m.seeker_id);
-
-        // Fetch full masked profiles for these exact matched seekers
-        // We use the existing visibility view to ensure privacy compliance
-        const placeholders = matchedIds.map((_, i) => `$${i + 2}`).join(',');
-        const fullProfiles = await prisma.$queryRawUnsafe(`
-            SELECT * FROM "JobSeeker"
-            WHERE id IN (${placeholders})
-        `, employerId, ...matchedIds);
-
-        // Fetch employer tier to enforce masking
         const employer = await prisma.employer.findUnique({ where: { id: req.user.id }, select: { tier: true } });
-        const isFreeTier = employer?.tier === 'FREE';
+        const employerTier = employer?.tier || 'FREE';
 
-        // Merge the smart score and visibility flag into the profiles
-        const enrichedMatches = fullProfiles.map(profile => {
-            const scoreData = matches.find(m => m.seeker_id === profile.id);
+        const enrichedMatches = await Promise.all(matches.map(async (match) => {
+            const [profile] = await prisma.$queryRawUnsafe(
+                `SELECT get_seeker_visibility_with_id($1::uuid, $2::text) as data`,
+                match.seeker_id,
+                employerTier
+            );
+            
+            const profileData = profile.data;
+            if (!profileData) return null;
 
-            // Mask if not visible in scoreData OR if employer is on FREE tier (Privacy Audit Fix)
-            const isMasked = !scoreData?.is_visible || isFreeTier;
+            // 🎯 Generate Smart Insights
+            const insights = [];
+            if (match.match_score >= 90) insights.push("Perfect Skill Match");
+            if (profileData.behaviorScore >= 90) insights.push("Highly Reliable");
+            if (profileData.isFaydaVerified) insights.push("Verified Identity");
+            if (profileData.experienceYears >= 5) insights.push("Veteran Experience");
+            if (profileData.completedJobs >= 5) insights.push("Proven History");
+            
+            // Add Trust Score for global context
+            profileData.trustScore = calculateTrustScore(profileData);
 
             return {
-                id: profile.id,
-                fullName: profile.fullName,
-                skills: profile.skills,
-                experienceYears: profile.experienceYears,
-                tier: profile.tier,
-                rating: profile.rating,
-                match_score: scoreData ? Math.round(scoreData.match_score) : 0,
-                is_visible: !isMasked,
-                // Masked fields
-                phone: isMasked ? '********' : profile.phone,
-                email: isMasked ? '********' : profile.email,
-                profilePhoto: profile.profilePhoto
+                ...profileData,
+                match_score: Math.round(match.match_score),
+                matchInsights: insights
             };
-        });
+        }));
 
+        const finalMatches = enrichedMatches.filter(m => m !== null);
+        
         // Final sort by match score descending
-        enrichedMatches.sort((a, b) => b.match_score - a.match_score);
+        finalMatches.sort((a, b) => b.match_score - a.match_score);
 
-        res.json(enrichedMatches);
+        res.json(finalMatches);
     } catch (error) {
         console.error("Smart Matching error:", error);
         res.status(500).json({ error: "Failed to calculate matching seekers" });

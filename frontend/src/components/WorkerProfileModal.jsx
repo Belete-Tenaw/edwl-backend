@@ -6,6 +6,8 @@ import authService from '../services/authService';
 import reviewService from '../services/reviewService';
 import ReviewForm from './ReviewForm';
 import UpgradeModal from './UpgradeModal';
+import TrustScorecard from './TrustScorecard';
+import ContractCreateModal from './ContractCreateModal';
 
 const WorkerProfileModal = ({ worker, onClose }) => {
     const { t } = useTranslation();
@@ -15,6 +17,7 @@ const WorkerProfileModal = ({ worker, onClose }) => {
     const [reviews, setReviews] = useState([]);
     const [loadingReviews, setLoadingReviews] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
+    const [showHireModal, setShowHireModal] = useState(false);
     const user = authService.getCurrentUser();
 
     React.useEffect(() => {
@@ -135,7 +138,7 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                             <div style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <Phone size={14} color="#64748b" />
                                 {worker.phone === '********' ? (
-                                    isSilver || isGold || isPlatinum ? (
+                                    isPlatinum ? (
                                         <span style={{ color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>({t('verification_pending')})</span>
                                     ) : (
                                         <span onClick={() => handleRestrictedAction('GOLD')} style={{ color: '#f59e0b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', background: '#fef3c7', padding: '4px 8px', borderRadius: '6px' }}>
@@ -150,11 +153,11 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                             <div style={{ fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <FileText size={14} color="#64748b" />
                                 {worker.nationalIdFayda === '********' || !worker.nationalIdFayda ? (
-                                    isSilver || isGold || isPlatinum ? (
+                                    isPlatinum ? (
                                         <span style={{ color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>({t('verification_pending')})</span>
                                     ) : (
                                         <span onClick={() => handleRestrictedAction('GOLD')} style={{ color: '#f59e0b', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <Lock size={12} /> {t('gold_required')}
+                                            <Lock size={12} /> {t('unlock_contact') || 'Unlock Contact Details'}
                                         </span>
                                     )
                                 ) : worker.nationalIdFayda}
@@ -211,6 +214,10 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    <div style={{ marginBottom: '25px', marginTop: '10px' }}>
+                        <TrustScorecard seeker={worker} />
                     </div>
 
                     <div style={{ marginBottom: '25px' }}>
@@ -311,8 +318,24 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                     >
                         <MessageSquare size={18} /> {t('contact_worker')}
                     </button>
+                    {user?.role === 'EMPLOYER' && (
+                        <button
+                            onClick={() => setShowHireModal(true)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 25px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 6px rgba(16, 185, 129, 0.2)' }}
+                        >
+                            <FileText size={18} /> {t('hire_contract') || 'Hire & Contract'}
+                        </button>
+                    )}
                 </div>
             </div>
+
+            {showHireModal && (
+                <ContractCreateModal
+                    worker={worker}
+                    onClose={() => setShowHireModal(false)}
+                    onSuccess={() => onClose()}
+                />
+            )}
 
             {showUpgradeModal && (
                 <UpgradeModal

@@ -11,12 +11,12 @@ const keepAlive = (url, intervalMs = 14 * 60 * 1000) => {
         return;
     }
 
-    console.log(`Starting keep-alive for ${url} every ${intervalMs / 60000} minutes.`);
+    
 
     setInterval(async () => {
         try {
             const res = await axios.get(url);
-            console.log(`Keep-alive ping successful: ${url} (Status: ${res.status})`);
+// pinged
         } catch (err) {
             console.error(`Keep-alive ping failed: ${err.message}`);
         }
@@ -24,3 +24,4 @@ const keepAlive = (url, intervalMs = 14 * 60 * 1000) => {
 };
 
 module.exports = keepAlive;
+

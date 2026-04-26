@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { useTranslation } from 'react-i18next';
 import { Menu, LogOut, User, MessageSquare, LogIn, LayoutDashboard, Briefcase } from 'lucide-react';
-import logo from '../assets/logo_circular.png';
+import logo from '../assets/logo_modern.png';
 
 const Navbar = () => {
     const { t, i18n } = useTranslation();
@@ -26,20 +26,22 @@ const Navbar = () => {
 
     const closeMenu = () => setIsMenuOpen(false);
 
-    const getNavLinkStyle = ({ isActive }) => ({
-        textDecoration: 'none',
-        color: isActive ? 'var(--primary)' : '#333',
-        fontWeight: isActive ? '700' : '500',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px'
-    });
+    const getNavLinkClass = ({ isActive }) => 
+        `nav-link ${isActive ? 'nav-link-active' : ''}`;
 
     return (
-        <nav className="navbar" style={{ position: 'sticky', top: 0, zIndex: 1000, padding: '10px 20px', background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <Link to="/" onClick={closeMenu} style={{ display: 'flex', alignItems: 'center', gap: '15px', textDecoration: 'none' }}>
-                <img src={logo} alt="EDWL Logo" style={{ height: '75px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease' }} className="nav-logo" />
-            </Link>
+        <nav className="navbar glass" style={{ position: 'sticky', top: 0, zIndex: 1000, padding: '10px 24px', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226, 232, 240, 0.6)', transition: 'all 0.3s ease' }}>
+            <NavLink to="/" onClick={closeMenu} className={({ isActive }) => `nav-logo-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+                <img src={logo} alt="EDWL Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease' }} className="nav-logo" />
+                <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column', color: 'var(--navy)' }}>
+                    <span style={{ fontSize: '1.2rem', fontWeight: '900', lineHeight: 1, letterSpacing: '-0.2px' }}>
+                        ኢትዮ ሃገር ውስጥ ሠራተኞች አገናኝ
+                    </span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1, marginTop: '5px' }}>
+                        Ethio Domestic Workers Link
+                    </span>
+                </div>
+            </NavLink>
 
             {/* Mobile top-right: language toggle + hamburger */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -53,29 +55,60 @@ const Navbar = () => {
 
             {/* Desktop nav + mobile slide-in menu */}
             <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <NavLink to="/" onClick={closeMenu} style={getNavLinkStyle}>{t('home')}</NavLink>
-                <NavLink to="/about" onClick={closeMenu} style={getNavLinkStyle}>{t('about_us')}</NavLink>
-                <NavLink to="/contact" onClick={closeMenu} style={getNavLinkStyle}>{t('contact_us')}</NavLink>
-                <NavLink to="/pricing" onClick={closeMenu} style={getNavLinkStyle}>{t('plans')}</NavLink>
+                <NavLink to="/" onClick={closeMenu} className={getNavLinkClass}>{t('home')}</NavLink>
+                <NavLink to="/about" onClick={closeMenu} className={getNavLinkClass}>{t('about_us')}</NavLink>
+                <NavLink to="/contact" onClick={closeMenu} className={getNavLinkClass}>{t('contact_us')}</NavLink>
+                <NavLink to="/pricing" onClick={closeMenu} className={getNavLinkClass}>{t('plans')}</NavLink>
 
                 {/* Desktop language toggle */}
                 <div className="desktop-only">
-                    <button onClick={toggleLanguage} style={{ background: 'transparent', border: '1px solid #ddd', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', width: 'fit-content' }}>
-                        {i18n.language === 'en' ? 'አማርኛ' : 'English'}
-                    </button>
+                    <div style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                        <button 
+                            onClick={() => i18n.changeLanguage('en')} 
+                            style={{ 
+                                padding: '6px 12px', 
+                                borderRadius: '7px', 
+                                border: 'none', 
+                                cursor: 'pointer', 
+                                fontSize: '0.8rem', 
+                                fontWeight: '700',
+                                background: i18n.language === 'en' ? 'var(--primary)' : 'transparent',
+                                color: i18n.language === 'en' ? 'white' : 'var(--text-light)',
+                                transition: 'var(--transition)'
+                            }}
+                        >
+                            EN
+                        </button>
+                        <button 
+                            onClick={() => i18n.changeLanguage('am')} 
+                            style={{ 
+                                padding: '6px 12px', 
+                                borderRadius: '7px', 
+                                border: 'none', 
+                                cursor: 'pointer', 
+                                fontSize: '0.8rem', 
+                                fontWeight: '700',
+                                background: i18n.language === 'am' ? 'var(--primary)' : 'transparent',
+                                color: i18n.language === 'am' ? 'white' : 'var(--text-light)',
+                                transition: 'var(--transition)'
+                            }}
+                        >
+                            አማ
+                        </button>
+                    </div>
                 </div>
 
                 {/* Logged-in specific links (Messages, Dashboard) */}
                 {user && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }} className="nav-links">
-                        <NavLink to="/messages" onClick={closeMenu} style={getNavLinkStyle}>
+                        <NavLink to="/messages" onClick={closeMenu} className={getNavLinkClass}>
                             <MessageSquare size={20} />
                             <span>{t('messages')}</span>
                         </NavLink>
                         <NavLink
                             to={user.role === 'JOB_SEEKER' ? '/dashboard/seeker' : user.role === 'EMPLOYER' ? '/dashboard/employer' : '/admin'}
                             onClick={closeMenu}
-                            style={getNavLinkStyle}
+                            className={getNavLinkClass}
                         >
                             <User size={20} />
                             <span>{t('dashboard')}</span>
@@ -101,8 +134,9 @@ const Navbar = () => {
                                     alignItems: 'center',
                                     gap: '10px',
                                     textDecoration: 'none',
-                                    border: '2px solid rgba(255, 255, 255, 0.2)', // Add subtle border for definition
-                                    backgroundColor: 'var(--primary)'
+                                    border: '2px solid var(--primary)',
+                                    color: 'var(--primary)',
+                                    backgroundColor: 'transparent'
                                 }}
                             >
                                 <LogIn size={20} />
@@ -124,7 +158,7 @@ const Navbar = () => {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     fontWeight: '700',
-                                    boxShadow: '0 4px 12px rgba(255, 69, 0, 0.2)'
+                                    boxShadow: '0 4px 12px rgba(0, 128, 128, 0.15)'
                                 }}
                             >
                                 {t('register')}

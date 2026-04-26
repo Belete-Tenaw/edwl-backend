@@ -1,27 +1,34 @@
 const { Client } = require('pg');
+require('dotenv').config();
 
 async function listTables() {
-    const client = new Client({
-        connectionString: 'postgresql://postgres.seqeximptkufzdeoprxr:EdwlBackend291965@aws-1-eu-west-1.pooler.supabase.com:5432/postgres',
-        ssl: { rejectUnauthorized: false }
-    });
+  const client = new Client({
+    connectionString: process.env.DIRECT_URL || process.env.DATABASE_URL
+  });
 
-    try {
-        await client.connect();
-        const res = await client.query(`
-      SELECT table_name, table_schema 
+  try {
+    await client.connect();
+    console.log('Connected to database.');
+    
+    const res = await client.query(`
+      SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public'
       ORDER BY table_name;
     `);
 
-        console.log('EXACT TABLE NAMES:');
-        res.rows.forEach(r => console.log(` - "${r.table_name}"`));
-
-        await client.end();
-    } catch (err) {
-        console.error('Error:', err.message);
+    console.log('Tables found:');
+    res.rows.forEach(row => console.log(`- ${row.table_name}`));
+    
+    if (res.rows.length === 0) {
+      console.log('No tables found in public schema.');
     }
+
+  } catch (err) {
+    console.error('Error connecting to database:', err.message);
+  } finally {
+    await client.end();
+  }
 }
 
 listTables();

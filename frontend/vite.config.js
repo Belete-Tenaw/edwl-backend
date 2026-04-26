@@ -13,12 +13,12 @@ export default defineConfig({
                 cleanupOutdatedCaches: true,
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,json,vue,txt,woff2}']
             },
-            includeAssets: ['logo_circular.png'],
+            includeAssets: ['logo_2024.png'],
             manifest: {
                 name: 'Ethio Domestic Workers Link',
                 short_name: 'EDWL',
                 description: 'Connecting Quality Help to Your Home in Ethiopia',
-                theme_color: '#ff6600',
+                theme_color: '#008080',
                 background_color: '#ffffff',
                 display: 'standalone',
                 orientation: 'portrait',
@@ -26,17 +26,17 @@ export default defineConfig({
                 start_url: '/',
                 icons: [
                     {
-                        src: 'logo_circular.png',
+                        src: 'logo_2024.png',
                         sizes: '192x192',
                         type: 'image/png'
                     },
                     {
-                        src: 'logo_circular.png',
+                        src: 'logo_2024.png',
                         sizes: '512x512',
                         type: 'image/png'
                     },
                     {
-                        src: 'logo_circular.png',
+                        src: 'logo_2024.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'any maskable'

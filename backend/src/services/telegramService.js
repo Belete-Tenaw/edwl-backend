@@ -14,7 +14,7 @@ class TelegramService {
     async sendMessage(chatId, text) {
         if (!this.botToken) {
             console.warn('[TelegramService] Telegram Bot Token is not configured. Mocking send...');
-            console.log(`[MOCK TELEGRAM to ${chatId}]: ${text}`);
+            
             return true;
         }
 
@@ -32,7 +32,7 @@ class TelegramService {
             });
 
             if (response.data.ok) {
-                console.log(`[TelegramService] Successfully sent message to ${chatId}`);
+                
                 return true;
             } else {
                 console.error(`[TelegramService] Failed to send to ${chatId}:`, response.data);
@@ -59,3 +59,4 @@ class TelegramService {
 }
 
 module.exports = new TelegramService();
+

@@ -80,6 +80,43 @@ exports.sendMessage = async (req, res) => {
             }
         }
 
+        // ⏱️ Response Time & Behavior Score Metric
+        try {
+            const senderFilter = receiverType === 'JOB_SEEKER' ? { senderJSId: receiverId } : { senderEmpId: receiverId };
+            const receiverFilter = senderRole === 'JOB_SEEKER' ? { receiverJSId: senderId } : { receiverEmpId: senderId };
+            
+            const lastReceivedMsg = await prisma.message.findFirst({
+                where: { ...senderFilter, ...receiverFilter },
+                orderBy: { timestamp: 'desc' }
+            });
+
+            if (lastReceivedMsg) {
+                const responseTimeMs = Date.now() - new Date(lastReceivedMsg.timestamp).getTime();
+                
+                const modelName = senderRole === 'JOB_SEEKER' ? 'jobSeeker' : 'employer';
+                const senderProps = await prisma[modelName].findUnique({ where: { id: senderId }, select: { responseTimeMs: true, behaviorScore: true } });
+                
+                if (senderProps) {
+                    // Exponential Moving Average (EMA): 80% history, 20% current
+                    const currentAvg = senderProps.responseTimeMs || responseTimeMs;
+                    const newAvgMs = Math.floor((currentAvg * 0.8) + (responseTimeMs * 0.2));
+                    
+                    let scoreChange = 0;
+                    if (responseTimeMs < 2 * 3600 * 1000) scoreChange = 1; // Fast reply (< 2h)
+                    else if (responseTimeMs > 24 * 3600 * 1000) scoreChange = -2; // Slow reply (> 24h)
+                    
+                    const newScore = Math.max(0, Math.min(100, (senderProps.behaviorScore || 50) + scoreChange));
+
+                    await prisma[modelName].update({
+                        where: { id: senderId },
+                        data: { responseTimeMs: newAvgMs, behaviorScore: newScore }
+                    });
+                }
+            }
+        } catch (metricErr) {
+            console.error('[Metrics Error] Failed to compute response time:', metricErr.message);
+        }
+
         const message = await prisma.message.create({
             data: {
                 content,
@@ -98,7 +135,7 @@ exports.sendMessage = async (req, res) => {
         const io = req.app.get('io');
         if (io) {
             io.to(receiverId).emit('new_message', message);
-            console.log(`🚀 Emitted real-time message to room ${receiverId}`);
+            
         }
 
         // 💬 Send Telegram Alert to Receiver (Proactive Betterment)
@@ -149,3 +186,4 @@ exports.getMessages = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+

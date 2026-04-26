@@ -6,18 +6,28 @@ const CameraCapture = ({ onCapture, onClose }) => {
     const { t } = useTranslation();
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const streamRef = useRef(null); // always holds the latest stream for reliable cleanup
     const [stream, setStream] = useState(null);
     const [capturedImage, setCapturedImage] = useState(null);
     const [error, setError] = useState(null);
 
     useEffect(() => {
         startCamera();
+        // Cleanup via ref to avoid stale-closure issue with state
         return () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
             }
         };
     }, []);
+
+    const stopCurrentStream = () => {
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        setStream(null);
+    };
 
     const startCamera = async () => {
         try {
@@ -25,6 +35,7 @@ const CameraCapture = ({ onCapture, onClose }) => {
                 video: { facingMode: 'user' }, 
                 audio: false 
             });
+            streamRef.current = mediaStream;
             setStream(mediaStream);
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;
@@ -66,6 +77,7 @@ const CameraCapture = ({ onCapture, onClose }) => {
     const handleRetake = () => {
         setCapturedImage(null);
         setError(null);
+        stopCurrentStream(); // stop old stream before opening a new one
         startCamera();
     };
 

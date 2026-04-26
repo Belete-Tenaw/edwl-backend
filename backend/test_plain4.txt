@@ -1,0 +1,203 @@
+(node:4516) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/tests/sanity.test.js
+  √ sanity check (69 ms)
+
+(node:23528) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS src/tests/rankLogic.test.js
+  calculateWorkerRank
+    √ should return BRONZE if photo or main ID is missing (50 ms)
+    √ should return BRONZE if only mandatory docs are present (8 ms)
+    √ should return SILVER if Fayda ID is present (5 ms)
+    √ should return GOLD if Fayda and Guarantor info are present (11 ms)
+    √ should NOT return GOLD if guarantor phone is missing (1 ms)
+    √ should return PLATINUM if all documents are present (2 ms)
+    √ should stay GOLD if health cert is missing but police clearance is present (4 ms)
+
+  console.log
+    [dotenv@17.3.1] injecting env (8) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.error
+    [TelegramBot] TELEGRAM_BOT_TOKEN missing in .env. Bot listener failed to start.
+
+    [0m [90m  5 |[39m
+     [90m  6 |[39m [36mif[39m ([33m![39mtoken) {
+    [31m[1m>[22m[39m[90m  7 |[39m     console[33m.[39merror([32m'[TelegramBot] TELEGRAM_BOT_TOKEN missing in .env. Bot listener failed to start.'[39m)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m  8 |[39m } [36melse[39m {
+     [90m  9 |[39m     [36mconst[39m bot [33m=[39m [36mnew[39m [33mTelegramBot[39m(token[33m,[39m { polling[33m:[39m [36mtrue[39m })[33m;[39m
+     [90m 10 |[39m[0m
+
+      at Object.error (src/services/telegramBot.js:7:13)
+      at Object.require (src/server.js:4:1)
+      at Object.require (src/tests/freemium.test.js:2:13)
+
+  console.warn
+    [FirebaseAdmin] ⚠️ Using Mock Services: no key found.
+
+    [0m [90m 18 |[39m         }
+     [90m 19 |[39m     } [36melse[39m {
+    [31m[1m>[22m[39m[90m 20 |[39m         console[33m.[39mwarn([32m'[FirebaseAdmin] ⚠️ Using Mock Services: no key found.'[39m)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 21 |[39m     }
+     [90m 22 |[39m }
+     [90m 23 |[39m[0m
+
+      at warn (src/utils/firebaseAdmin.js:20:17)
+      at Object.initialize [as bucket] (src/utils/firebaseAdmin.js:58:9)
+      at Object.bucket (src/services/firebaseStorageService.js:5:24)
+      at Object.require (src/controllers/authController.js:7:34)
+      at Object.require (src/routes/auth.js:3:24)
+      at Object.require (tests/duplicate.test.js:10:20)
+
+  console.error
+    [TelegramBot] TELEGRAM_BOT_TOKEN missing in .env. Bot listener failed to start.
+
+    [0m [90m  5 |[39m
+     [90m  6 |[39m [36mif[39m ([33m![39mtoken) {
+    [31m[1m>[22m[39m[90m  7 |[39m     console[33m.[39merror([32m'[TelegramBot] TELEGRAM_BOT_TOKEN missing in .env. Bot listener failed to start.'[39m)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m  8 |[39m } [36melse[39m {
+     [90m  9 |[39m     [36mconst[39m bot [33m=[39m [36mnew[39m [33mTelegramBot[39m(token[33m,[39m { polling[33m:[39m [36mtrue[39m })[33m;[39m
+     [90m 10 |[39m[0m
+
+      at Object.error (src/services/telegramBot.js:7:13)
+      at Object.require (src/server.js:4:1)
+      at Object.require (src/tests/auth.test.js:2:13)
+
+(node:4760) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/duplicate.test.js (32.434 s)
+  Backend Duplicate Detection and Normalization
+    √ normalizePhone should correctly format Ethiopian numbers (770 ms)
+    √ Login should work with non-normalized phone identification (3823 ms)
+
+  console.warn
+    [FirebaseAdmin] ⚠️ Using Mock Services: no key found.
+
+    [0m [90m 18 |[39m         }
+     [90m 19 |[39m     } [36melse[39m {
+    [31m[1m>[22m[39m[90m 20 |[39m         console[33m.[39mwarn([32m'[FirebaseAdmin] ⚠️ Using Mock Services: no key found.'[39m)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 21 |[39m     }
+     [90m 22 |[39m }
+     [90m 23 |[39m[0m
+
+      at warn (src/utils/firebaseAdmin.js:20:17)
+      at Object.initialize [as bucket] (src/utils/firebaseAdmin.js:58:9)
+      at Object.bucket (src/services/firebaseStorageService.js:5:24)
+      at Object.require (src/controllers/authController.js:7:34)
+      at Object.require (src/routes/auth.js:3:24)
+      at Object.require (src/server.js:197:22)
+      at Object.require (src/tests/auth.test.js:2:13)
+
+  console.warn
+    [NotificationService] TELEGRAM_BOT_TOKEN missing in .env. Telegram alerts will be skipped.
+
+    [0m [90m  9 |[39m     
+     [90m 10 |[39m } [36melse[39m {
+    [31m[1m>[22m[39m[90m 11 |[39m     console[33m.[39mwarn([32m'[NotificationService] TELEGRAM_BOT_TOKEN missing in .env. Telegram alerts will be skipped.'[39m)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 12 |[39m }
+     [90m 13 |[39m
+     [90m 14 |[39m [90m/**[39m[0m
+
+      at Object.warn (src/services/notificationService.js:11:13)
+      at Object.require (src/controllers/adminController.js:4:26)
+      at Object.require (src/routes/admin.js:3:25)
+      at Object.require (src/server.js:201:23)
+      at Object.require (src/tests/auth.test.js:2:13)
+
+FAIL src/tests/auth.test.js
+  ● Test suite failed to run
+
+    TypeError: argument handler must be a function
+
+       7 | // Could be public so anyone can see what modules EDWL offers, 
+       8 | // using 'protect' here so we identify the JobSeeker for status tracking.
+    >  9 | router.get('/', protect, trainingController.getModules);
+         |        ^
+      10 |
+      11 | // Job Seeker completes a module
+      12 | router.post('/:moduleId/complete', protect, trainingController.completeModule);
+
+      at Route.<computed> [as get] (node_modules/router/lib/route.js:228:15)
+      at router.Router.<computed> [as get] (node_modules/router/index.js:448:19)
+      at Object.get (src/routes/trainingRoutes.js:9:8)
+      at Object.require (src/server.js:209:26)
+      at Object.require (src/tests/auth.test.js:2:13)
+
+(node:24180) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+  console.warn
+    [FirebaseAdmin] ⚠️ Using Mock Services: no key found.
+
+    [0m [90m 18 |[39m         }
+     [90m 19 |[39m     } [36melse[39m {
+    [31m[1m>[22m[39m[90m 20 |[39m         console[33m.[39mwarn([32m'[FirebaseAdmin] ⚠️ Using Mock Services: no key found.'[39m)[33m;[39m
+     [90m    |[39m                 [31m[1m^[22m[39m
+     [90m 21 |[39m     }
+     [90m 22 |[39m }
+     [90m 23 |[39m[0m
+
+      at warn (src/utils/firebaseAdmin.js:20:17)
+      at Object.initialize [as bucket] (src/utils/firebaseAdmin.js:58:9)
+      at Object.bucket (src/services/firebaseStorageService.js:5:24)
+      at Object.require (src/controllers/authController.js:7:34)
+      at Object.require (src/routes/auth.js:3:24)
+      at Object.require (src/server.js:197:22)
+      at Object.require (src/tests/freemium.test.js:2:13)
+
+  console.warn
+    [NotificationService] TELEGRAM_BOT_TOKEN missing in .env. Telegram alerts will be skipped.
+
+    [0m [90m  9 |[39m     
+     [90m 10 |[39m } [36melse[39m {
+    [31m[1m>[22m[39m[90m 11 |[39m     console[33m.[39mwarn([32m'[NotificationService] TELEGRAM_BOT_TOKEN missing in .env. Telegram alerts will be skipped.'[39m)[33m;[39m
+     [90m    |[39m             [31m[1m^[22m[39m
+     [90m 12 |[39m }
+     [90m 13 |[39m
+     [90m 14 |[39m [90m/**[39m[0m
+
+      at Object.warn (src/services/notificationService.js:11:13)
+      at Object.require (src/controllers/adminController.js:4:26)
+      at Object.require (src/routes/admin.js:3:25)
+      at Object.require (src/server.js:201:23)
+      at Object.require (src/tests/freemium.test.js:2:13)
+
+FAIL src/tests/freemium.test.js
+  ● Test suite failed to run
+
+    TypeError: argument handler must be a function
+
+       7 | // Could be public so anyone can see what modules EDWL offers, 
+       8 | // using 'protect' here so we identify the JobSeeker for status tracking.
+    >  9 | router.get('/', protect, trainingController.getModules);
+         |        ^
+      10 |
+      11 | // Job Seeker completes a module
+      12 | router.post('/:moduleId/complete', protect, trainingController.completeModule);
+
+      at Route.<computed> [as get] (node_modules/router/lib/route.js:228:15)
+      at router.Router.<computed> [as get] (node_modules/router/index.js:448:19)
+      at Object.get (src/routes/trainingRoutes.js:9:8)
+      at Object.require (src/server.js:209:26)
+      at Object.require (src/tests/freemium.test.js:2:13)
+
+(node:23632) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+Test Suites: 2 failed, 3 passed, 5 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        41.406 s
+Ran all test suites.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?

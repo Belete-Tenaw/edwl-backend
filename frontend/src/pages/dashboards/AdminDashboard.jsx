@@ -424,6 +424,40 @@ const AdminDashboard = () => {
                         </div>
                     </div>
 
+                    <div className="card" style={{ gridColumn: '1 / -1', background: '#0f172a', color: 'white', border: 'none' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <div>
+                                <h4 style={{ margin: 0, opacity: 0.8, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Revenue (Life-to-Date)</h4>
+                                <div style={{ fontSize: '2.5rem', fontWeight: '900', color: '#10b981' }}>{stats.metrics.revenue.total.toLocaleString()} ETB</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '5px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                    <Activity size={14} /> {((stats.metrics.revenue.automated / stats.metrics.revenue.total) * 100 || 0).toFixed(1)}% Automated
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <div style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '5px' }}>Automated (Chapa/Telebirr)</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{stats.metrics.revenue.automated.toLocaleString()} ETB</div>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <div style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '5px' }}>Manual (CBE/Cash)</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{stats.metrics.revenue.manual.toLocaleString()} ETB</div>
+                            </div>
+                        </div>
+
+                        <div style={{ height: '12px', background: 'rgba(255,255,255,0.1)', borderRadius: '6px', overflow: 'hidden', display: 'flex' }}>
+                            <div style={{ width: `${(stats.metrics.revenue.automated / stats.metrics.revenue.total) * 100 || 0}%`, background: '#10b981', height: '100%' }}></div>
+                            <div style={{ width: `${(stats.metrics.revenue.manual / stats.metrics.revenue.total) * 100 || 0}%`, background: '#64748b', height: '100%' }}></div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginTop: '8px', opacity: 0.5 }}>
+                            <span>Automation Target: 90%</span>
+                            <span>Scale Focus: Job Seeker Premium Growth</span>
+                        </div>
+                    </div>
+
                     <div className="card" style={{ gridColumn: '1 / -1', background: 'var(--primary)', color: 'white' }}>
                         <h4 style={{ margin: '0 0 10px 0' }}>Marketplace Summary</h4>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px' }}>

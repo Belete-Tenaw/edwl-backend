@@ -1,4 +1,5 @@
 {
+    "create_free_account": "ነፃ መለያ ይፍጠሩ",
     "auth_error": "ማረጋገጫ አልተሳካም። እባክዎን እንደገና ይሞክሩ።",
     "invalid_credentials": "ኢሜይል/ስልክ ወይም የይለፍ ቃል የተሳሳተ ነው። እባክዎ በትክክል ያስገቡ።",
     "invalid_phone": "እባክዎ ትክክለኛ የስልክ ቁጥር ያስገቡ (ለምሳሌ 09... ወይም +251...)",
@@ -475,5 +476,25 @@
     "infographic_pay_desc": "በቴሌቢር ወይም በባንክ ይክፈሉ",
     "infographic_screenshot_desc": "ደረሰኝ እና መለያ ቁጥሩን በቴሌግራም ይላኩ",
     "infographic_receive_desc": "የፕሪሚየም ኮድዎን ይቀበሉ",
-    "infographic_activate_desc": "አገልግሎቱን ለመጀመር ኮዱን ያስገቡ"
+    "infographic_activate_desc": "አገልግሎቱን ለመጀመር ኮዱን ያስገቡ",
+    "search_workers": "ሰራተኞችን በስም ወይም በስራ አይነት ይፈልጉ...",
+    "all_locations": "ሁሉም ቦታዎች",
+    "no_matches_found": "ምንም ተዛማጅ አልተገኘም።",
+    "try_adjusting_filters": "ተጨማሪ ዕጩዎችን ለማግኘት ፍለጋዎን ወይም ማጣሪያዎን ለማስተካከል ይሞክሩ።",
+    "clear_filters": "ማጣሪያዎችን አጽዳ",
+    "user_identified": "መለያው ተገኝቷል። እባክዎን የደህንነት ጥያቄዎን ይመልሱ።",
+    "security_check": "የደህንነት ማረጋገጫ",
+    "security_confirm_desc": "የይለፍ ቃልዎን ለመቀየር እባክዎን ሲመዘገቡ የሞሉትን የደህንነት ጥያቄ ይመልሱ።",
+    "identify_btn": "ቀጣይ: የደህንነት ማረጋገጫ",
+    "answer_placeholder": "መልስዎን እዚህ ያስገቡ...",
+    "try_different_account": "በሌላ መለያ ይሞክሩ",
+    "password_reset_success_toast": "ተሳክቷል! የይለፍ ቃልዎ ተቀይሯል።",
+    "searching": "በመፈለግ ላይ...",
+    "resetting": "የይለፍ ቃል በመቀየር ላይ...",
+    "reset_password_btn": "የይለፍ ቃል ቀይር",
+    "smart_connecting": "በዘመናዊ መንገድ በመገናኘት ላይ...",
+    "recommended": "የሚመከር",
+    "verified_top_choice": "ምርጥ ምርጫ (የተረጋገጠ)",
+    "verified_trust": "የታመነ ማረጋገጫ",
+    "trust_desc_short": "የተረጋገጡ ሰራተኞችን ከተረጋገጡ አሰሪዎች ጋር እናገናኛለን::"
 }

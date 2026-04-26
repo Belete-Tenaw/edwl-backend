@@ -1,8 +1,9 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { Camera, Video, Upload, X, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { Camera, Video, Upload, X, Check, Image as ImageIcon } from 'lucide-react';
 import CameraCapture from './CameraCapture';
 import VideoRecorder from './VideoRecorder';
 import { useTranslation } from 'react-i18next';
+import { useToast } from './Toast';
 
 const MediaUploader = ({
     type = 'image', // 'image' or 'video'
@@ -10,9 +11,11 @@ const MediaUploader = ({
     onFileSelect,
     previewUrl,
     required = false,
-    id
+    id,
+    captureMode = null, // 'user' (selfie/front cam) | 'environment' (doc/back cam) | null (auto)
 }) => {
     const { t } = useTranslation();
+    const addToast = useToast();
     const [showOptions, setShowOptions] = useState(false);
     const [showCamera, setShowCamera] = useState(false);
     const [showVideoRecorder, setShowVideoRecorder] = useState(false);
@@ -22,6 +25,15 @@ const MediaUploader = ({
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     };
 
+    // Determine the correct capture attribute for the hidden file input.
+    // 'user' = front camera (selfies), 'environment' = back camera (documents)
+    const getCaptureAttribute = () => {
+        if (!isMobile()) return undefined;
+        if (type === 'video') return 'user'; // video bios use front camera
+        if (captureMode) return captureMode;  // explicit override from parent
+        return 'environment'; // default: back cam for documents
+    };
+
     const handleUploadClick = () => {
         setShowOptions(true);
     };
@@ -29,6 +41,33 @@ const MediaUploader = ({
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+            const MAX_VIDEO_SIZE = 15 * 1024 * 1024; // 15MB
+
+            if (type === 'image' && file.size > MAX_IMAGE_SIZE) {
+                addToast(t('image_too_large') || 'Image is too large. Maximum size is 5MB.', 'error');
+                e.target.value = '';
+                return;
+            }
+
+            if (type === 'video' && file.size > MAX_VIDEO_SIZE) {
+                addToast(t('video_too_large') || 'Video is too large. Maximum size is 15MB. Please choose a smaller file or record directly.', 'error');
+                e.target.value = '';
+                return;
+            }
+            
+            if (type === 'image' && !file.type.startsWith('image/') && file.type !== 'application/pdf') {
+                addToast(t('invalid_image_format') || 'Please select a valid image or PDF file.', 'error');
+                e.target.value = '';
+                return;
+            }
+
+            if (type === 'video' && !file.type.startsWith('video/')) {
+                addToast(t('invalid_video_format') || 'Please select a valid video format.', 'error');
+                e.target.value = '';
+                return;
+            }
+
             onFileSelect(file, URL.createObjectURL(file));
         }
         setShowOptions(false);
@@ -41,27 +80,35 @@ const MediaUploader = ({
     };
 
     const handleTakeMedia = () => {
-        if (isMobile()) {
-            triggerNativeCapture();
-        } else {
-            if (type === 'image') {
-                setShowCamera(true);
+        // Always use our in-browser recorder/camera for both mobile and desktop.
+        // Native 'capture' attribute on mobile is unreliable — on Android it often
+        // opens camera-only mode, skipping gallery, and produces blobs without
+        // proper metadata headers needed by our video processor.
+        if (type === 'image') {
+            if (isMobile()) {
+                triggerNativeCapture(); // Native camera is fine for still images
             } else {
-                setShowVideoRecorder(true);
+                setShowCamera(true);
             }
+        } else {
+            // Video: always use in-browser VideoRecorder on all devices
+            setShowVideoRecorder(true);
         }
         setShowOptions(false);
     };
 
     const handleUploadFromFile = () => {
-        // For simple upload, we want to ensure capture attribute is NOT used
-        // But the input is shared, so we'll just trigger it.
-        // On mobile, if capture is present, it might force camera.
-        // We'll use a temporary input if needed or just accept the platform behavior.
-        if (fileInputRef.current) {
-            fileInputRef.current.removeAttribute('capture');
-            fileInputRef.current.click();
-        }
+        // Create a fresh temporary input to avoid the 'capture' attribute on the shared ref
+        // interfering with gallery browsing on mobile devices.
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        tempInput.accept = type === 'image' ? 'image/*,application/pdf' : 'video/*';
+        tempInput.style.display = 'none';
+        tempInput.onchange = handleFileChange;
+        document.body.appendChild(tempInput);
+        tempInput.click();
+        // Clean up after selection or cancel
+        setTimeout(() => document.body.removeChild(tempInput), 60000);
         setShowOptions(false);
     };
 
@@ -162,8 +209,8 @@ const MediaUploader = ({
                 id={id}
                 ref={fileInputRef}
                 type="file"
-                accept={type === 'image' ? "image/*" : "video/*"}
-                capture={isMobile() ? (type === 'image' ? "environment" : "user") : undefined}
+                accept={type === 'image' ? "image/*,application/pdf" : "video/*"}
+                capture={getCaptureAttribute()}
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
             />

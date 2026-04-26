@@ -376,6 +376,18 @@ exports.getAdminStats = async (req, res) => {
         // Conversion Rate (Premium Employers %)
         const conversionRate = totalEmployers > 0 ? ((premiumEmployers / totalEmployers) * 100).toFixed(1) : 0;
 
+        // Revenue Breakdown
+        const [automatedRevenueData, manualRevenueData] = await Promise.all([
+            prisma.payment.aggregate({
+                where: { status: 'COMPLETED', provider: { in: ['CHAPA', 'TELEBIRR'] } },
+                _sum: { amount: true }
+            }),
+            prisma.payment.aggregate({
+                where: { status: 'COMPLETED', provider: { in: ['MANUAL', 'CBE'] } },
+                _sum: { amount: true }
+            })
+        ]);
+
         res.json({
             metrics: {
                 verificationVelocity: avgVelocityHours.toFixed(1), // in hours
@@ -383,7 +395,12 @@ exports.getAdminStats = async (req, res) => {
                 conversionRate,
                 seedingProgress: approvedSeekers, // Target is 50
                 targetSeeding: 50,
-                heatmap: heatmap.slice(0, 5) // Top 5 shortages
+                heatmap: heatmap.slice(0, 5), // Top 5 shortages
+                revenue: {
+                    automated: automatedRevenueData._sum.amount || 0,
+                    manual: manualRevenueData._sum.amount || 0,
+                    total: (automatedRevenueData._sum.amount || 0) + (manualRevenueData._sum.amount || 0)
+                }
             },
             counts: {
                 seekers: totalSeekers,

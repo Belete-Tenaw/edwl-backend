@@ -1,4 +1,5 @@
 {
+    "create_free_account": "Create Free Account",
     "auth_error": "Authentication failed. Please try again.",
     "invalid_credentials": "Invalid email/phone or password. Please check and try again.",
     "invalid_phone": "Please enter a valid phone number (e.g. 09... or +251...)",
@@ -477,5 +478,25 @@
     "infographic_pay_desc": "Pay via Telebirr or Bank",
     "infographic_screenshot_desc": "Send screenshot + ID to Telegram",
     "infographic_receive_desc": "Receive your Premium Code",
-    "infographic_activate_desc": "Enter code to unlock features"
+    "infographic_activate_desc": "Enter code to unlock features",
+    "search_workers": "Search workers by name or role...",
+    "all_locations": "All Locations",
+    "no_matches_found": "No matches found.",
+    "try_adjusting_filters": "Try adjusting your search or filters to find more candidates.",
+    "clear_filters": "Clear filters",
+    "user_identified": "Account located. Please answer your security question.",
+    "security_check": "Security Verification",
+    "security_confirm_desc": "Please answer the security question you set during registration to reset your password.",
+    "identify_btn": "Next: Security Check",
+    "answer_placeholder": "Enter your answer here...",
+    "try_different_account": "Try a different account",
+    "password_reset_success_toast": "Success! Your password has been changed.",
+    "searching": "Searching...",
+    "resetting": "Updating password...",
+    "reset_password_btn": "Reset Password",
+    "smart_connecting": "Smart Connecting...",
+    "recommended": "Recommended",
+    "verified_top_choice": "Top Choice (Verified)",
+    "verified_trust": "Reliability First",
+    "trust_desc_short": "Connecting verified talent with verified employers."
 }

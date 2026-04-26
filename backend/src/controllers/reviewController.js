@@ -54,6 +54,43 @@ exports.createReview = async (req, res) => {
 
         const newReview = await prisma.review.create({ data });
 
+        // --- Behavioral & Rating Sync ---
+        (async () => {
+            try {
+                const targetModel = targetType === 'seeker' ? 'jobSeeker' : 'employer';
+                const reviews = await prisma.review.findMany({
+                    where: targetType === 'seeker' ? { targetJSId: targetId } : { targetEmpId: targetId },
+                    select: { rating: true }
+                });
+
+                const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+                const avgRating = totalRating / reviews.length;
+
+                // Behavior Score Bonus for good reviews
+                let behaviorChange = 0;
+                if (rating >= 5) behaviorChange = 5;
+                else if (rating <= 2) behaviorChange = -5;
+
+                const targetUser = await prisma[targetModel].findUnique({
+                    where: { id: targetId },
+                    select: { behaviorScore: true }
+                });
+
+                const newBehaviorScore = Math.max(0, Math.min(100, (targetUser?.behaviorScore || 50) + behaviorChange));
+
+                await prisma[targetModel].update({
+                    where: { id: targetId },
+                    data: {
+                        rating: avgRating,
+                        behaviorScore: newBehaviorScore,
+                        completedJobs: reviews.length // Simple proxy for verified hires
+                    }
+                });
+            } catch (err) {
+                console.error('[Review Sync Error]:', err.message);
+            }
+        })();
+
         res.status(201).json({ 
             message: "Review submitted successfully!", 
             review: newReview 

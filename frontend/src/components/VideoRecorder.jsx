@@ -1,7 +1,27 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Video, Square, RefreshCw, X, Check, Timer } from 'lucide-react';
 
-const VideoRecorder = ({ onCapture, onClose, maxDuration = 30 }) => {
+/**
+ * Returns the best supported video MIME type for MediaRecorder.
+ * iOS Safari supports video/mp4; Chrome/Firefox prefer video/webm.
+ */
+const getSupportedMimeType = () => {
+    const candidates = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+        'video/mp4;codecs=h264,aac',
+        'video/mp4',
+    ];
+    for (const type of candidates) {
+        if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) {
+            return type;
+        }
+    }
+    return ''; // Let browser choose default
+};
+
+const VideoRecorder = ({ onCapture, onClose, maxDuration = 300 }) => {
     const videoRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const [stream, setStream] = useState(null);
@@ -11,6 +31,7 @@ const VideoRecorder = ({ onCapture, onClose, maxDuration = 30 }) => {
     const [timeLeft, setTimeLeft] = useState(maxDuration);
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
+    const assembledBlobRef = useRef(null); // holds the final blob for handleConfirm
 
     const startCamera = async () => {
         setLoading(true);
@@ -61,7 +82,8 @@ const VideoRecorder = ({ onCapture, onClose, maxDuration = 30 }) => {
         setPreviewUrl(null);
         setTimeLeft(maxDuration);
 
-        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        const mimeType = getSupportedMimeType();
+        const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
         mediaRecorderRef.current = mediaRecorder;
 
         mediaRecorder.ondataavailable = (event) => {
@@ -74,7 +96,7 @@ const VideoRecorder = ({ onCapture, onClose, maxDuration = 30 }) => {
             // Processing in stopRecording
         };
 
-        mediaRecorder.start();
+        mediaRecorder.start(100); // 100ms timeslice: fires ondataavailable continuously, critical for mobile
         setRecording(true);
     };
 
@@ -92,7 +114,10 @@ const VideoRecorder = ({ onCapture, onClose, maxDuration = 30 }) => {
 
     useEffect(() => {
         if (!recording && recordedChunks.length > 0) {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            // Use the same MIME type that was used during recording
+            const mimeType = getSupportedMimeType() || 'video/webm';
+            const blob = new Blob(recordedChunks, { type: mimeType });
+            assembledBlobRef.current = blob; // Store for handleConfirm to use
             const url = URL.createObjectURL(blob);
             setPreviewUrl(url);
             stopCamera();
@@ -100,10 +125,14 @@ const VideoRecorder = ({ onCapture, onClose, maxDuration = 30 }) => {
     }, [recording, recordedChunks]);
 
     const handleConfirm = () => {
-        if (recordedChunks.length > 0) {
-            const blob = new Blob(recordedChunks, { type: 'video/webm' });
-            const file = new File([blob], "video_bio.webm", { type: "video/webm" });
+        // Use the pre-assembled blob from the ref — avoids stale closure on recordedChunks
+        const blob = assembledBlobRef.current;
+        if (blob && previewUrl) {
+            const mimeType = blob.type || 'video/webm';
+            const ext = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
+            const file = new File([blob], `video_bio.${ext}`, { type: mimeType });
             onCapture(file, previewUrl);
+            onClose();
         }
     };
 

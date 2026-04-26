@@ -1,45 +1,50 @@
 /**
- * Calculates the rank of a job seeker based on their uploaded documents.
+ * Calculates a numerical 100-point Trust Score and maps it to a Tier.
+ * Inspired by global reliability scoring systems.
  * 
- * BRONZE (Mandatory): Recent Photo AND (Renewed Kebele ID OR Renewed Passport/idDocument).
- * SILVER (Fast-Track): BRONZE + National ID (Fayda).
- * GOLD: SILVER + Guarantor's National ID and Phone Number.
- * PLATINUM: GOLD + Health Certificate AND Police Clearance.
+ * Score breakdown:
+ * - Base Profile (Photo + ID): 20 pts (Bronze Threshold)
+ * - Fayda National ID (Verified): 40 pts (Silver Threshold)
+ * - Guarantor Vetting: 20 pts (Gold Threshold)
+ * - Health & Police Clearance: 20 pts (Platinum Threshold: 100 pts)
  * 
- * @param {Object} worker - The job seeker object containing document URLs and phone numbers.
+ * @param {Object} worker - The job seeker object
  * @returns {string} - The calculated rank (BRONZE, SILVER, GOLD, or PLATINUM).
  */
+const calculateTrustScore = (worker) => {
+    let score = 0;
+
+    // 1. Base Credentials (20 pts)
+    if (worker.profilePhoto) score += 10;
+    if (worker.idDocument) score += 10;
+
+    // 2. National Trust (40 pts)
+    if (worker.isFaydaVerified === true || (worker.nationalIdUrl && worker.nationalIdUrl !== '')) {
+        score += 40;
+    }
+
+    // 3. Social/Guarantor Trust (20 pts)
+    if (worker.guarantorIdUrl && worker.guarantorPhone) {
+        score += 20;
+    }
+
+    // 4. Professional Compliance (20 pts)
+    if (worker.healthCertificateUrl) score += 10;
+    if (worker.policeClearanceUrl) score += 10;
+
+    return Math.min(score, 100);
+};
+
 const calculateWorkerRank = (worker) => {
-    const hasPhoto = !!worker.profilePhoto;
-    const hasBaseId = !!worker.idDocument; // Used for Kebele ID or Passport
+    const score = calculateTrustScore(worker);
 
-    // Mandatory check for Bronze
-    // Mandatory check for Bronze
-    if (!hasPhoto || !hasBaseId) {
-        return 'BRONZE';
-    }
-
-    const hasFayda = (!!worker.nationalIdUrl && worker.nationalIdUrl !== '') || worker.isFaydaVerified === true;
-    const hasGuarantor = !!worker.guarantorIdUrl && !!worker.guarantorPhone && worker.guarantorIdUrl !== '';
-    const hasHealthCert = !!worker.healthCertificateUrl && worker.healthCertificateUrl !== '';
-    const hasPoliceClearance = !!worker.policeClearanceUrl && worker.policeClearanceUrl !== '';
-
-    // Rank Progression (Strict waterfall)
-    if (hasFayda && hasGuarantor && hasHealthCert && hasPoliceClearance) {
-        return 'PLATINUM';
-    }
-
-    if (hasFayda && hasGuarantor) {
-        return 'GOLD';
-    }
-
-    if (hasFayda) {
-        return 'SILVER';
-    }
-
+    if (score >= 100) return 'PLATINUM';
+    if (score >= 80) return 'GOLD';
+    if (score >= 60) return 'SILVER';
     return 'BRONZE';
 };
 
 module.exports = {
+    calculateTrustScore,
     calculateWorkerRank
 };

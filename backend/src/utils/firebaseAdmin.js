@@ -12,7 +12,7 @@ function initialize() {
                 credential: admin.credential.cert(serviceAccount),
                 storageBucket: 'edwl-ethio-domesticworkerslink.firebasestorage.app'
             });
-            console.log('[FirebaseAdmin] ✅ Success: Firebase initialized.');
+            
         } catch (e) {
             console.error('[FirebaseAdmin] ❌ Error:', e.message);
         }
@@ -23,7 +23,7 @@ function initialize() {
 
 const authMock = {
     setCustomUserClaims: async (uid, claims) => {
-        console.log('[Mock 🔥] Claims set for', uid);
+        
     },
     getUser: async (uid) => {
         return { uid, email: 'mock@edwl.com' };
@@ -62,3 +62,4 @@ const storage = {
 };
 
 module.exports = { admin, auth, storage };
+

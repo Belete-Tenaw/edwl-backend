@@ -57,7 +57,7 @@ export const compressImage = async (file, maxWidth = 1200, maxHeight = 1200, qua
                         });
 
                         // Log size for debugging (remove in production if desired)
-                        console.log(`Original: ${(file.size / 1024).toFixed(2)}KB, Compressed: ${(compressedFile.size / 1024).toFixed(2)}KB`);
+                        .toFixed(2)}KB, Compressed: ${(compressedFile.size / 1024).toFixed(2)}KB`);
 
                         resolve(compressedFile);
                     },
@@ -70,3 +70,4 @@ export const compressImage = async (file, maxWidth = 1200, maxHeight = 1200, qua
         reader.onerror = (err) => reject(err);
     });
 };
+

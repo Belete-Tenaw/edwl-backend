@@ -13,4 +13,7 @@ router.post('/verification', auth, upload.single('idDocument'), uploadController
 // Upload Live Selfie (Trust & Safety Betterment)
 router.post('/live-selfie', auth, upload.single('selfie'), uploadController.uploadLiveSelfie);
 
+// Upload Video Bio (Trust & Transparency)
+router.post('/video-bio', auth, upload.single('videoBio'), uploadController.uploadVideoBio);
+
 module.exports = router;

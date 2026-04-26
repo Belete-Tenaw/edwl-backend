@@ -26,9 +26,8 @@ const logAction = async (action, userId, userType, details = {}, ipAddress = nul
             data.userId = userId;
         }
 
-        console.log(`[Audit] Logging action: ${action} for user: ${userId} (${userType})`);
         const log = await prisma.auditLog.create({ data });
-        console.log(`[Audit] Log created successfully: ${log.id}`);
+        
     } catch (error) {
         console.error('Audit Log Error:', error);
         // We don't want to crash the request if logging fails, 
@@ -39,3 +38,4 @@ const logAction = async (action, userId, userType, details = {}, ipAddress = nul
 module.exports = {
     logAction
 };
+

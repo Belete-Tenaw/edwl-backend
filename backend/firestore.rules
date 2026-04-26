@@ -1,25 +1,13 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Core Authorization Functions
-    function isSuperAdmin() {
-      return request.auth != null && request.auth.token.superAdmin == true;
-    }
-    
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-
-    // Users Collection Rule
-    match /users/{userId} {
-      // Users can only access their own profile; Super Admin can view/modify/delete any.
-      allow read, write: if isOwner(userId) || isSuperAdmin();
-    }
-
-    // Default Fallback
+    // Lock down default access - all profile reads/writes happen via backend API
     match /{document=**} {
-      allow read, write: if isSuperAdmin();
+      allow read, write: if request.auth != null && request.auth.token.superAdmin == true;
+    }
+    // Allow secure chat/message endpoints if migrating off Socket.io
+    match /messages/{messageId} {
+      allow read, write: if request.auth != null && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
     }
   }
 }

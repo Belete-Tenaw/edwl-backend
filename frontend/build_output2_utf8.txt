@@ -1,0 +1,143 @@
+﻿
+> frontend@1.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 48 modules transformed.
+node.exe : 
+[31mΓ£ù[39m Build 
+failed in 442ms
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ([31mΓ£ù[39m   
+  Build failed in 4    
+42ms:String) [], R    
+emoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+[31merror during 
+build:
+[31m[vite-plugin-pwa:b
+uild] [plugin 
+vite-plugin-pwa:build] 
+src/pages/EditProfile.j
+sx (84:16): There was 
+an error during the 
+build:
+  Transform failed 
+with 1 error:
+C:/Users/belet/EDWL-Pro
+ject/frontend/src/pages
+/EditProfile.jsx:84:16:
+ ERROR: Unexpected "."
+Additionally, handling 
+the error in the 
+'buildEnd' hook caused 
+the following error:
+  Transform failed 
+with 1 error:
+C:/Users/belet/EDWL-Pro
+ject/frontend/src/pages
+/EditProfile.jsx:84:16:
+ ERROR: Unexpected 
+"."[31m
+file: [36mC:/Users/bel
+et/EDWL-Project/fronten
+d/src/pages/EditProfile
+.jsx:84:16[31m
+[33m
+[33mUnexpected 
+"."[33m
+82 |              if (f
+ile.type.startsWith('im
+age/')) {
+83 |                  
+processedFile = await 
+compressImage(file, { 
+maxWidth: 1200, 
+maxHeight: 1200, 
+quality: 0.8 });
+84 |                  
+.toFixed(1)}KB -> 
+${(processedFile.size 
+/ 
+1024).toFixed(1)}KB`);
+   |                  ^
+85 |              }
+86 |              
+setFormData({ 
+...formData, 
+[e.target.name]: 
+processedFile });
+[31m
+    at getRollupError (
+file:///C:/Users/belet/
+EDWL-Project/frontend/n
+ode_modules/vite/node_m
+odules/rollup/dist/es/s
+hared/parseAst.js:402:4
+1)
+    at file:///C:/Users
+/belet/EDWL-Project/fro
+ntend/node_modules/vite
+/node_modules/rollup/di
+st/es/shared/node-entry
+.js:23467:39
+    at process.processT
+icksAndRejections (node
+:internal/process/task_
+queues:103:5)
+    at async catchUnfin
+ishedHookActions (file:
+///C:/Users/belet/EDWL-
+Project/frontend/node_m
+odules/vite/node_module
+s/rollup/dist/es/shared
+/node-entry.js:22925:16
+)
+    at async 
+rollupInternal (file://
+/C:/Users/belet/EDWL-Pr
+oject/frontend/node_mod
+ules/vite/node_modules/
+rollup/dist/es/shared/n
+ode-entry.js:23450:5)
+    at async 
+buildEnvironment (file:
+///C:/Users/belet/EDWL-
+Project/frontend/node_m
+odules/vite/dist/node/c
+hunks/config.js:33541:1
+2)
+    at async 
+Object.build (file:///C
+:/Users/belet/EDWL-Proj
+ect/frontend/node_modul
+es/vite/dist/node/chunk
+s/config.js:33900:19)
+    at async 
+Object.buildApp (file:/
+//C:/Users/belet/EDWL-P
+roject/frontend/node_mo
+dules/vite/dist/node/ch
+unks/config.js:33897:15
+3)
+    at async 
+CAC.<anonymous> (file:/
+//C:/Users/belet/EDWL-P
+roject/frontend/node_mo
+dules/vite/dist/node/cl
+i.js:629:3)[39m

@@ -5,7 +5,11 @@ const prisma = require('../utils/prisma');
 jest.mock('../utils/prisma', () => ({
     jobSeeker: {
         findFirst: jest.fn(),
+        findUnique: jest.fn(),
         create: jest.fn(),
+    },
+    employer: {
+        findUnique: jest.fn(),
     },
     auditLog: {
         create: jest.fn()
@@ -19,6 +23,8 @@ describe('Auth Endpoints', () => {
 
     it('should register a new job seeker', async () => {
         prisma.jobSeeker.findFirst.mockResolvedValue(null);
+        prisma.jobSeeker.findUnique.mockResolvedValue(null);
+        prisma.employer.findUnique.mockResolvedValue(null);
         prisma.jobSeeker.create.mockResolvedValue({
             id: '123',
             fullName: 'Test User',

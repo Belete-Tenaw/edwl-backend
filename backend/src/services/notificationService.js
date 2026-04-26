@@ -6,7 +6,7 @@ let bot = null;
 
 if (token) {
     bot = new TelegramBot(token);
-    console.log('[NotificationService] Telegram Bot initialized.');
+    
 } else {
     console.warn('[NotificationService] TELEGRAM_BOT_TOKEN missing in .env. Telegram alerts will be skipped.');
 }
@@ -22,7 +22,7 @@ exports.sendTelegramAlert = async (telegramChatId, message) => {
 
     try {
         await bot.sendMessage(telegramChatId, message, { parse_mode: 'HTML' });
-        console.log(`[Telegram] Alert sent to ${telegramChatId}`);
+        
     } catch (error) {
         console.error(`[Telegram] Failed to send alert to ${telegramChatId}:`, error.message);
         // We do not re-throw here to keep the parent transaction safe.
@@ -39,7 +39,7 @@ exports.sendSMSAlert = async (phoneNumber, message) => {
     if (!phoneNumber) return;
 
     try {
-        console.log(`[SMS Placeholder] Sending to ${phoneNumber}: "${message}"`);
+        
         
         // Example implementation with Africa's Talking (uncomment when credentials added)
         /*
@@ -56,3 +56,4 @@ exports.sendSMSAlert = async (phoneNumber, message) => {
         console.error(`[SMS] Failed to send alert to ${phoneNumber}:`, error.message);
     }
 };
+

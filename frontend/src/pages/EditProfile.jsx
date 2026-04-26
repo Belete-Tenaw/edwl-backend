@@ -19,6 +19,11 @@ const EditProfile = () => {
     const [formData, setFormData] = useState({});
     const [showCamera, setShowCamera] = useState(false);
     const [uploadingSelfie, setUploadingSelfie] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+
+    const [faydaIdInput, setFaydaIdInput] = useState('');
+    const [faydaOtpInput, setFaydaOtpInput] = useState('');
+    const [faydaStep, setFaydaStep] = useState(0); 
 
     useEffect(() => {
         if (!user) {
@@ -69,6 +74,27 @@ const EditProfile = () => {
         }
     };
 
+    const handleRequestFaydaOTP = async () => {
+        try {
+            await api.post('/seekers/fayda/request-otp', { faydaId: faydaIdInput });
+            setFaydaStep(1);
+            alert(t('otp_sent', 'OTP sent to your Fayda registered phone number!'));
+        } catch (err) {
+            alert(err.response?.data?.error || t('request_otp_failed', 'Failed to request OTP'));
+        }
+    };
+
+    const handleVerifyFaydaOTP = async () => {
+        try {
+            await api.post('/seekers/fayda/verify', { faydaId: faydaIdInput, otpCode: faydaOtpInput });
+            setFaydaStep(2);
+            setFormData(prev => ({ ...prev, isFaydaVerified: true, faydaId: faydaIdInput }));
+            alert(t('fayda_verified', 'Successfully verified Fayda ID!'));
+        } catch (err) {
+            alert(err.response?.data?.error || t('verify_otp_failed', 'Failed to verify OTP'));
+        }
+    };
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -81,7 +107,6 @@ const EditProfile = () => {
             let processedFile = file;
             if (file.type.startsWith('image/')) {
                 processedFile = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 });
-                console.log(`Compressed ${file.name}: ${(file.size / 1024).toFixed(1)}KB -> ${(processedFile.size / 1024).toFixed(1)}KB`);
             }
             setFormData({ ...formData, [e.target.name]: processedFile });
         } catch (err) {
@@ -241,7 +266,11 @@ const EditProfile = () => {
             }
 
             const res = await api.put(endpoint, dataToSend, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': 'multipart/form-data' },
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(percentCompleted);
+                }
             });
 
             const updatedUser = { ...user, fullName: res.data.fullName || res.data.contactName };
@@ -255,6 +284,7 @@ const EditProfile = () => {
             alert(err.response?.data?.error || 'Failed to update profile.');
         } finally {
             setSaving(false);
+            setUploadProgress(0);
         }
     };
 
@@ -410,6 +440,28 @@ const EditProfile = () => {
                                 <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '5px' }}>{t('re_verify_hint') || "Updating your ID will require re-verification by admin."}</p>
                             </div>
 
+                            <div style={{ gridColumn: '1 / -1', background: '#eef2ff', padding: '20px', borderRadius: '8px', border: '1px solid #c7d2fe', marginTop: '10px' }}>
+                                <h4 style={{ color: '#3730a3', marginBottom: '10px' }}>🇪🇹 National ID (Fayda) Verification</h4>
+                                {formData.isFaydaVerified ? (
+                                    <div style={{ color: '#166534', fontWeight: 'bold' }}>✅ Your Fayda ID ({formData.faydaId}) is Verified</div>
+                                ) : (
+                                    faydaStep === 0 ? (
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <input className="input" placeholder="Enter 12-digit Fayda ID" value={faydaIdInput} onChange={e => setFaydaIdInput(e.target.value)} />
+                                            <button type="button" className="btn-primary" onClick={handleRequestFaydaOTP}>Verify Fayda</button>
+                                        </div>
+                                    ) : faydaStep === 1 ? (
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <input className="input" placeholder="Enter OTP (e.g. 123456)" value={faydaOtpInput} onChange={e => setFaydaOtpInput(e.target.value)} />
+                                            <button type="button" className="btn-primary" onClick={handleVerifyFaydaOTP}>Submit OTP</button>
+                                        </div>
+                                    ) : (
+                                        <div style={{ color: '#166534', fontWeight: 'bold' }}>✅ Verified in this session. Save changes to keep it!</div>
+                                    )
+                                )}
+                                <p style={{ fontSize: '0.8rem', color: '#4f46e5', marginTop: '5px' }}>Verified users get priority matching and the highly trusted "Verified" badge.</p>
+                            </div>
+
                             <div style={{ gridColumn: '1 / -1' }}>
                                 <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '20px 0' }} />
                                 <h4 style={{ marginBottom: '15px' }}>{t('account_recovery')}</h4>
@@ -478,7 +530,18 @@ const EditProfile = () => {
                         </div>
                     )}
 
-                    <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ marginTop: '30px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '15px' }}>
+                        {saving && uploadProgress > 0 && uploadProgress < 100 && (
+                            <div style={{ width: '100%', maxWidth: '300px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '0.85rem', color: '#666' }}>
+                                    <span>{t('uploading_files') || 'Uploading files...'}</span>
+                                    <span>{uploadProgress}%</span>
+                                </div>
+                                <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div style={{ height: '100%', width: `${uploadProgress}%`, background: 'var(--primary)', transition: 'width 0.2s' }}></div>
+                                </div>
+                            </div>
+                        )}
                         <button type="submit" className="btn-primary" disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {saving ? t('saving') : t('save_changes')} <Save size={18} />
                         </button>
@@ -502,3 +565,4 @@ const EditProfile = () => {
 };
 
 export default EditProfile;
+

@@ -1,9 +1,11 @@
-console.log('--- App.jsx: Loading component ---');
+
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ErrorBoundary from './components/ErrorBoundary';
 import { AdminRoute } from './components/AdminRoute';
+import { ToastProvider } from './components/Toast';
 import authService from './services/authService';
 // Helper to handle Chunk Load Errors (happens after major updates)
 const lazyWithRetry = (componentImport) =>
@@ -39,6 +41,7 @@ const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
 const TermsAndConditions = lazyWithRetry(() => import('./pages/TermsAndConditions'));
 const About = lazyWithRetry(() => import('./pages/About'));
 const Safety = lazyWithRetry(() => import('./pages/Safety'));
+const Academy = lazyWithRetry(() => import('./pages/Academy'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'));
 const PaymentSuccess = lazyWithRetry(() => import('./pages/PaymentSuccess'));
@@ -50,8 +53,7 @@ const Loading = () => (
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
-        color: 'var(--primary)',
-        background: 'white',
+        background: '#f8fafc',
         zIndex: 9999,
         position: 'fixed',
         top: 0,
@@ -59,8 +61,30 @@ const Loading = () => (
         right: 0,
         bottom: 0
     }}>
-        <div style={{ width: '50px', height: '50px', border: '5px solid #f3f3f3', borderTop: '5px solid var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-        <p style={{ marginTop: '20px', fontWeight: 'bold' }}>Loading EDWL...</p>
+        <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+            <div style={{ 
+                position: 'absolute', 
+                width: '100%', 
+                height: '100%', 
+                border: '4px solid rgba(0, 128, 128, 0.1)', 
+                borderRadius: '50%',
+                borderTopColor: 'var(--primary)',
+                animation: 'spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite'
+            }}></div>
+            <div style={{ 
+                position: 'absolute', 
+                top: '50%', 
+                left: '50%', 
+                transform: 'translate(-50%, -50%)',
+                fontSize: '0.9rem',
+                fontWeight: '900',
+                color: 'var(--primary)',
+                letterSpacing: '1px'
+            }}>EDWL</div>
+        </div>
+        <p style={{ marginTop: '24px', fontWeight: '700', color: '#1e293b', fontSize: '1rem', letterSpacing: '0.05em' }}>
+            SMART CONNECTING...
+        </p>
         <style>{`
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         `}</style>
@@ -76,62 +100,67 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 function App() {
     return (
-        <Router>
-            <div className="app">
-                <Suspense fallback={<Loading />}>
-                    <Navbar />
-                    <main>
-                        <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/register" element={<Register />} />
-                            <Route path="/pricing" element={<Pricing />} />
-                            <Route path="/activate" element={<Activate />} />
-                            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-                            <Route path="/about" element={<About />} />
-                            <Route path="/safety" element={<Safety />} />
-                            <Route path="/contact" element={<Contact />} />
-                            <Route path="/forgot-password" element={<ForgotPassword />} />
-                            <Route path="/payment-success" element={<PaymentSuccess />} />
+        <ToastProvider>
+            <Router>
+                <div className="app">
+                    <Suspense fallback={<Loading />}>
+                        <Navbar />
+                        <ErrorBoundary>
+                            <main>
+                                <Routes>
+                                    <Route path="/" element={<Home />} />
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/register" element={<Register />} />
+                                    <Route path="/pricing" element={<Pricing />} />
+                                    <Route path="/activate" element={<Activate />} />
+                                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                                    <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                                    <Route path="/about" element={<About />} />
+                                    <Route path="/safety" element={<Safety />} />
+                                    <Route path="/academy" element={<Academy />} />
+                                    <Route path="/contact" element={<Contact />} />
+                                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                                    <Route path="/payment-success" element={<PaymentSuccess />} />
 
-                            <Route path="/messages" element={
-                                <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER', 'ADMIN']}>
-                                    <Messages />
-                                </ProtectedRoute>
-                            } />
+                                    <Route path="/messages" element={
+                                        <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER', 'ADMIN']}>
+                                            <Messages />
+                                        </ProtectedRoute>
+                                    } />
 
-                            <Route path="/profile/edit" element={
-                                <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER']}>
-                                    <EditProfile />
-                                </ProtectedRoute>
-                            } />
+                                    <Route path="/profile/edit" element={
+                                        <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER']}>
+                                            <EditProfile />
+                                        </ProtectedRoute>
+                                    } />
 
-                            <Route path="/dashboard/seeker" element={
-                                <ProtectedRoute allowedRoles={['JOB_SEEKER']}>
-                                    <SeekerDashboard />
-                                </ProtectedRoute>
-                            } />
+                                    <Route path="/dashboard/seeker" element={
+                                        <ProtectedRoute allowedRoles={['JOB_SEEKER']}>
+                                            <SeekerDashboard />
+                                        </ProtectedRoute>
+                                    } />
 
-                            <Route path="/dashboard/employer" element={
-                                <ProtectedRoute allowedRoles={['EMPLOYER']}>
-                                    <EmployerDashboard />
-                                </ProtectedRoute>
-                            } />
+                                    <Route path="/dashboard/employer" element={
+                                        <ProtectedRoute allowedRoles={['EMPLOYER']}>
+                                            <EmployerDashboard />
+                                        </ProtectedRoute>
+                                    } />
 
-                            <Route path="/admin" element={
-                                <AdminRoute>
-                                    <AdminDashboard />
-                                </AdminRoute>
-                            } />
+                                    <Route path="/admin" element={
+                                        <AdminRoute>
+                                            <AdminDashboard />
+                                        </AdminRoute>
+                                    } />
 
-                            <Route path="*" element={<NotFound />} />
-                        </Routes>
-                    </main>
-                    <Footer />
-                </Suspense>
-            </div>
-        </Router>
+                                    <Route path="*" element={<NotFound />} />
+                                </Routes>
+                            </main>
+                        </ErrorBoundary>
+                        <Footer />
+                    </Suspense>
+                </div>
+            </Router>
+        </ToastProvider>
     );
 }
 

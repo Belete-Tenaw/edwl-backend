@@ -6,8 +6,6 @@ import am from './am.json';
 
 const storedLanguage = localStorage.getItem('i18nextLng') || 'en';
 
-console.log('--- i18n.js: Initializing with en keys:', Object.keys(en).length, 'am keys:', Object.keys(am).length);
-
 i18n
     .use(LanguageDetector)
     .use(initReactI18next)
@@ -30,6 +28,7 @@ i18n
         }
     });
 
-console.log('--- i18n.js: Initialized. Current language:', i18n.language);
+
 
 export default i18n;
+

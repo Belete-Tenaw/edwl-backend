@@ -15,7 +15,7 @@ const Contact = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         // Simulate form submission
-        console.log('Contact form submitted:', formData);
+        
         setSubmitted(true);
         // Reset form after 3 seconds
         setTimeout(() => setSubmitted(false), 3000);
@@ -125,3 +125,4 @@ const Contact = () => {
 };
 
 export default Contact;
+

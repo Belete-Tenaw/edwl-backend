@@ -56,6 +56,22 @@ class ChapaService {
             throw new Error(error.response?.data?.message || 'Chapa verification failed');
         }
     }
+
+    /**
+     * Verify Chapa webhook signature
+     * @param {string} signature - The x-chapa-signature header
+     * @param {object} body - The raw request body
+     */
+    verifyWebhookSignature(signature, body) {
+        if (!this.secretKey) return true; // Mock mode
+        
+        const crypto = require('crypto');
+        const hash = crypto.createHmac('sha256', this.secretKey)
+            .update(JSON.stringify(body))
+            .digest('hex');
+            
+        return hash === signature;
+    }
 }
 
 module.exports = new ChapaService();

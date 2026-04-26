@@ -18,10 +18,8 @@ const Pricing = () => {
     useEffect(() => {
         const fetchTiers = async () => {
             try {
-                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-                const response = await fetch(`${baseUrl}/api/payments/tiers`);
-                if (!response.ok) throw new Error('Failed to fetch pricing tiers');
-                const data = await response.json();
+                const response = await api.get('/payments/tiers');
+                const data = response.data;
                 
                 // Map backend tiers to frontend UI requirements
                 const mappedPlans = data.map(tier => ({

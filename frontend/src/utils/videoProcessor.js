@@ -9,14 +9,12 @@ export const processVideoBio = async (file) => {
             return reject(new Error('Selected file is not a video.'));
         }
 
-        const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+        const MAX_SIZE = 15 * 1024 * 1024; // 15MB
         const MAX_DURATION = 30; // 30 seconds
 
         // 1. Initial Size Check (Quick fail for massive files)
-        // Note: We'll check again after processing if we were doing server-side compression, 
-        // but for $0 budget we mostly rely on duration limiting and client-side rejection.
-        if (file.size > 10 * 1024 * 1024) { // Hard cap before duration check
-            return reject(new Error('Video is too large. Max size for raw upload is 10MB, but will be limited to 3MB after duration check.'));
+        if (file.size > 15 * 1024 * 1024) { // Hard cap before duration check
+            return reject(new Error('Video is too large. Max size for upload is 15MB. Please choose a smaller file.'));
         }
 
         const video = document.createElement('video');
@@ -34,12 +32,12 @@ export const processVideoBio = async (file) => {
             }
 
             if (duration > MAX_DURATION) {
-                return reject(new Error(`Video bio must be 15 seconds or shorter. Your video is ${Math.round(duration)}s.`));
+                return reject(new Error(`Video bio must be ${MAX_DURATION} seconds or shorter. Your video is ${Math.round(duration)}s.`));
             }
 
             // 2. Final Size Check
             if (file.size > MAX_SIZE) {
-                return reject(new Error(`Video file size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds 10MB limit. Please try recording at a lower resolution.`));
+                return reject(new Error(`Video file size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds 15MB limit. Please try recording at a lower resolution.`));
             }
 
             resolve({
@@ -50,6 +48,7 @@ export const processVideoBio = async (file) => {
         };
 
         video.onerror = () => {
+            URL.revokeObjectURL(video.src); // Clean up on error path too
             reject(new Error('Failed to load video metadata. The file might be corrupted or in an unsupported format.'));
         };
 

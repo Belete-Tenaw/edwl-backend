@@ -119,3 +119,37 @@ exports.uploadLiveSelfie = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// Upload Video Bio (Trust & Transparency Feature)
+exports.uploadVideoBio = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const role = req.user.role;
+
+        if (role !== 'JOB_SEEKER') {
+            return res.status(403).json({ error: 'Only job seekers can upload a video bio' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Video file is required' });
+        }
+
+        // Upload to Firebase (stored in 'videos' folder)
+        const result = await uploadFileToFirebase(req.file, 'videos', false);
+        const videoUrl = result.storagePath;
+
+        // Update seeker record
+        await prisma.jobSeeker.update({
+            where: { id: userId },
+            data: { videoBio: videoUrl }
+        });
+
+        res.json({
+            message: 'Video introduction uploaded successfully',
+            videoUrl
+        });
+    } catch (error) {
+        console.error("Video Upload Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+};

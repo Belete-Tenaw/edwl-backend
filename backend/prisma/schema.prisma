@@ -66,9 +66,12 @@ model JobSeeker {
   resetPasswordExpires DateTime?
   resetPasswordToken   String?
   liveSelfieUrl        String?
+  behaviorScore        Float                 @default(50.0)
+  responseTimeMs       Int?
   auditLogs            AuditLog[]
   contracts            Contract[]
   disputes             Dispute[]             @relation("ReportedByJS")
+  escrowContracts      EscrowContract[]
   receivedMessages     Message[]             @relation("ReceivedByJS")
   sentMessages         Message[]             @relation("SentByJS")
   payments             Payment[]
@@ -77,6 +80,7 @@ model JobSeeker {
   reviewsSent          Review[]              @relation("JSReviewsSent")
   reviewsReceived      Review[]              @relation("JSReviewsReceived")
   subscriptions        Subscription[]
+  userTrainings        UserTraining[]
   verificationRequests VerificationRequest[]
   viewLogs             ViewLog[]
 
@@ -86,6 +90,8 @@ model JobSeeker {
   @@index([preferredLocation])
   @@index([experienceYears])
   @@index([expectedSalary])
+  @@index([phone])
+  @@index([isActive])
 }
 
 model Employer {
@@ -129,9 +135,12 @@ model Employer {
   resetPasswordExpires DateTime?
   resetPasswordToken   String?
   liveSelfieUrl        String?
+  behaviorScore        Float                 @default(50.0)
+  responseTimeMs       Int?
   auditLogs            AuditLog[]
   contracts            Contract[]
   disputes             Dispute[]             @relation("ReportedByEmp")
+  escrowContracts      EscrowContract[]
   hiringRequirement    HiringRequirement?
   jobPosts             JobPost[]
   receivedMessages     Message[]             @relation("ReceivedByEmp")
@@ -147,6 +156,8 @@ model Employer {
 
   @@index([tier])
   @@index([createdAt])
+  @@index([phone])
+  @@index([isActive])
 }
 
 model HiringRequirement {
@@ -168,9 +179,14 @@ model JobPost {
   jobType              String
   preferredArrangement PreferredArrangement
   address              String
+  locationRegion       String?
+  locationZone         String?
+  locationWoreda       String?
+  locationKebele       String?
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
   contracts            Contract[]
+  escrowContracts      EscrowContract[]
   employer             Employer             @relation(fields: [employerId], references: [id], onDelete: Cascade)
   viewLogs             ViewLog[]
 
@@ -179,6 +195,7 @@ model JobPost {
   @@index([jobType])
   @@index([preferredArrangement])
   @@index([salaryOffered])
+  @@index([locationRegion])
 }
 
 model Message {
@@ -259,6 +276,11 @@ model Payment {
   employer             Employer?       @relation(fields: [employerId], references: [id])
   jobSeeker            JobSeeker?      @relation(fields: [jobSeekerId], references: [id])
   subscription         Subscription?
+
+  @@index([jobSeekerId])
+  @@index([employerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Invoice {
@@ -324,6 +346,11 @@ model Contract {
   terms          ContractTerm[]
   disputes       Dispute[]
   reviews        Review[]
+
+  @@index([employerId])
+  @@index([jobSeekerId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model ContractTerm {
@@ -407,6 +434,43 @@ model AuditLog {
   employer    Employer?  @relation(fields: [employerId], references: [id])
   jobSeeker   JobSeeker? @relation(fields: [jobSeekerId], references: [id])
   admin       Admin?     @relation(fields: [userId], references: [id])
+}
+
+model TrainingModule {
+  id            String         @id @default(uuid())
+  title         String
+  description   String
+  videoUrl      String
+  category      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  userTrainings UserTraining[]
+}
+
+model UserTraining {
+  id             String         @id @default(uuid())
+  jobSeekerId    String
+  moduleId       String
+  completedAt    DateTime       @default(now())
+  jobSeeker      JobSeeker      @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  trainingModule TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([jobSeekerId, moduleId])
+}
+
+model EscrowContract {
+  id          String       @id @default(uuid())
+  employerId  String
+  workerId    String
+  jobId       String?
+  amount      Float
+  status      EscrowStatus @default(PENDING)
+  telebirrRef String?      @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  employer    Employer     @relation(fields: [employerId], references: [id])
+  jobPost     JobPost?     @relation(fields: [jobId], references: [id])
+  worker      JobSeeker    @relation(fields: [workerId], references: [id])
 }
 
 enum Gender {
@@ -500,4 +564,11 @@ enum DisputeStatus {
   OPEN
   RESOLVED
   CLOSED
+}
+
+enum EscrowStatus {
+  PENDING
+  FUNDED
+  RELEASED
+  DISPUTED
 }

@@ -139,7 +139,17 @@ exports.registerJobSeeker = async (req, res, next) => {
             await referralController.trackReferral(referralCodeUsed, 'seeker', newSeeker.id);
         }
 
-        res.status(201).json({ message: "Job Seeker registered successfully", userId: newSeeker.id });
+        const token = jwt.sign(
+            { id: newSeeker.id, role: 'JOB_SEEKER' },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({ 
+            message: "Job Seeker registered successfully", 
+            userId: newSeeker.id,
+            token 
+        });
 
         // Audit Log
         await logAction('REGISTER_SEEKER', newSeeker.id, 'JOB_SEEKER', { fullName: newSeeker.fullName });
@@ -180,6 +190,10 @@ exports.loginJobSeeker = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        if (!seeker.isActive) {
+            return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
+        }
+
         const isPasswordValid = await bcrypt.compare(password, seeker.password);
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid credentials" });
@@ -192,10 +206,6 @@ exports.loginJobSeeker = async (req, res) => {
                 where: { id: seeker.id },
                 data: { referralCode: seeker.referralCode }
             });
-        }
-
-        if (!seeker.isActive) {
-            return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
         }
 
         const token = jwt.sign(
@@ -278,9 +288,16 @@ exports.registerEmployer = async (req, res, next) => {
             await referralController.trackReferral(referralCodeUsed, 'employer', newEmployer.id);
         }
 
+        const token = jwt.sign(
+            { id: newEmployer.id, role: 'EMPLOYER' },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
         res.status(201).json({
             message: "Employer registered successfully",
-            userId: newEmployer.id
+            userId: newEmployer.id,
+            token
         });
 
         // Audit Log
@@ -322,6 +339,10 @@ exports.loginEmployer = async (req, res) => {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
+        if (!employer.isActive) {
+            return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
+        }
+
         const isPasswordValid = await bcrypt.compare(password, employer.password);
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid credentials" });
@@ -334,10 +355,6 @@ exports.loginEmployer = async (req, res) => {
                 where: { id: employer.id },
                 data: { referralCode: employer.referralCode }
             });
-        }
-
-        if (!employer.isActive) {
-            return res.status(403).json({ error: "Your account has been suspended. Please contact support." });
         }
 
         const token = jwt.sign(
@@ -471,35 +488,16 @@ exports.forgotPassword = async (req, res) => {
         }
 
         if (!user) {
-            // Security best practice: don't reveal if user exists, but for UX we might want to
-            return res.status(200).json({ message: "If an account exists, a reset link has been sent." });
+            return res.status(404).json({ error: "User not found with this identifier." });
         }
 
-        const token = crypto.randomBytes(3).toString('hex').toUpperCase(); // 6-char OTP
-        const expires = new Date(Date.now() + 3600000); // 1 hour
-
-        if (userType === 'seeker') {
-            await prisma.jobSeeker.update({
-                where: { id: user.id },
-                data: { resetPasswordToken: token, resetPasswordExpires: expires }
-            });
-        } else {
-            await prisma.employer.update({
-                where: { id: user.id },
-                data: { resetPasswordToken: token, resetPasswordExpires: expires }
-            });
-        }
-
-        const message = `Your EDWL password reset code is: ${token}. It expires in 1 hour.`;
-        
-        if (user.phone) {
-            const { sendSMSAlert } = require('../services/notificationService');
-            await sendSMSAlert(user.phone, message);
-        } else if (user.email) {
-            console.log(`[Email Mock] Sending to ${user.email}: ${message}`);
-        }
-
-        return res.status(200).json({ message: "Reset code sent successfully", phone: user.phone ? `******${user.phone.slice(-4)}` : null });
+        // Return the security question for the local "Smart Recovery" flow
+        return res.status(200).json({ 
+            message: "User identified", 
+            securityQuestion: user.securityQuestion || "What is your registration date?", // Fallback if not set
+            userType,
+            identifier: normalized
+        });
     } catch (error) {
         console.error("Forgot Password error:", error);
         res.status(500).json({ error: "Failed to process request" });
@@ -511,16 +509,14 @@ exports.forgotPassword = async (req, res) => {
 // =============================
 exports.resetPassword = async (req, res) => {
     try {
-        const { identifier, token, newPassword } = req.body;
-        if (!token || !newPassword) return res.status(400).json({ error: "Token and new password are required" });
+        const { identifier, securityAnswer, newPassword } = req.body;
+        if (!securityAnswer || !newPassword) return res.status(400).json({ error: "Answer and new password are required" });
 
         const normalized = identifier.includes('@') ? normalizeEmail(identifier) : normalizePhone(identifier);
 
         let user = await prisma.jobSeeker.findFirst({ 
             where: { 
-                OR: [{ email: normalized }, { phone: normalized }],
-                resetPasswordToken: token,
-                resetPasswordExpires: { gt: new Date() }
+                OR: [{ email: normalized }, { phone: normalized }]
             } 
         });
         let userType = 'seeker';
@@ -528,16 +524,21 @@ exports.resetPassword = async (req, res) => {
         if (!user) {
             user = await prisma.employer.findFirst({ 
                 where: { 
-                    OR: [{ email: normalized }, { phone: normalized }],
-                    resetPasswordToken: token,
-                    resetPasswordExpires: { gt: new Date() }
+                    OR: [{ email: normalized }, { phone: normalized }]
                 } 
             });
             userType = 'employer';
         }
 
         if (!user) {
-            return res.status(400).json({ error: "Invalid or expired reset token" });
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        // Verify Answer (case-insensitive and trimmed)
+        const isAnswerCorrect = user.securityAnswer?.trim().toLowerCase() === securityAnswer.trim().toLowerCase();
+        
+        if (!isAnswerCorrect) {
+            return res.status(401).json({ error: "Incorrect security answer." });
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -568,3 +569,4 @@ exports.resetPassword = async (req, res) => {
         res.status(500).json({ error: "Failed to reset password" });
     }
 };
+

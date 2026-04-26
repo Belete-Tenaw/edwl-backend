@@ -15,7 +15,21 @@ api.interceptors.request.use(
         }
         return config;
     },
+    (error) => Promise.reject(error)
+);
+
+// Response interceptor for global error handling
+api.interceptors.response.use(
+    (response) => response,
     (error) => {
+        if (error.response && error.response.status === 401) {
+            // Session expired
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login?expired=true';
+            }
+        }
         return Promise.reject(error);
     }
 );
