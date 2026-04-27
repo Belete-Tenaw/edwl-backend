@@ -21,7 +21,7 @@ const getSupportedMimeType = () => {
     return ''; // Let browser choose default
 };
 
-const VideoRecorder = ({ onCapture, onClose, maxDuration = 300 }) => {
+const VideoRecorder = ({ onCapture, onClose, maxDuration = 1200 }) => {
     const videoRef = useRef(null);
     const mediaRecorderRef = useRef(null);
     const [stream, setStream] = useState(null);
@@ -225,7 +225,7 @@ const VideoRecorder = ({ onCapture, onClose, maxDuration = 300 }) => {
                             fontSize: '0.9rem',
                             animation: 'pulse 1s infinite'
                         }}>
-                            <Timer size={16} /> {timeLeft}s
+                            <Timer size={16} /> {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
                         </div>
                     )}
                 </div>

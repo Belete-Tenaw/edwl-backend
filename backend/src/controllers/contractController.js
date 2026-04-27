@@ -3,7 +3,7 @@ const prisma = require('../utils/prisma');
 // Create a digital contract
 exports.createContract = async (req, res) => {
     try {
-        const { jobSeekerId, jobPostId, startDate, endDate, salaryAmount, termsConditions, jobType } = req.body;
+        const { jobSeekerId, jobPostId, startDate, endDate, salaryAmount, termsConditions, jobType, includeInsurance } = req.body;
         const employerId = req.user.userId;
 
         if (req.user.role !== 'employer') {
@@ -18,6 +18,7 @@ exports.createContract = async (req, res) => {
                 startDate: new Date(startDate),
                 endDate: endDate ? new Date(endDate) : null,
                 salaryAmount: parseFloat(salaryAmount),
+                insuranceFee: includeInsurance ? 250.0 : 0,
                 termsConditions,
                 jobType,
                 status: 'PENDING_SEEKER_SIGNATURE'

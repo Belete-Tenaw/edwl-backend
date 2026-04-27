@@ -1,13 +1,14 @@
-
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
+import SOSButton from './components/SOSButton';
 import { AdminRoute } from './components/AdminRoute';
 import { ToastProvider } from './components/Toast';
 import authService from './services/authService';
-// Helper to handle Chunk Load Errors (happens after major updates)
+
+// Helper to handle Chunk Load Errors
 const lazyWithRetry = (componentImport) =>
     lazy(async () => {
         const pageHasAlreadyBeenForceReloaded = window.sessionStorage.getItem('page-force-reloaded');
@@ -45,6 +46,10 @@ const Academy = lazyWithRetry(() => import('./pages/Academy'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'));
 const PaymentSuccess = lazyWithRetry(() => import('./pages/PaymentSuccess'));
+
+const RewardsDashboard = lazyWithRetry(() => import('./pages/RewardsDashboard'));
+const AcademyDashboard = lazyWithRetry(() => import('./pages/AcademyDashboard'));
+const SmartInterview = lazyWithRetry(() => import('./pages/SmartInterview'));
 
 const Loading = () => (
     <div style={{
@@ -121,6 +126,21 @@ function App() {
                                     <Route path="/contact" element={<Contact />} />
                                     <Route path="/forgot-password" element={<ForgotPassword />} />
                                     <Route path="/payment-success" element={<PaymentSuccess />} />
+                                    <Route path="/rewards" element={
+                                        <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER']}>
+                                            <RewardsDashboard />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/academy" element={
+                                        <ProtectedRoute allowedRoles={['JOB_SEEKER']}>
+                                            <AcademyDashboard />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/smart-interview" element={
+                                        <ProtectedRoute allowedRoles={['JOB_SEEKER']}>
+                                            <SmartInterview />
+                                        </ProtectedRoute>
+                                    } />
 
                                     <Route path="/messages" element={
                                         <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER', 'ADMIN']}>
@@ -156,6 +176,7 @@ function App() {
                                 </Routes>
                             </main>
                         </ErrorBoundary>
+                        <SOSButton />
                         <Footer />
                     </Suspense>
                 </div>

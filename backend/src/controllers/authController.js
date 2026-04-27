@@ -570,3 +570,41 @@ exports.resetPassword = async (req, res) => {
     }
 };
 
+exports.getNotifications = async (req, res) => {
+    try {
+        const notifications = await prisma.notification.findMany({
+            where: { userId: req.user.id },
+            orderBy: { createdAt: 'desc' },
+            take: 20
+        });
+        res.json(notifications);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.markNotificationRead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.notification.update({
+            where: { id, userId: req.user.id },
+            data: { read: true }
+        });
+        res.json({ message: 'Marked as read' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.markAllNotificationsRead = async (req, res) => {
+    try {
+        await prisma.notification.updateMany({
+            where: { userId: req.user.id, read: false },
+            data: { read: true }
+        });
+        res.json({ message: 'All marked as read' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+

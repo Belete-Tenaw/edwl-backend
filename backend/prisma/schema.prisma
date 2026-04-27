@@ -54,12 +54,16 @@ model JobSeeker {
   priorityWeight       Int                   @default(0)
   referralCode         String?               @unique
   referralCount        Int                   @default(0)
+  rewardPoints         Int                   @default(0)
   referredById         String?
   referredByType       String?
   securityAnswer       String?
   securityQuestion     String?
   telegramChatId       String?               @unique
   videoBio             String?
+  videoTranscription   Json?
+  interviewAnswers     Json?
+  availability         Json?
   tier                 SeekerTier            @default(BRONZE)
   premiumCode          String?
   isSubscribed         Boolean               @default(false)
@@ -83,6 +87,8 @@ model JobSeeker {
   userTrainings        UserTraining[]
   verificationRequests VerificationRequest[]
   viewLogs             ViewLog[]
+  notifications        Notification[]
+  sosAlerts            SOSAlert[]
 
   @@index([tier])
   @@index([createdAt])
@@ -124,6 +130,7 @@ model Employer {
   passwordHint         String?
   referralCode         String?               @unique
   referralCount        Int                   @default(0)
+  rewardPoints         Int                   @default(0)
   referredById         String?
   referredByType       String?
   securityAnswer       String?
@@ -153,6 +160,8 @@ model Employer {
   subscriptions        Subscription[]
   verificationRequests VerificationRequest[]
   viewLogs             ViewLog[]
+  notifications        Notification[]
+  sosAlerts            SOSAlert[]
 
   @@index([tier])
   @@index([createdAt])
@@ -337,6 +346,7 @@ model Contract {
   startDate      DateTime
   endDate        DateTime?
   salary         Float
+  insuranceFee   Float?         @default(0)
   employerSigned Boolean        @default(false)
   workerSigned   Boolean        @default(false)
   createdAt      DateTime       @default(now())
@@ -346,6 +356,7 @@ model Contract {
   terms          ContractTerm[]
   disputes       Dispute[]
   reviews        Review[]
+  transitSessions TransitSession[]
 
   @@index([employerId])
   @@index([jobSeekerId])
@@ -371,6 +382,7 @@ model Dispute {
   status        DisputeStatus @default(OPEN)
   resolution    String?
   adminId       String?
+  evidenceUrls  String[]      @default([])
   createdAt     DateTime      @default(now())
   admin         Admin?        @relation(fields: [adminId], references: [id])
   contract      Contract?     @relation(fields: [contractId], references: [id])
@@ -440,8 +452,10 @@ model TrainingModule {
   id            String         @id @default(uuid())
   title         String
   description   String
-  videoUrl      String
+  videoUrl      String?
+  quizData      Json?
   category      String
+  points        Int            @default(10)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   userTrainings UserTraining[]
@@ -451,6 +465,7 @@ model UserTraining {
   id             String         @id @default(uuid())
   jobSeekerId    String
   moduleId       String
+  score          Int            @default(0)
   completedAt    DateTime       @default(now())
   jobSeeker      JobSeeker      @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
   trainingModule TrainingModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
@@ -471,6 +486,17 @@ model EscrowContract {
   employer    Employer     @relation(fields: [employerId], references: [id])
   jobPost     JobPost?     @relation(fields: [jobId], references: [id])
   worker      JobSeeker    @relation(fields: [workerId], references: [id])
+}
+
+model TransitSession {
+  id          String   @id @default(uuid())
+  contractId  String
+  userId      String
+  latitude    Float
+  longitude   Float
+  updatedAt   DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  contract    Contract @relation(fields: [contractId], references: [id])
 }
 
 enum Gender {
@@ -542,6 +568,7 @@ enum PaymentProvider {
   CHAPA
   CBE
   MANUAL
+  STRIPE
 }
 
 enum VerificationStatus {
@@ -571,4 +598,37 @@ enum EscrowStatus {
   FUNDED
   RELEASED
   DISPUTED
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String
+  userType    String   // 'JOB_SEEKER' or 'EMPLOYER'
+  title       String
+  message     String
+  type        String   @default("SYSTEM") // 'MATCH', 'MESSAGE', 'PAYMENT', 'SYSTEM'
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  employer    Employer?  @relation(fields: [userId], references: [id], map: "Notification_Employer_fkey")
+  jobSeeker   JobSeeker? @relation(fields: [userId], references: [id], map: "Notification_JobSeeker_fkey")
+
+  @@index([userId, read])
+}
+
+model SOSAlert {
+  id          String   @id @default(uuid())
+  userId      String
+  userType    String   // 'JOB_SEEKER' or 'EMPLOYER'
+  latitude    Float?
+  longitude   Float?
+  status      String   @default("ACTIVE") // 'ACTIVE', 'RESOLVED'
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  employer    Employer?  @relation(fields: [userId], references: [id], map: "SOSAlert_Employer_fkey")
+  jobSeeker   JobSeeker? @relation(fields: [userId], references: [id], map: "SOSAlert_JobSeeker_fkey")
+
+  @@index([status])
+  @@index([createdAt])
 }

@@ -10,7 +10,8 @@ const ContractCreateModal = ({ worker, onClose, onSuccess }) => {
         startDate: new Date().toISOString().split('T')[0],
         salaryAmount: worker.expectedSalary || '',
         jobType: 'HOUSEHOLD',
-        termsConditions: `1. Working hours: 8:00 AM - 6:00 PM\n2. Weekly holiday: Sunday\n3. One meal provided per day\n4. Respectful treatment guaranteed`
+        termsConditions: `1. Working hours: 8:00 AM - 6:00 PM\n2. Weekly holiday: Sunday\n3. One meal provided per day\n4. Respectful treatment guaranteed`,
+        includeInsurance: true
     });
 
     const handleChange = (e) => {
@@ -87,6 +88,21 @@ const ContractCreateModal = ({ worker, onClose, onSuccess }) => {
                             onChange={handleChange}
                             style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', minHeight: '120px', outline: 'none', fontSize: '0.9rem' }} 
                         />
+                    </div>
+
+                    <div style={{ marginBottom: '20px', padding: '12px', border: '1px solid #bae6fd', background: '#f0f9ff', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <input 
+                            type="checkbox" 
+                            id="includeInsurance" 
+                            name="includeInsurance"
+                            checked={formData.includeInsurance}
+                            onChange={(e) => setFormData({...formData, includeInsurance: e.target.checked})}
+                            style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                        />
+                        <label htmlFor="includeInsurance" style={{ fontSize: '0.85rem', color: '#0369a1', cursor: 'pointer' }}>
+                            <strong>Add Insurance & Welfare Protection</strong> (+250 ETB/mo)
+                            <br/><span style={{ opacity: 0.8, fontSize: '0.75rem' }}>Protects worker against medical emergencies.</span>
+                        </label>
                     </div>
 
                     <div style={{ background: '#f0f9ff', padding: '15px', borderRadius: '12px', marginBottom: '25px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>

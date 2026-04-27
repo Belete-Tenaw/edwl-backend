@@ -35,5 +35,6 @@ router.put('/profile', auth, authorize([Roles.SEEKER]), upload.fields([
 
 router.post('/fayda/request-otp', auth, authorize([Roles.SEEKER]), authRateLimiter, seekerController.requestFaydaOTP);
 router.post('/fayda/verify', auth, authorize([Roles.SEEKER]), authRateLimiter, seekerController.verifyFayda);
+router.get('/concierge/picks', auth, authorize([Roles.EMPLOYER]), seekerController.getConciergePicks);
 
 module.exports = router;

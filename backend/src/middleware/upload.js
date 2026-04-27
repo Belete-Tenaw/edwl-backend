@@ -48,7 +48,7 @@ const mediaFilter = (req, file, cb) => {
 // Individual image limits are enforced below via a custom size checker.
 const upload = multer({
     storage,
-    limits: { fileSize: 15 * 1024 * 1024 }, // 15MB outer cap (covers videos)
+    limits: { fileSize: 200 * 1024 * 1024 }, // 200MB outer cap (covers videos)
     fileFilter: mediaFilter
 });
 

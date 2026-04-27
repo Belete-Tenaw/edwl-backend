@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import authService from '../../services/authService';
-import { Briefcase, MapPin, DollarSign, Shield, UserPlus, Copy, Check, Search, UserCircle, Sparkles } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Shield, UserPlus, Copy, Check, Search, UserCircle, Sparkles, BookOpen, Video, ChevronRight } from 'lucide-react';
 import JobDetailModal from '../../components/JobDetailModal';
 import RankProgress from '../../components/RankProgress';
 import TrustScorecard from '../../components/TrustScorecard';
@@ -28,6 +28,8 @@ const SeekerDashboard = () => {
     const [escrows, setEscrows] = useState([]);
     const [pendingVerification, setPendingVerification] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterLocation, setFilterLocation] = useState('');
 
     const handleCopyCode = () => {
         if (user?.referralCode) {
@@ -70,6 +72,15 @@ const SeekerDashboard = () => {
         };
         fetchData();
     }, [user.id, t]);
+
+    const filteredJobs = jobs.filter(job => {
+        const matchesSearch = (job.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                              ((job.requiredSkills || []).join(' ')).toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesLocation = filterLocation ? (job.address === filterLocation) : true;
+        return matchesSearch && matchesLocation;
+    });
+
+    const uniqueLocations = [...new Set(jobs.map(j => j.address).filter(Boolean))];
 
     return (
         <div className="container" style={{ padding: '40px 20px' }}>
@@ -209,15 +220,63 @@ const SeekerDashboard = () => {
 
                     {activeTab === 'jobs' ? (
                         <>
+                            {/* Wave 2 Features: Academy & Interview */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+                                <Link to="/academy" className="card glass-hover" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', textDecoration: 'none', background: 'linear-gradient(135deg, var(--navy) 0%, #1e293b 100%)', color: 'white' }}>
+                                    <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <BookOpen size={30} />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>EDWL Academy</h3>
+                                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8 }}>Get certified and earn points</p>
+                                    </div>
+                                    <ChevronRight style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                </Link>
+
+                                <Link to="/smart-interview" className="card glass-hover" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', textDecoration: 'none', background: 'linear-gradient(135deg, var(--primary) 0%, #0d9488 100%)', color: 'white' }}>
+                                    <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Video size={30} />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>Smart Interview</h3>
+                                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8 }}>Record your pre-screening</p>
+                                    </div>
+                                    <ChevronRight style={{ marginLeft: 'auto', opacity: 0.5 }} />
+                                </Link>
+                            </div>
+
                             {/* Rank Progress */}
                             <RankProgress user={user} />
+
+                            <div style={{ display: 'flex', gap: '15px', marginBottom: '24px', flexWrap: 'wrap' }}>
+                                <div style={{ position: 'relative', flex: 1, minWidth: '250px' }}>
+                                    <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
+                                    <input
+                                        type="text"
+                                        placeholder={t('search_jobs_placeholder') || 'Search by title or skills...'}
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        style={{ width: '100%', padding: '14px 14px 14px 48px', borderRadius: '16px', border: '1px solid #f1f5f9', background: 'white', fontSize: '0.95rem' }}
+                                    />
+                                </div>
+                                <select
+                                    value={filterLocation}
+                                    onChange={(e) => setFilterLocation(e.target.value)}
+                                    style={{ padding: '0 20px', borderRadius: '16px', border: '1px solid #f1f5f9', background: 'white', color: 'var(--text)', fontSize: '0.95rem', fontWeight: '600' }}
+                                >
+                                    <option value="">{t('all_locations') || 'All Locations'}</option>
+                                    {uniqueLocations.map(loc => (
+                                        <option key={loc} value={loc}>{loc}</option>
+                                    ))}
+                                </select>
+                            </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
                                 <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text)', margin: 0 }}>
                                     {t('recommended') || 'Smart Picks'}
                                 </h2>
                                 <span style={{ fontSize: '0.9rem', color: 'var(--text-light)', fontWeight: '600' }}>
-                                    {jobs.length} {t('jobs_found') || 'Opportunities'}
+                                    {filteredJobs.length} {t('jobs_found') || 'Opportunities'}
                                 </span>
                             </div>
 
@@ -231,8 +290,8 @@ const SeekerDashboard = () => {
                                 </div>
                             ) : (
                                 <div style={{ display: 'grid', gap: '24px' }}>
-                                    {jobs.length > 0 ? (
-                                        jobs.map((job, index) => (
+                                    {filteredJobs.length > 0 ? (
+                                        filteredJobs.map((job, index) => (
                                             <div key={job.id} className={`card reveal delay-${index % 5 + 1}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderRadius: '24px', transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s' }}>
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>

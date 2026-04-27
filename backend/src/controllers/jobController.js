@@ -1,5 +1,7 @@
 const prisma = require('../utils/prisma');
 const telegramService = require('../services/telegramService');
+const notificationService = require('../services/notificationService');
+const cacheService = require('../services/cacheService');
 const { calculateTrustScore } = require('../utils/rankLogic');
 
 exports.createJobPost = async (req, res) => {
@@ -53,7 +55,6 @@ exports.createJobPost = async (req, res) => {
         });
 
         // 🎯 Proactive Match Notifications (Optimized)
-        // Wrapped in an async IIFE to avoid blocking the response
         (async () => {
             try {
                 const matches = await prisma.$queryRawUnsafe(
@@ -61,24 +62,40 @@ exports.createJobPost = async (req, res) => {
                     job.id
                 );
 
-                // Benchmark: Industry giants use >80% match for push, we use 75
-                const topMatches = matches.filter(m => m.match_score >= 75);
+                const topMatches = matches.filter(m => m.match_score >= 70);
+                const io = req.app.get('io');
                 
                 for (const match of topMatches) {
                     const seeker = await prisma.jobSeeker.findUnique({
                         where: { id: match.seeker_id },
-                        select: { telegramChatId: true, fullName: true, isActive: true }
+                        select: { id: true, telegramChatId: true, fullName: true, isActive: true }
                     });
 
-                    if (seeker?.isActive && seeker?.telegramChatId) {
-                        const message = `🔔 <b>Perfect Match!</b>\n\nHello ${seeker.fullName},\n\nWe found a job matching your skills: <b>"${job.title}"</b>.\n\n💰 Salary: ${job.salaryOffered} ETB\n📍 Location: ${job.locationWoreda || job.locationRegion || 'Near You'}\n\nApply now: https://edwl-ethio-domesticworkerslink.web.app/jobs/${job.id}`;
-                        await telegramService.sendMessage(seeker.telegramChatId, message);
+                    if (seeker?.isActive) {
+                        // 1. Persistent In-App Notification
+                        await notificationService.createInAppNotification(
+                            seeker.id,
+                            'JOB_SEEKER',
+                            'Perfect Job Match!',
+                            `We found a new job "${job.title}" that matches your profile perfectly.`,
+                            'MATCH',
+                            io
+                        );
+
+                        // 2. Telegram Alert
+                        if (seeker.telegramChatId) {
+                            const message = `🔔 <b>Perfect Match!</b>\n\nHello ${seeker.fullName},\n\nWe found a job matching your skills: <b>"${job.title}"</b>.\n\n💰 Salary: ${job.salaryOffered} ETB\n📍 Location: ${job.locationWoreda || job.locationRegion || 'Near You'}\n\nApply now: https://edwl-ethio-domesticworkerslink.web.app/jobs/${job.id}`;
+                            await telegramService.sendMessage(seeker.telegramChatId, message);
+                        }
                     }
                 }
             } catch (err) {
                 console.error('[Match Notification Error]:', err.message);
             }
         })();
+
+        // Flush cache on new post
+        cacheService.del('all_jobs');
 
         res.status(201).json(job);
     } catch (error) {
@@ -88,6 +105,9 @@ exports.createJobPost = async (req, res) => {
 
 exports.getAllJobs = async (req, res) => {
     try {
+        const cachedJobs = cacheService.get('all_jobs');
+        if (cachedJobs) return res.json(cachedJobs);
+
         const jobs = await prisma.jobPost.findMany({
             include: {
                 employer: {
@@ -98,12 +118,13 @@ exports.getAllJobs = async (req, res) => {
                         isVerified: true,
                         rating: true,
                         completedJobs: true
-                        // The requirement says "Cannot view employer full profile or address" for freemium.
                     }
                 }
             },
             orderBy: { createdAt: 'desc' }
         });
+        
+        cacheService.set('all_jobs', jobs, 600000); // 10 minutes
         res.json(jobs);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -186,14 +207,25 @@ exports.getMatchesForJob = async (req, res) => {
             const profileData = profile.data;
             if (!profileData) return null;
 
-            // 🎯 Generate Smart Insights
+            // 🎯 Generate Smart Insights V2
             const insights = [];
-            if (match.match_score >= 90) insights.push("Perfect Skill Match");
-            if (profileData.behaviorScore >= 90) insights.push("Highly Reliable");
-            if (profileData.isFaydaVerified) insights.push("Verified Identity");
-            if (profileData.experienceYears >= 5) insights.push("Veteran Experience");
-            if (profileData.completedJobs >= 5) insights.push("Proven History");
+            if (match.match_score >= 90) insights.push("Exceptional Match");
+            else if (match.match_score >= 80) insights.push("Strong Skill Fit");
             
+            if (profileData.behaviorScore >= 90) insights.push("Highly Reliable");
+            if (profileData.isFaydaVerified) insights.push("Identity Verified");
+            if (profileData.experienceYears >= 5) insights.push("Veteran Experience");
+            if (profileData.completedJobs >= 10) insights.push("Platform Expert");
+            if (profileData.responseTimeMs && profileData.responseTimeMs < 3600000) insights.push("Quick Responder");
+            
+            // Economic Insight
+            if (profileData.expectedSalary <= job.salaryOffered) insights.push("Budget Friendly");
+            
+            // 2026 World Class Reference: Stability Indicator
+            if (profileData.completedJobs > 0 && profileData.rating >= 4.5) {
+                insights.push("High Retention Rate");
+            }
+
             // Add Trust Score for global context
             profileData.trustScore = calculateTrustScore(profileData);
 

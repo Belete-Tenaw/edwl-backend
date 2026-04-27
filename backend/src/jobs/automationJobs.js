@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const prisma = require('../utils/prisma');
 const telegramService = require('../services/telegramService');
+const aiTrustEngine = require('../services/aiTrustEngine');
 
 // JOB 1: Daily "Teaser" Matches (Runs every day at 09:00 AM)
 if (process.env.NODE_ENV !== 'test') {
@@ -73,7 +74,69 @@ if (process.env.NODE_ENV !== 'test') {
             console.error('[CRON Error] Expiry Alerts:', error);
         }
     });
+
+    // JOB 3: Nightly AI Trust Engine Vetting (Runs every day at 02:00 AM)
+    cron.schedule('0 2 * * *', async () => {
+        try {
+            await aiTrustEngine.runNightlyBatchVetting();
+        } catch (error) {
+            console.error('[CRON Error] AI Trust Engine Nightly Batch:', error);
+        }
+    });
+
+    // JOB 4: Automated LTV Re-engagement & Marketing Engine (Runs every day at 11:00 AM)
+    cron.schedule('0 11 * * *', async () => {
+        try {
+            const today = new Date();
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(today.getDate() - 7);
+
+            // 1. Identify 'Stalled' Freemium Employers (inactive for exactly 7 days)
+            // Using a date range to avoid spamming the same employer every day
+            const stalledEmployers = await prisma.employer.findMany({
+                where: {
+                    tier: 'FREE',
+                    updatedAt: {
+                        lte: sevenDaysAgo,
+                        gte: new Date(sevenDaysAgo.getTime() - 24 * 60 * 60 * 1000)
+                    }
+                }
+            });
+
+            for (const employer of stalledEmployers) {
+                // Generate a one-time dynamic re-engagement discount code (simulated logic)
+                const promoCode = `COMEBACK-${Math.floor(Math.random() * 90000) + 10000}`;
+                
+                await prisma.subscriptionCode.create({
+                    data: {
+                        code: promoCode,
+                        status: 'UNUSED',
+                        durationDays: 30,
+                        expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // Expires in 3 days
+                        codeType: 'TRUST_UPGRADE',
+                        tierUpgrade: 'SILVER_ACCESS'
+                    }
+                });
+
+                // Blast the localized, urgency-driven marketing message
+                const message = `✨ <b>Exclusive EDWL Offer!</b>\n\nHi ${employer.contactName}, we noticed you haven't hired your ideal domestic worker yet. \n\nWe just added 50+ AI-Vetted workers in your area! Use code <b>${promoCode}</b> within the next 72 hours to get a FREE 30-Day Silver Trust Upgrade.\n\nClaim here: https://edwl-ethio-domesticworkerslink.web.app`;
+
+                if (employer.telegramChatId) {
+                    await telegramService.sendMessage(employer.telegramChatId, message);
+                }
+                
+                // Track the marketing touchpoint
+                await prisma.auditLog.create({
+                    data: {
+                        action: 'MARKETING_REENGAGEMENT_SENT',
+                        userType: 'EMPLOYER',
+                        employerId: employer.id,
+                        details: { promoCode, trigger: '7_day_inactivity' }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('[CRON Error] LTV Re-engagement Marketing Engine:', error);
+        }
+    });
 }
-
-
-

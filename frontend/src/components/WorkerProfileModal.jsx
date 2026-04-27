@@ -232,6 +232,32 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                             </span>
                         ))}
                     </div>
+
+                    {/* Video Bio Section */}
+                    {worker.videoBio && worker.videoBio !== 'undefined' && (
+                        <div style={{ marginTop: '30px', padding: '20px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                            <h3 style={{ fontSize: '1rem', marginBottom: '15px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Activity size={18} /> {t('video_bio_presentation') || 'Video Presentation'}
+                            </h3>
+                            <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', background: 'black' }}>
+                                <video 
+                                    src={worker.videoBio.startsWith('http') ? worker.videoBio : `${BACKEND_URL}${worker.videoBio}`} 
+                                    controls 
+                                    style={{ width: '100%', display: 'block' }} 
+                                />
+                                {worker.videoTranscription && (
+                                    <div style={{ 
+                                        padding: '12px', background: 'rgba(0,0,0,0.8)', color: 'white', 
+                                        fontSize: '0.85rem', lineHeight: '1.4', fontStyle: 'italic',
+                                        borderTop: '1px solid rgba(255,255,255,0.1)'
+                                    }}>
+                                        <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '4px', fontWeight: '800' }}>AI Subtitles</div>
+                                        {typeof worker.videoTranscription === 'string' ? worker.videoTranscription : JSON.stringify(worker.videoTranscription)}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ borderTop: '1px solid #eee', paddingTop: '20px', marginBottom: '25px' }}>

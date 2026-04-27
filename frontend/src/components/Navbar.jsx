@@ -2,8 +2,9 @@ import React from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { useTranslation } from 'react-i18next';
-import { Menu, LogOut, User, MessageSquare, LogIn, LayoutDashboard, Briefcase } from 'lucide-react';
-import logo from '../assets/logo_modern.png';
+import { Menu, LogOut, User, MessageSquare, LogIn, LayoutDashboard, Briefcase, Sun, Moon, Database, Gift } from 'lucide-react';
+import logo from '../assets/logo_premium_v4.png';
+import NotificationCenter from './NotificationCenter';
 
 const Navbar = () => {
     const { t, i18n } = useTranslation();
@@ -11,6 +12,22 @@ const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
     const [isProfileOpen, setIsProfileOpen] = React.useState(false);
     const user = authService.getCurrentUser();
+    const [theme, setTheme] = React.useState(localStorage.getItem('theme') || 'light');
+    const [lowDataMode, setLowDataMode] = React.useState(localStorage.getItem('lowDataMode') === 'true');
+
+    React.useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
+    
+    const toggleLowDataMode = () => {
+        const newState = !lowDataMode;
+        setLowDataMode(newState);
+        localStorage.setItem('lowDataMode', newState);
+        window.location.reload(); // Reload to apply data mode globally (e.g. stop video auto-load)
+    };
 
     const handleLogout = () => {
         authService.logout();
@@ -48,6 +65,25 @@ const Navbar = () => {
                 <button className="mobile-only" onClick={toggleLanguage} style={{ background: 'transparent', border: '1px solid #ddd', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>
                     {i18n.language === 'en' ? 'አማ' : 'En'}
                 </button>
+                <button 
+                    onClick={toggleLowDataMode} 
+                    style={{ 
+                        background: lowDataMode ? '#fef3c7' : 'transparent', 
+                        border: '1px solid #ddd', 
+                        padding: '6px', 
+                        borderRadius: '8px', 
+                        cursor: 'pointer',
+                        color: lowDataMode ? '#d97706' : '#64748b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        fontSize: '0.7rem',
+                        fontWeight: '800'
+                    }}
+                    title="Low Data Mode"
+                >
+                    <Database size={16} /> {lowDataMode ? 'LOW' : 'DATA'}
+                </button>
                 <div className="mobile-only" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                     <Menu size={28} color="var(--primary)" style={{ cursor: 'pointer' }} />
                 </div>
@@ -59,6 +95,7 @@ const Navbar = () => {
                 <NavLink to="/about" onClick={closeMenu} className={getNavLinkClass}>{t('about_us')}</NavLink>
                 <NavLink to="/contact" onClick={closeMenu} className={getNavLinkClass}>{t('contact_us')}</NavLink>
                 <NavLink to="/pricing" onClick={closeMenu} className={getNavLinkClass}>{t('plans')}</NavLink>
+                {user && <NavLink to="/rewards" onClick={closeMenu} className={getNavLinkClass}>{t('rewards') || 'Rewards'}</NavLink>}
 
                 {/* Desktop language toggle */}
                 <div className="desktop-only">
@@ -98,12 +135,13 @@ const Navbar = () => {
                     </div>
                 </div>
 
-                {/* Logged-in specific links (Messages, Dashboard) */}
+                {/* Logged-in specific links (Messages, Dashboard, Notifications) */}
                 {user && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }} className="nav-links">
+                        <NotificationCenter user={user} />
                         <NavLink to="/messages" onClick={closeMenu} className={getNavLinkClass}>
                             <MessageSquare size={20} />
-                            <span>{t('messages')}</span>
+                            <span className="desktop-only">{t('messages')}</span>
                         </NavLink>
                         <NavLink
                             to={user.role === 'JOB_SEEKER' ? '/dashboard/seeker' : user.role === 'EMPLOYER' ? '/dashboard/employer' : '/admin'}
@@ -111,10 +149,28 @@ const Navbar = () => {
                             className={getNavLinkClass}
                         >
                             <User size={20} />
-                            <span>{t('dashboard')}</span>
+                            <span className="desktop-only">{t('dashboard')}</span>
                         </NavLink>
                     </div>
                 )}
+                
+                {/* Low Data Toggle */}
+                <button 
+                    onClick={toggleLowDataMode}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: lowDataMode ? 'var(--primary)' : 'var(--text-light)' }}
+                    title={lowDataMode ? "Disable Low Data Mode" : "Enable Low Data Mode"}
+                >
+                    <Database size={20} />
+                </button>
+
+                {/* Theme Toggle */}
+                <button 
+                    onClick={toggleTheme}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    className="nav-link"
+                >
+                    {theme === 'light' ? <Moon size={20} color="var(--text-light)" /> : <Sun size={20} color="var(--primary)" />}
+                </button>
 
                 {/* Always visible Auth actions */}
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }} className="nav-auth">

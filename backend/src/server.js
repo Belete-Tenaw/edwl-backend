@@ -234,6 +234,7 @@ app.use('/api/training', require('./routes/trainingRoutes'));
 app.use('/api/contracts', require('./routes/contracts'));
 app.use('/api/escrow', require('./routes/escrow'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/seeker', require('./routes/academy'));
 
 // ================================
 // ❌ GLOBAL ERROR HANDLER

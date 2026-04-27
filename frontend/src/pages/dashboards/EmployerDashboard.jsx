@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import authService from '../../services/authService';
-import { User, MapPin, Briefcase, Plus, Star, Settings, Shield, UserPlus, Copy, Check, Activity, Search, Award } from 'lucide-react';
+import { User, MapPin, Briefcase, Plus, Star, Settings, Shield, UserPlus, Copy, Check, Activity, Search, Award, Sparkles } from 'lucide-react';
 import JobPostModal from '../../components/JobPostModal';
 import WorkerProfileModal from '../../components/WorkerProfileModal';
 import DigitalContractViewer from '../../components/DigitalContractViewer';
 import EscrowTracker from '../../components/EscrowTracker';
+import CandidateComparisonModal from '../../components/CandidateComparisonModal';
+import { FileText, Columns } from 'lucide-react';
 
 const EmployerDashboard = () => {
     const { t } = useTranslation();
@@ -29,6 +31,9 @@ const EmployerDashboard = () => {
     const [activeTab, setActiveTab] = useState('workers'); // 'workers', 'agreements', 'escrow'
     const [contracts, setContracts] = useState([]);
     const [escrows, setEscrows] = useState([]);
+    const [compareList, setCompareList] = useState([]);
+    const [showComparison, setShowComparison] = useState(false);
+    const [showJobModal, setShowJobModal] = useState(false);
 
     const handleCopyCode = () => {
         if (user?.referralCode) {
@@ -104,6 +109,18 @@ const EmployerDashboard = () => {
         }
     };
 
+    const toggleCompare = (worker) => {
+        if (compareList.find(c => (c.id || c.seeker_id) === (worker.id || worker.seeker_id))) {
+            setCompareList(compareList.filter(c => (c.id || c.seeker_id) !== (worker.id || worker.seeker_id)));
+        } else {
+            if (compareList.length >= 3) {
+                alert("You can compare up to 3 candidates at once.");
+                return;
+            }
+            setCompareList([...compareList, worker]);
+        }
+    };
+
     const displayedWorkers = selectedJobForMatches ? matches : workers;
     
     const filteredWorkers = displayedWorkers.filter(worker => {
@@ -131,6 +148,15 @@ const EmployerDashboard = () => {
                     <button className="btn-primary" onClick={() => setShowJobModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Plus size={20} /> {t('post_job')}
                     </button>
+                    {compareList.length > 1 && (
+                        <button 
+                            className="btn-primary" 
+                            onClick={() => setShowComparison(true)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--navy)' }}
+                        >
+                            <Columns size={20} /> Compare ({compareList.length})
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -252,6 +278,36 @@ const EmployerDashboard = () => {
                     <div style={{ position: 'absolute', right: '-50px', top: '-50px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }}></div>
                 </div>
             )}
+
+
+            {/* Concierge Section (Wave 2) */}
+            <div style={{ marginBottom: '40px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <div style={{ padding: '8px', background: 'var(--navy)', borderRadius: '10px', color: 'white' }}>
+                        <Sparkles size={20} />
+                    </div>
+                    <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '800' }}>Concierge Picks</h2>
+                    <span style={{ fontSize: '0.75rem', background: '#f59e0b', color: 'white', padding: '2px 10px', borderRadius: '20px', fontWeight: '800' }}>PREMIUM AI</span>
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                    {[1,2,3].map(i => (
+                        <div key={i} className="card glass-hover" style={{ padding: '20px', border: '1px solid #bae6fd', background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)' }}>
+                            <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                                <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: '#eee' }}></div>
+                                <div>
+                                    <h4 style={{ margin: 0, fontWeight: '800' }}>Top Candidate #{i}</h4>
+                                    <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
+                                        {[1,2,3,4,5].map(s => <Star key={s} size={12} fill="#f59e0b" color="#f59e0b" />)}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '700', marginTop: '5px' }}>98% AI Match Score</div>
+                                </div>
+                            </div>
+                            <button className="btn-secondary" style={{ width: '100%', fontSize: '0.85rem' }}>View Exclusive Analysis</button>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             {/* Tab Switcher */}
             <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
@@ -434,7 +490,23 @@ const EmployerDashboard = () => {
                         ) : (
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                                 {filteredWorkers.map(worker => (
-                                <div key={worker.id || worker.seeker_id} className="card" style={{ opacity: worker.is_visible === false ? 0.6 : 1 }}>
+                                <div key={worker.id || worker.seeker_id} className="card" style={{ 
+                                    opacity: worker.is_visible === false ? 0.6 : 1,
+                                    border: compareList.find(c => c.id === worker.id) ? '2px solid var(--primary)' : '1px solid var(--glass-border)',
+                                    position: 'relative'
+                                }}>
+                                    {worker.is_visible !== false && (
+                                        <div style={{ position: 'absolute', top: '15px', right: '15px', zIndex: 10 }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 'bold', color: 'var(--text-light)' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={!!compareList.find(c => c.id === worker.id)}
+                                                    onChange={() => toggleCompare(worker)}
+                                                />
+                                                Compare
+                                            </label>
+                                        </div>
+                                    )}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
                                         <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', filter: worker.is_visible === false ? 'blur(4px)' : 'none' }}>
                                             {worker.profilePhoto ? (
@@ -584,6 +656,13 @@ const EmployerDashboard = () => {
                     />
                 )
             }
+
+            {showComparison && (
+                <CandidateComparisonModal 
+                    candidates={compareList} 
+                    onClose={() => setShowComparison(false)} 
+                />
+            )}
         </div >
     );
 };

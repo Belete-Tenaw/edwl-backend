@@ -654,7 +654,7 @@ const Register = () => {
                                     previewUrl={seekerData.videoBioPreview}
                                     onFileSelect={(file, url) => handleMediaCapture('videoBio', file, url)}
                                 />
-                                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-10px' }}>{t('video_bio_msg') || 'Record a short video introducing yourself to employers.'}</p>
+                                <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '-10px' }}>{t('video_bio_msg') || 'Record a video introducing yourself (up to 20 minutes) to employers.'}</p>
                             </div>
 
                             {/* Document Uploads */}

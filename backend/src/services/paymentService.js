@@ -60,9 +60,9 @@ class PaymentService {
             }
         });
 
-        // If using CHAPA (which handles Telebirr/CBE too)
-        if (provider === 'CHAPA' || provider === 'TELEBIRR') {
-            const chapaData = {
+        // If using CHAPA (which handles Telebirr/CBE too) or STRIPE
+        if (provider === 'CHAPA' || provider === 'TELEBIRR' || provider === 'STRIPE') {
+            const checkoutData = {
                 amount: tier.priceETB.toString(),
                 currency: 'ETB',
                 email: user.email || 'customer@edwl.et',
@@ -77,11 +77,18 @@ class PaymentService {
                 }
             };
 
-            const chapaRes = await chapaService.initialize(chapaData);
-            if (chapaRes.status === 'success') {
+            let res;
+            if (provider === 'STRIPE') {
+                const stripeService = require('./stripeService');
+                res = await stripeService.initialize(checkoutData);
+            } else {
+                res = await chapaService.initialize(checkoutData);
+            }
+
+            if (res.status === 'success') {
                 return {
                     ...payment,
-                    paymentUrl: chapaRes.data.checkout_url
+                    paymentUrl: res.data.checkout_url
                 };
             }
         }
@@ -107,11 +114,20 @@ class PaymentService {
         if (!payment) throw new Error('Payment not found');
         if (payment.status === 'COMPLETED') return payment;
 
-        // Verify with Chapa if necessary
+        // Verify with Provider
         if (payment.provider === 'CHAPA' || payment.provider === 'TELEBIRR') {
             const verification = await chapaService.verify(payment.transactionReference);
             if (verification.status !== 'success') {
-                throw new Error('Payment verification failed with provider');
+                throw new Error('Payment verification failed with Chapa/Telebirr');
+            }
+        } else if (payment.provider === 'STRIPE') {
+            const stripeService = require('./stripeService');
+            const verification = await stripeService.verify(payment.transactionReference);
+            if (verification.status !== 'success' && verification.status !== 'paid') {
+                throw new Error('Payment verification failed with Stripe');
+            }
+            if (verification.data && verification.data.external_ref) {
+                externalRef = verification.data.external_ref;
             }
         }
 

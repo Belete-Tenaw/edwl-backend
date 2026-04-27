@@ -63,25 +63,35 @@ BEGIN
             (CASE WHEN js."preferredLocation" ILIKE '%' || v_job_location || '%' 
                     OR v_job_location ILIKE '%' || js."preferredLocation" || '%' THEN 30 
                   ELSE 0 END) as score_loc,
-            -- E. TRUST TIER BOOST: max 15 points
-            (CASE WHEN js.tier = 'PLATINUM' THEN 15 
-                  WHEN js.tier = 'GOLD' THEN 10 
-                  WHEN js.tier = 'SILVER' THEN 5 
-                  ELSE 0 END) as score_tier,
-            -- F. VERIFICATION BOOST: max 5 points
-            (CASE WHEN js."nationalIdUrl" IS NOT NULL AND js."nationalIdUrl" != '' THEN 3 ELSE 0 END +
-             CASE WHEN js."policeClearanceUrl" IS NOT NULL AND js."policeClearanceUrl" != '' THEN 2 ELSE 0 END) as score_verify
+
+            -- --- RELIABILITY VELOCITY ENGINE ---
+            -- E. MOMENTUM: Recent activity heavily weighted (max 20 pts)
+            LEAST((js."completedJobs" * 2.0)::INT, 20) as score_momentum,
+
+            -- F. RESPONSIVENESS: Efficiency bonus based on responseTimeMs (ideal=15 mins or 900k ms) (max 10 pts)
+            LEAST((900000.0 / COALESCE(NULLIF(js."responseTimeMs", 0), 900000)) * 10.0, 10)::INT as score_response,
+
+            -- G. QUALITY vs RISK: Combines NLP behaviorScore and Employer Rating (max 20 pts)
+            LEAST((js."behaviorScore" / 100.0 * 10.0 + js."rating" / 5.0 * 10.0), 20)::INT as score_quality,
+
+            -- H. TIER TRUST MULTIPLIER: Treated as an additive boost (max 20 pts)
+            (CASE WHEN js.tier = 'PLATINUM' THEN 20 
+                  WHEN js.tier = 'GOLD' THEN 15 
+                  WHEN js.tier = 'SILVER' THEN 10 
+                  ELSE 0 END) as score_tier_boost
         FROM "JobSeeker" js
         WHERE js."isActive" = true
     )
     SELECT 
         s_id,
         s_name,
-        (COALESCE(score_skills, 0) + COALESCE(score_exp, 0) + COALESCE(score_salary, 0) + COALESCE(score_loc, 0) + COALESCE(score_tier, 0) + COALESCE(score_verify, 0))::INT as s_score,
+        -- Final Match Score is a combination of traditional fit + Reliability Velocity
+        (COALESCE(score_skills, 0) + COALESCE(score_exp, 0) + COALESCE(score_salary, 0) + COALESCE(score_loc, 0) 
+         + COALESCE(score_momentum, 0) + COALESCE(score_response, 0) + COALESCE(score_quality, 0) + COALESCE(score_tier_boost, 0))::INT as s_score,
         s_tier,
         TRUE as is_visible -- Always Return TRUE for the "Teaser" Strategy, masking happens on the frontend via access lock overlay
     FROM potential_matches
-    WHERE (COALESCE(score_skills, 0) + COALESCE(score_exp, 0) + COALESCE(score_salary, 0) + COALESCE(score_loc, 0) + COALESCE(score_tier, 0) + COALESCE(score_verify, 0)) > 0
+    WHERE (COALESCE(score_skills, 0) + COALESCE(score_exp, 0) + COALESCE(score_salary, 0) + COALESCE(score_loc, 0)) > 0
     ORDER BY s_score DESC, s_tier DESC
     LIMIT 50;
 END;

@@ -8,7 +8,8 @@ import { compressImage } from '../utils/compression';
 import { validateAndFormatPhone } from '../utils/validation';
 import { processVideoBio } from '../utils/videoProcessor';
 import CameraCapture from '../components/CameraCapture';
-import { Camera } from 'lucide-react';
+import { Camera, Calendar } from 'lucide-react';
+import AvailabilityCalendar from '../components/AvailabilityCalendar';
 
 const EditProfile = () => {
     const { t } = useTranslation();
@@ -217,6 +218,8 @@ const EditProfile = () => {
                 dataToSend.append('passwordHint', formData.passwordHint || '');
                 dataToSend.append('securityQuestion', formData.securityQuestion || '');
                 dataToSend.append('securityAnswer', formData.securityAnswer || '');
+                dataToSend.append('availability', JSON.stringify(formData.availability || {}));
+                dataToSend.append('videoTranscription', JSON.stringify(formData.videoTranscription || {}));
 
                 if (formData.profilePhoto instanceof File) {
                     dataToSend.append('profilePhoto', formData.profilePhoto);
@@ -460,6 +463,13 @@ const EditProfile = () => {
                                     )
                                 )}
                                 <p style={{ fontSize: '0.8rem', color: '#4f46e5', marginTop: '5px' }}>Verified users get priority matching and the highly trusted "Verified" badge.</p>
+                            </div>
+
+                            <div style={{ gridColumn: '1 / -1', marginTop: '20px' }}>
+                                <AvailabilityCalendar 
+                                    availability={formData.availability} 
+                                    onChange={(newSched) => setFormData({ ...formData, availability: newSched })} 
+                                />
                             </div>
 
                             <div style={{ gridColumn: '1 / -1' }}>

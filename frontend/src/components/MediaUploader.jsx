@@ -42,7 +42,7 @@ const MediaUploader = ({
         const file = e.target.files[0];
         if (file) {
             const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-            const MAX_VIDEO_SIZE = 15 * 1024 * 1024; // 15MB
+            const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
 
             if (type === 'image' && file.size > MAX_IMAGE_SIZE) {
                 addToast(t('image_too_large') || 'Image is too large. Maximum size is 5MB.', 'error');

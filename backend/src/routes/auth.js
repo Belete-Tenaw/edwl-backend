@@ -3,6 +3,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const upload = require('../middleware/upload');
 const { authRateLimiter, registerRateLimiter } = require('../middleware/rateLimiter');
+const verifyToken = require('../middleware/auth');
 
 // Job Seeker Routes
 router.post('/seeker/register', registerRateLimiter, upload.fields([
@@ -33,5 +34,10 @@ router.post('/reset-password', authRateLimiter, authController.resetPassword);
 
 // Pre-flight duplicate check (phone or email, no auth required)
 router.get('/check-duplicate', authController.checkDuplicate);
+
+// Notification Routes (Authenticated)
+router.get('/notifications', verifyToken, authController.getNotifications);
+router.put('/notifications/:id/read', verifyToken, authController.markNotificationRead);
+router.put('/notifications/read-all', verifyToken, authController.markAllNotificationsRead);
 
 module.exports = router;

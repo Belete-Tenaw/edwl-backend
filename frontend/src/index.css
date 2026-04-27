@@ -27,6 +27,21 @@
   --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+[data-theme='dark'] {
+  --primary: hsl(180, 100%, 35%);
+  --primary-light: hsl(180, 100%, 55%);
+  --secondary: hsl(220, 30%, 7%);
+  --white: hsl(220, 30%, 12%);
+  --navy: hsl(210, 40%, 90%);
+  --text: hsl(210, 40%, 95%);
+  --text-light: hsl(210, 20%, 80%);
+  --text-muted: hsl(210, 20%, 60%);
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

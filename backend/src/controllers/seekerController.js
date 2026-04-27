@@ -2,6 +2,7 @@ const prisma = require('../utils/prisma');
 const { calculateWorkerRank, calculateTrustScore } = require('../utils/rankLogic');
 const { uploadFileToFirebase } = require('../services/firebaseStorageService');
 const faydaService = require('../services/faydaService');
+const cacheService = require('../services/cacheService');
 
 // Removed local calculateSeekerTier as it's now handled by calculateWorkerRank in utils
 
@@ -91,13 +92,14 @@ exports.updateProfile = async (req, res) => {
         const id = req.user.id;
         if (req.user.role !== 'JOB_SEEKER') return res.status(403).json({ error: 'Forbidden' });
 
-        const { fullName, bio, skills, experienceYears, expectedSalary, preferredLocation, preferredArrangement, guarantorPhone, videoBio } = req.body;
+        const { fullName, bio, skills, experienceYears, expectedSalary, preferredLocation, preferredArrangement, guarantorPhone, videoBio, availability, videoTranscription } = req.body;
 
         const updateData = {
             fullName, bio,
             experienceYears: experienceYears ? parseInt(experienceYears) : undefined,
             expectedSalary: expectedSalary ? parseInt(expectedSalary) : undefined,
-            preferredLocation, preferredArrangement, guarantorPhone, videoBio
+            preferredLocation, preferredArrangement, guarantorPhone, videoBio,
+            availability, videoTranscription
         };
 
         if (skills) {
@@ -168,10 +170,8 @@ exports.updateProfile = async (req, res) => {
         // Recalculate Tier using unified logic
         updateData.tier = calculateWorkerRank(mergedData);
 
-        const updated = await prisma.jobSeeker.update({
-            where: { id },
-            data: updateData
-        });
+        // Flush cache on update
+        cacheService.del('all_seekers');
 
         res.json(updated);
     } catch (error) {
@@ -184,15 +184,18 @@ exports.getAllSeekers = async (req, res) => {
         const userId = req.user.id;
         const userRole = req.user.role;
 
+        // Only cache for non-employers or generic list
+        const cacheKey = `seekers_${userRole}`;
+        const cached = cacheService.get(cacheKey);
+        if (cached) return res.json(cached);
+
         let seekers;
         if (userRole === 'EMPLOYER') {
-            // Use the database-level masking function for employers
             seekers = await prisma.$queryRaw`
                 SELECT * FROM get_seeker_visibility_with_id(${userId}::uuid)
                 ORDER BY "fullName" ASC
             `;
         } else {
-            // Seekers and Admin see the full data
             seekers = await prisma.jobSeeker.findMany({
                 orderBy: { fullName: 'asc' }
             });
@@ -203,6 +206,7 @@ exports.getAllSeekers = async (req, res) => {
             trustScore: calculateTrustScore(s)
         }));
 
+        cacheService.set(cacheKey, enrichedSeekers, 300000); // 5 minutes
         res.json(enrichedSeekers);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -267,5 +271,22 @@ exports.verifyFayda = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+exports.getConciergePicks = async (req, res) => {
+    try {
+        // Rank by points, rating, and verification status
+        const topPicks = await prisma.jobSeeker.findMany({
+            where: { isActive: true },
+            orderBy: [
+                { isVerified: 'desc' },
+                { rewardPoints: 'desc' },
+                { rating: 'desc' }
+            ],
+            take: 3
+        });
+        res.json(topPicks);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 };
