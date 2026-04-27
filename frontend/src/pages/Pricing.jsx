@@ -73,7 +73,7 @@ const Pricing = () => {
         { id: 'SILVER', name: t('silver'), icon: <Star size={32} color="#9CA3AF" />, price: '500', duration: t('days_30'), features: [t('pricing_features.basic_visibility')], color: '#9CA3AF' }
     ];
 
-    const handleSelect = async (plan) => {
+    const handleSelect = async (plan, provider = 'CHAPA') => {
         setSelectedPlan(plan);
         const newRef = `EDWL-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
         setRefId(newRef);
@@ -89,7 +89,7 @@ const Pricing = () => {
             try {
                 const res = await api.post('/payments/initiate', {
                     tierId: plan.id,
-                    provider: 'CHAPA'
+                    provider: provider
                 });
 
                 if (res.data.paymentUrl) {
@@ -268,29 +268,57 @@ const Pricing = () => {
                                 </ul>
                             </div>
 
-                             <button
-                                className="btn-primary"
-                                disabled={initiating && selectedPlan?.id === plan.id}
-                                style={{
-                                    width: '100%',
-                                    padding: '15px',
-                                    background: plan.popular ? plan.color : '#666',
-                                    transform: selectedPlan?.id === plan.id ? 'scale(1.05)' : 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '10px'
-                                }}
-                            >
-                                {initiating && selectedPlan?.id === plan.id ? (
-                                    <><Loader className="spin" size={20} /> {t('initiating') || 'Initiating...'}</>
-                                ) : (
-                                    <>
-                                        {paymentMethod === 'AUTOMATED' ? <ExternalLink size={18} /> : null}
-                                        {t('select_plan_name', { name: plan.name })}
-                                    </>
-                                )}
-                            </button>
+                            {paymentMethod === 'AUTOMATED' ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    <button
+                                        className="btn-primary"
+                                        disabled={initiating && selectedPlan?.id === plan.id}
+                                        onClick={(e) => { e.stopPropagation(); handleSelect(plan, 'CHAPA'); }}
+                                        style={{
+                                            width: '100%', padding: '15px', background: plan.popular ? plan.color : '#666',
+                                            transform: selectedPlan?.id === plan.id ? 'scale(1.05)' : 'none',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                                            border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'
+                                        }}
+                                    >
+                                        {initiating && selectedPlan?.id === plan.id ? (
+                                            <><Loader className="spin" size={20} /> {t('initiating') || 'Initiating...'}</>
+                                        ) : (
+                                            <><ExternalLink size={18} /> {t('pay_local') || 'Pay Local (Chapa)'}</>
+                                        )}
+                                    </button>
+                                    <button
+                                        className="btn-secondary"
+                                        disabled={initiating && selectedPlan?.id === plan.id}
+                                        onClick={(e) => { e.stopPropagation(); handleSelect(plan, 'STRIPE'); }}
+                                        style={{
+                                            width: '100%', padding: '15px', background: '#6366f1',
+                                            transform: selectedPlan?.id === plan.id ? 'scale(1.05)' : 'none',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                                            border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'
+                                        }}
+                                    >
+                                        {initiating && selectedPlan?.id === plan.id ? (
+                                            <><Loader className="spin" size={20} /> {t('initiating') || 'Initiating...'}</>
+                                        ) : (
+                                            <><CreditCard size={18} /> {t('pay_global') || 'Pay Global (Stripe)'}</>
+                                        )}
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    className="btn-primary"
+                                    onClick={(e) => { e.stopPropagation(); handleSelect(plan, 'MANUAL'); }}
+                                    style={{
+                                        width: '100%', padding: '15px', background: plan.popular ? plan.color : '#666',
+                                        transform: selectedPlan?.id === plan.id ? 'scale(1.05)' : 'none',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                                        border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'
+                                    }}
+                                >
+                                    <MessageSquare size={18} /> {t('select_plan_name', { name: plan.name }) || 'Request via Telegram'}
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>

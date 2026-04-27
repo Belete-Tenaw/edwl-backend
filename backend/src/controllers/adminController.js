@@ -388,6 +388,16 @@ exports.getAdminStats = async (req, res) => {
             })
         ]);
 
+        // LTV Marketing (Comeback Codes) Stats
+        const [totalPromoSent, promoUsed] = await Promise.all([
+            prisma.subscriptionCode.count({
+                where: { code: { startsWith: 'COMEBACK-' } }
+            }),
+            prisma.subscriptionCode.count({
+                where: { code: { startsWith: 'COMEBACK-' }, status: 'USED' }
+            })
+        ]);
+
         res.json({
             metrics: {
                 verificationVelocity: avgVelocityHours.toFixed(1), // in hours
@@ -400,6 +410,11 @@ exports.getAdminStats = async (req, res) => {
                     automated: automatedRevenueData._sum.amount || 0,
                     manual: manualRevenueData._sum.amount || 0,
                     total: (automatedRevenueData._sum.amount || 0) + (manualRevenueData._sum.amount || 0)
+                },
+                marketingStats: {
+                    promoCodesSent: totalPromoSent,
+                    promoCodesUsed: promoUsed,
+                    conversionRate: totalPromoSent > 0 ? ((promoUsed / totalPromoSent) * 100).toFixed(1) : 0
                 }
             },
             counts: {

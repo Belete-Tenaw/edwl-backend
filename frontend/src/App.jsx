@@ -50,6 +50,7 @@ const PaymentSuccess = lazyWithRetry(() => import('./pages/PaymentSuccess'));
 const RewardsDashboard = lazyWithRetry(() => import('./pages/RewardsDashboard'));
 const AcademyDashboard = lazyWithRetry(() => import('./pages/AcademyDashboard'));
 const SmartInterview = lazyWithRetry(() => import('./pages/SmartInterview'));
+const MarketingDashboard = lazyWithRetry(() => import('./pages/admin/MarketingDashboard'));
 
 const Loading = () => (
     <div style={{
@@ -169,6 +170,12 @@ function App() {
                                     <Route path="/admin" element={
                                         <AdminRoute>
                                             <AdminDashboard />
+                                        </AdminRoute>
+                                    } />
+
+                                    <Route path="/admin/marketing" element={
+                                        <AdminRoute>
+                                            <MarketingDashboard />
                                         </AdminRoute>
                                     } />
 

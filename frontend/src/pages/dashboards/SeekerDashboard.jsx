@@ -156,9 +156,9 @@ const SeekerDashboard = () => {
                             <TrustScorecard seeker={user} />
                         </div>
 
-                        <hr style={{ border: '0', borderTop: '1px solid #f1f5f9', margin: '24px 0' }} /> />
+                        <hr style={{ border: '0', borderTop: '1px solid #f1f5f9', margin: '24px 0' }} />
                         <Link to="/profile/edit" className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px', textDecoration: 'none', fontWeight: '700' }}>
-                            <Settings size={18} /> {t('settings') || 'Settings'}
+                            <FileText size={18} /> {t('settings') || 'Settings'}
                         </Link>
                     </div>
 

@@ -429,6 +429,36 @@ const EmployerDashboard = () => {
                     </aside>
 
                     <main>
+                        {/* Dynamic Match Radar */}
+                        <div style={{
+                            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                            borderRadius: '16px',
+                            padding: '20px',
+                            marginBottom: '25px',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '20px',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
+                        }}>
+                            <div style={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
+                                {/* Radar pulse animation */}
+                                <div style={{ position: 'absolute', inset: 0, border: '2px solid rgba(56, 189, 248, 0.5)', borderRadius: '50%', animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite' }}></div>
+                                <div style={{ position: 'absolute', inset: '10px', background: '#38bdf8', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Activity size={24} color="white" />
+                                </div>
+                                <style>{`@keyframes ping { 75%, 100% { transform: scale(2); opacity: 0; } }`}</style>
+                            </div>
+                            <div>
+                                <h3 style={{ margin: '0 0 5px 0', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    Live AI Radar <span style={{ background: '#10b981', color: 'white', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Scanning</span>
+                                </h3>
+                                <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>
+                                    Actively scanning {filterLocation || 'all regions'}... Found <strong style={{ color: '#38bdf8' }}>{filteredWorkers.length}</strong> high-probability matches ready for hire.
+                                </p>
+                            </div>
+                        </div>
+
                         <h3 style={{ marginBottom: '20px' }}>
                             {selectedJobForMatches ? `${t('matches_for') || 'Matches for'} "${myJobs.find(j => j.id === selectedJobForMatches)?.title}"` : t('all_workers') || 'Available Workers'}
                         </h3>

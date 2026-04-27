@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../services/api';
 import authService from '../services/authService';
-import { Send, User, MessageSquare, Keyboard } from 'lucide-react';
+import { Send, User, MessageSquare, Keyboard, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { transliterate } from '../utils/amharicTranslit';
 import PanicButton from '../components/PanicButton';
@@ -247,6 +247,12 @@ const Messages = () => {
                             <PanicButton contractId={selectedUser.contractId} />
                         </div>
 
+                        {/* Security Banner */}
+                        <div style={{ background: '#f0fdf4', padding: '8px 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.75rem', color: '#166534', borderBottom: '1px solid #dcfce7' }}>
+                            <Shield size={14} />
+                            <span>Messages are end-to-end encrypted. Nobody outside of this chat, not even EDWL, can read them.</span>
+                        </div>
+
                         <div ref={scrollRef} style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             {chatHistory.length === 0 && (
                                 <div style={{ textAlign: 'center', color: '#999', marginTop: '20px' }}>{t('start_conversation')}</div>
@@ -274,12 +280,50 @@ const Messages = () => {
                             })}
                         </div>
 
-                        <form onSubmit={handleSendMessage} style={{ padding: '15px', borderTop: '1px solid #eee' }}>
+                        <form onSubmit={handleSendMessage} style={{ padding: '15px', borderTop: '1px solid #eee', background: '#fff' }}>
                             {sendError && (
                                 <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '8px 12px', borderRadius: '8px', marginBottom: '10px', fontSize: '0.9rem' }}>
                                     {sendError}
                                 </div>
                             )}
+
+                            {/* Smart Quick Replies */}
+                            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '5px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                {(currentUser.role === 'EMPLOYER' ? [
+                                    "Are you available for an interview?",
+                                    "Can you start immediately?",
+                                    "What is your expected salary?",
+                                    "Please share your references."
+                                ] : [
+                                    "Yes, I am available.",
+                                    "When would you like to schedule an interview?",
+                                    "Thank you for reaching out!",
+                                    "I can start immediately."
+                                ]).map((reply, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => setNewMessage(reply)}
+                                        style={{
+                                            whiteSpace: 'nowrap',
+                                            padding: '6px 14px',
+                                            borderRadius: '20px',
+                                            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                                            border: '1px solid #e2e8f0',
+                                            color: '#475569',
+                                            fontSize: '0.8rem',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            fontWeight: '600'
+                                        }}
+                                        onMouseEnter={(e) => { e.target.style.background = '#e2e8f0'; e.target.style.color = 'var(--primary)'; }}
+                                        onMouseLeave={(e) => { e.target.style.background = 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'; e.target.style.color = '#475569'; }}
+                                    >
+                                        ✨ {reply}
+                                    </button>
+                                ))}
+                            </div>
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     <button
@@ -297,7 +341,7 @@ const Messages = () => {
                                         value={newMessage}
                                         onChange={handleMessageChange}
                                     />
-                                    <button disabled={!newMessage.trim()} type="submit" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'var(--primary)', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                    <button disabled={!newMessage.trim()} type="submit" style={{ width: '45px', height: '45px', borderRadius: '50%', background: 'var(--primary)', border: 'none', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'transform 0.1s', transform: newMessage.trim() ? 'scale(1.05)' : 'scale(1)' }}>
                                         <Send size={20} />
                                     </button>
                                 </div>

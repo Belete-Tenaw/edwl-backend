@@ -75,8 +75,11 @@ io.on('connection', (socket) => {
 
 // ================================
 // 🔐 SECURITY: TRUST PROXY (Updated for Google Cloud Run)
+// Setting to 1 tells Express exactly one trusted reverse proxy sits in front
+// of the app (Cloud Run's load balancer). This is more secure than `true`
+// and satisfies express-rate-limit's strict validation.
 // ================================
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // ================================
 // 📘 Swagger Setup

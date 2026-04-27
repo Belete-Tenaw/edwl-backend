@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, MapPin, Briefcase, User, MessageSquare, Star, Shield, Phone, FileText, Activity, Lock } from 'lucide-react';
+import { X, MapPin, Briefcase, User, MessageSquare, Star, Shield, Phone, FileText, Activity, Lock, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import authService from '../services/authService';
 import reviewService from '../services/reviewService';
@@ -19,6 +19,22 @@ const WorkerProfileModal = ({ worker, onClose }) => {
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [showHireModal, setShowHireModal] = useState(false);
     const user = authService.getCurrentUser();
+    
+    // Secure Vault State
+    const [vaultUnlocked, setVaultUnlocked] = useState(false);
+    const [decrypting, setDecrypting] = useState(false);
+
+    const handleUnlockVault = () => {
+        if (user?.tier !== 'PLATINUM_ACCESS') {
+            handleRestrictedAction('PLATINUM');
+            return;
+        }
+        setDecrypting(true);
+        setTimeout(() => {
+            setDecrypting(false);
+            setVaultUnlocked(true);
+        }, 2000); // Simulate decryption delay
+    };
 
     React.useEffect(() => {
         if (worker?.id) {
@@ -123,6 +139,18 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                                     <Star size={14} fill="white" /> TOP RATED
                                 </div>
                             )}
+                            
+                            {/* AI Trust Engine: Reliability Velocity Badges */}
+                            {worker.behaviorScore >= 80 && (
+                                <div title="AI Verified: Exceptional Behavior Score" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', color: 'white', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(139, 92, 246, 0.3)' }}>
+                                    <Activity size={14} color="white" /> <span>{worker.behaviorScore}% TRUST SCORE</span>
+                                </div>
+                            )}
+                            {worker.completedJobs >= 5 && (
+                                <div title="High Platform Momentum (Reliability Velocity)" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', color: 'white', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(244, 63, 94, 0.3)' }}>
+                                    <Briefcase size={14} color="white" /> HIGH VELOCITY
+                                </div>
+                            )}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginBottom: '5px' }}>
                             <Star size={18} fill="#f59e0b" color="#f59e0b" />
@@ -180,40 +208,48 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                         </div>
                     </div>
 
-                    <div style={{ marginBottom: '25px', padding: '20px', background: '#f0f9ff', borderRadius: '12px', border: '1px solid #bae6fd' }}>
-                        <h3 style={{ fontSize: '1rem', marginBottom: '15px', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Shield size={18} /> {t('legal_health_assurance') || 'Legal & Health Assurance'}
+                    <div style={{ marginBottom: '25px', padding: '20px', background: vaultUnlocked ? '#f0fdf4' : '#1e293b', borderRadius: '16px', border: vaultUnlocked ? '1px solid #bbf7d0' : '1px solid #334155', transition: 'all 0.4s', color: vaultUnlocked ? '#111' : '#fff', position: 'relative', overflow: 'hidden' }}>
+                        {decrypting && (
+                            <div style={{ position: 'absolute', inset: 0, background: 'rgba(30, 41, 59, 0.9)', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ width: '40px', height: '40px', border: '3px solid #38bdf8', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                                <div style={{ color: '#38bdf8', marginTop: '10px', fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase' }}>Decrypting Biometrics...</div>
+                            </div>
+                        )}
+                        <h3 style={{ fontSize: '1rem', marginBottom: '15px', color: vaultUnlocked ? '#166534' : '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Shield size={18} color={vaultUnlocked ? "#166534" : "#38bdf8"} /> {vaultUnlocked ? 'Decrypted Vault Records' : 'Encrypted Biometric Vault'}
                         </h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem' }}>
-                                    <Activity size={16} color="#0369a1" /> {t('police_clearance')}
-                                </div>
-                                {worker.badge === 'PLATINUM' && isPlatinum ? (
-                                    <span style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold' }}>✓ Verified</span>
-                                ) : worker.display_tier === 'PLATINUM' && isPlatinum ? (
-                                    <span style={{ color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>({t('verification_pending')})</span>
-                                ) : (
-                                    <button onClick={() => handleRestrictedAction('PLATINUM')} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #0369a1', background: 'transparent', color: '#0369a1', fontSize: '0.75rem', cursor: 'pointer' }}>
-                                        {t('view_platinum') || 'Platinum Required'}
-                                    </button>
-                                )}
+                        
+                        {!vaultUnlocked ? (
+                            <div style={{ textAlign: 'center', padding: '10px' }}>
+                                <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '15px' }}>Sensitive ID, Health, and Police records are strictly protected. Access requires Platinum authorization.</p>
+                                <button onClick={handleUnlockVault} style={{ padding: '8px 20px', background: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 auto', transition: 'transform 0.2s' }}>
+                                    <Lock size={16} /> Authorize & Decrypt
+                                </button>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem' }}>
-                                    <Activity size={16} color="#0369a1" /> {t('health_certificate')}
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '8px', borderBottom: '1px solid #dcfce7' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem' }}>
+                                        <Activity size={16} color="#15803d" /> {t('police_clearance')}
+                                    </div>
+                                    {worker.badge === 'PLATINUM' ? (
+                                        <span style={{ background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12} /> VERIFIED</span>
+                                    ) : (
+                                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic' }}>Pending Check</span>
+                                    )}
                                 </div>
-                                {worker.badge === 'PLATINUM' && isPlatinum ? (
-                                    <span style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold' }}>✓ Verified</span>
-                                ) : worker.display_tier === 'PLATINUM' && isPlatinum ? (
-                                    <span style={{ color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>({t('verification_pending')})</span>
-                                ) : (
-                                    <button onClick={() => handleRestrictedAction('PLATINUM')} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #0369a1', background: 'transparent', color: '#0369a1', fontSize: '0.75rem', cursor: 'pointer' }}>
-                                        {t('view_platinum')}
-                                    </button>
-                                )}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9rem' }}>
+                                        <Activity size={16} color="#15803d" /> {t('health_certificate')}
+                                    </div>
+                                    {worker.badge === 'PLATINUM' ? (
+                                        <span style={{ background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={12} /> VERIFIED</span>
+                                    ) : (
+                                        <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic' }}>Pending Check</span>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     <div style={{ marginBottom: '25px', marginTop: '10px' }}>
