@@ -16,4 +16,7 @@ router.post('/live-selfie', auth, upload.single('selfie'), uploadController.uplo
 // Upload Video Bio (Trust & Transparency)
 router.post('/video-bio', auth, upload.single('videoBio'), uploadController.uploadVideoBio);
 
+// Upload Voice Bio (Accessibility & Inclusivity)
+router.post('/voice-bio', auth, upload.single('voiceBio'), uploadController.uploadVoiceBio);
+
 module.exports = router;

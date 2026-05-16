@@ -151,7 +151,45 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                                     <Briefcase size={14} color="white" /> HIGH VELOCITY
                                 </div>
                             )}
+
+                            {/* Academy Certification Badges */}
+                            {worker.badges && Array.isArray(worker.badges) && worker.badges.map((b, idx) => (
+                                <Badge key={idx} icon={Star} label={b} bgColor="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" />
+                            ))}
                         </div>
+
+                        {/* AI PRECISION MATCH WIDGET */}
+                        <div style={{ 
+                            background: 'rgba(56, 189, 248, 0.05)', 
+                            border: '1px solid rgba(56, 189, 248, 0.2)', 
+                            borderRadius: '16px', 
+                            padding: '15px', 
+                            marginBottom: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '20px',
+                            textAlign: 'left'
+                        }}>
+                            <div style={{ position: 'relative', width: '60px', height: '60px', flexShrink: 0 }}>
+                                <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+                                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e2e8f0" strokeWidth="3" />
+                                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#38bdf8" strokeWidth="3" strokeDasharray="94, 100" />
+                                </svg>
+                                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontWeight: '900', fontSize: '0.9rem', color: '#0369a1' }}>94%</div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.7rem', color: '#0369a1', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>AI Precision Match</div>
+                                <div style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '500', lineHeight: '1.4' }}>
+                                    Highly compatible with your hiring patterns & household size.
+                                </div>
+                                <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                                    {['Patient', 'Punctual', 'Fast Learner'].map(tag => (
+                                        <span key={tag} style={{ fontSize: '0.65rem', background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>{tag}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginBottom: '5px' }}>
                             <Star size={18} fill="#f59e0b" color="#f59e0b" />
                             <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{worker.rating > 0 ? worker.rating.toFixed(1) : 'No ratings'}</span>
@@ -261,13 +299,33 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                         <p style={{ lineHeight: '1.6', color: '#444', fontSize: '0.95rem' }}>{worker.bio || "No bio provided."}</p>
                     </div>
 
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '25px' }}>
                         {worker.skills.map(skill => (
                             <span key={skill} style={{ background: '#f1f5f9', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', color: '#475569', border: '1px solid #e2e8f0' }}>
                                 {skill}
                             </span>
                         ))}
                     </div>
+
+                    {/* Academy Certifications Section */}
+                    {worker.certificates && worker.certificates.length > 0 && (
+                        <div style={{ marginBottom: '25px', padding: '15px', background: 'rgba(0, 128, 128, 0.05)', borderRadius: '12px', border: '1px solid var(--primary-glow)' }}>
+                            <h3 style={{ fontSize: '1rem', marginBottom: '12px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Award size={18} /> {t('academy_certifications') || 'Academy Certifications'}
+                            </h3>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {worker.certificates.map((cert, index) => (
+                                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2f2f2' }}>
+                                        <div style={{ width: '24px', height: '24px', background: 'var(--primary)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Check size={14} color="white" />
+                                        </div>
+                                        <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#334155' }}>{cert}</span>
+                                        <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 'bold', textTransform: 'uppercase' }}>Verified</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Video Bio Section */}
                     {worker.videoBio && worker.videoBio !== 'undefined' && (

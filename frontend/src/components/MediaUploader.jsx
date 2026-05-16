@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Camera, Video, Upload, X, Check, Image as ImageIcon } from 'lucide-react';
+import { Camera, Video, Upload, X, Check, Image as ImageIcon, FileText } from 'lucide-react';
 import CameraCapture from './CameraCapture';
 import VideoRecorder from './VideoRecorder';
 import { useTranslation } from 'react-i18next';
@@ -42,7 +42,7 @@ const MediaUploader = ({
         const file = e.target.files[0];
         if (file) {
             const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-            const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200MB
+            const MAX_VIDEO_SIZE = 15 * 1024 * 1024; // 15MB (Synced with backend/toast)
 
             if (type === 'image' && file.size > MAX_IMAGE_SIZE) {
                 addToast(t('image_too_large') || 'Image is too large. Maximum size is 5MB.', 'error');
@@ -51,13 +51,14 @@ const MediaUploader = ({
             }
 
             if (type === 'video' && file.size > MAX_VIDEO_SIZE) {
-                addToast(t('video_too_large') || 'Video is too large. Maximum size is 15MB. Please choose a smaller file or record directly.', 'error');
+                addToast(t('video_too_large') || 'Video is too large. Maximum size is 15MB.', 'error');
                 e.target.value = '';
                 return;
             }
             
-            if (type === 'image' && !file.type.startsWith('image/') && file.type !== 'application/pdf') {
-                addToast(t('invalid_image_format') || 'Please select a valid image or PDF file.', 'error');
+            const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+            if (type === 'image' && !allowedImageTypes.includes(file.type)) {
+                addToast(t('invalid_image_format') || 'Please select a valid JPG, PNG, WebP or PDF file.', 'error');
                 e.target.value = '';
                 return;
             }
@@ -174,7 +175,11 @@ const MediaUploader = ({
                         title={t('click_to_preview') || 'Click to preview'}
                     >
                         {type === 'image' ? (
-                            <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            previewUrl.toLowerCase().endsWith('.pdf') || previewUrl.startsWith('blob:') && fileInputRef.current?.files[0]?.type === 'application/pdf' ? (
+                                <FileText size={30} color="#059669" />
+                            ) : (
+                                <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            )
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
                                 <Video size={20} color="#059669" />

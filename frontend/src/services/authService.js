@@ -2,9 +2,19 @@ import api from './api';
 
 const authService = {
     login: async (credentials, type) => {
-        // type: 'seeker', 'employer', 'admin'
-        const endpoint = `/auth/${type}/login`;
-        const response = await api.post(endpoint, credentials);
+        // type: 'seeker', 'employer', 'admin', 'agency'
+        let endpoint = `/auth/${type}/login`;
+        let payload = credentials;
+
+        if (type === 'agency') {
+            endpoint = '/agencies/login';
+            payload = {
+                registrationNo: credentials.identifier,
+                password: credentials.password
+            };
+        }
+
+        const response = await api.post(endpoint, payload);
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -13,8 +23,11 @@ const authService = {
     },
 
     register: async (data, type) => {
-        // type: 'seeker', 'employer'
-        const endpoint = `/auth/${type}/register`;
+        // type: 'seeker', 'employer', 'agency'
+        let endpoint = `/auth/${type}/register`;
+        if (type === 'agency') {
+            endpoint = '/agencies/register';
+        }
         const response = await api.post(endpoint, data);
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);

@@ -430,3 +430,58 @@ exports.getAdminStats = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch analytics' });
     }
 };
+
+/**
+ * Get All Disputes for Management
+ */
+exports.getAllDisputes = async (req, res) => {
+    try {
+        const disputes = await prisma.dispute.findMany({
+            include: {
+                contract: {
+                    include: {
+                        employer: { select: { contactName: true } },
+                        jobSeeker: { select: { fullName: true } }
+                    }
+                },
+                reporterEmp: { select: { contactName: true } },
+                reporterJS: { select: { fullName: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json(disputes);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch disputes' });
+    }
+};
+
+/**
+ * Resolve a Dispute
+ */
+exports.resolveDispute = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { resolution, status } = req.body; // status: RESOLVED or CLOSED
+
+        const updatedDispute = await prisma.dispute.update({
+            where: { id },
+            data: {
+                resolution,
+                status,
+                adminId: req.user.id
+            }
+        });
+
+        // Audit Log
+        await logAction(
+            'ADMIN_DISPUTE_RESOLVED',
+            req.user.id,
+            'ADMIN',
+            { disputeId: id, resolution, status }
+        );
+
+        res.json({ message: 'Dispute updated successfully', dispute: updatedDispute });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to resolve dispute' });
+    }
+};

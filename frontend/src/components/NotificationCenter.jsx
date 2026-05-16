@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bell, CheckCircle, Info, AlertTriangle, MessageCircle, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import socket from '../services/socket';
+import { useSocket } from '../context/SocketContext';
 import { useTranslation } from 'react-i18next';
 
 const NotificationCenter = ({ user }) => {
@@ -12,13 +12,15 @@ const NotificationCenter = ({ user }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
 
+    const socket = useSocket();
+
     useEffect(() => {
         fetchNotifications();
 
         // Listen for real-time notifications
         if (socket) {
-            socket.emit('join', user.id);
-            socket.on('new_notification', (notification) => {
+            // socket.emit('join', user.id); // This is already handled in SocketContext.jsx
+            socket.on('notification', (notification) => {
                 setNotifications(prev => [notification, ...prev]);
                 setUnreadCount(prev => prev + 1);
             });
@@ -33,7 +35,7 @@ const NotificationCenter = ({ user }) => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
-            if (socket) socket.off('new_notification');
+            if (socket) socket.off('notification');
         };
     }, [user.id]);
 

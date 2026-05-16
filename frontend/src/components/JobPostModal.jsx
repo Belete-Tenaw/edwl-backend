@@ -3,6 +3,7 @@ import api from '../services/api';
 import { X, Check, Keyboard } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { transliterate } from '../utils/amharicTranslit';
+import SalaryBenchmark from './SalaryBenchmark';
 
 const JobPostModal = ({ onClose, onJobPosted }) => {
     const [loading, setLoading] = useState(false);
@@ -129,6 +130,16 @@ const JobPostModal = ({ onClose, onJobPosted }) => {
                             />
                         </div>
                     </div>
+
+                    {/* 📊 AI Salary Benchmark Widget */}
+                    <SalaryBenchmark
+                        jobType={formData.jobType}
+                        region={formData.locationRegion}
+                        salary={parseInt(formData.salaryOffered) || 0}
+                        onChange={(suggestedSalary) =>
+                            setFormData(prev => ({ ...prev, salaryOffered: String(suggestedSalary) }))
+                        }
+                    />
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                         <div>
                             <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>{t('region') || 'Region'}</label>

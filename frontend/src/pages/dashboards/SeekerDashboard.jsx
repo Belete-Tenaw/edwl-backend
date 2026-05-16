@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
 import authService from '../../services/authService';
-import { Briefcase, MapPin, DollarSign, Shield, UserPlus, Copy, Check, Search, UserCircle, Sparkles, BookOpen, Video, ChevronRight } from 'lucide-react';
+import { Briefcase, MapPin, DollarSign, Shield, UserPlus, Copy, Check, Search, UserCircle, Sparkles, BookOpen, Video, ChevronRight, TrendingUp, Loader } from 'lucide-react';
 import JobDetailModal from '../../components/JobDetailModal';
 import RankProgress from '../../components/RankProgress';
 import TrustScorecard from '../../components/TrustScorecard';
@@ -12,6 +12,7 @@ import { useToast } from '../../components/Toast';
 import { FileText } from 'lucide-react';
 import DigitalContractViewer from '../../components/DigitalContractViewer';
 import EscrowTracker from '../../components/EscrowTracker';
+import SafeCheckIn from '../../components/SafeCheckIn';
 
 const SeekerDashboard = () => {
     const { t } = useTranslation();
@@ -27,6 +28,10 @@ const SeekerDashboard = () => {
     const [contracts, setContracts] = useState([]);
     const [escrows, setEscrows] = useState([]);
     const [pendingVerification, setPendingVerification] = useState(false);
+    const [loans, setLoans] = useState([]);
+    const [loanAmount, setLoanAmount] = useState(1000);
+    const [loanLoading, setLoanLoading] = useState(false);
+    const [loanMsg, setLoanMsg] = useState(null);
     const [copied, setCopied] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterLocation, setFilterLocation] = useState('');
@@ -43,15 +48,17 @@ const SeekerDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [jobsRes, profileRes, contractsRes, escrowRes] = await Promise.all([
+                const [jobsRes, profileRes, contractsRes, escrowRes, loansRes] = await Promise.all([
                     api.get('/jobs'),
                     api.get(`/seekers/${user.id}`),
                     api.get('/contracts'),
-                    api.get('/escrow')
+                    api.get('/escrow'),
+                    api.get('/loans').catch(() => ({ data: [] }))
                 ]);
-                
+
                 setContracts(contractsRes.data || []);
                 setEscrows(escrowRes.data || []);
+                setLoans(loansRes.data || []);
                 // Smart Sort: Verified Employers and Jobs with higher Salary first
                 const sortedJobs = jobsRes.data.sort((a, b) => {
                     if (a.employer?.isVerified && !b.employer?.isVerified) return -1;
@@ -112,12 +119,12 @@ const SeekerDashboard = () => {
                         </div>
                         <div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800' }}>
-                                {user.tier} {t('membership') || 'PRO'}
+                                {user.tier} {t('membership')}
                             </div>
                             <div style={{ fontSize: '1rem', fontWeight: '800', color: 'var(--text)' }}>
                                 {Math.ceil((new Date(user.subscriptionExpiry) - new Date()) / (1000 * 60 * 60 * 24)) > 0 ? (
                                     <span>
-                                        {Math.ceil((new Date(user.subscriptionExpiry) - new Date()) / (1000 * 60 * 60 * 24))} {t('days_left') || 'Days Left'}
+                                        {Math.ceil((new Date(user.subscriptionExpiry) - new Date()) / (1000 * 60 * 60 * 24))} {t('days_left')}
                                     </span>
                                 ) : (
                                     <span style={{ color: '#ef4444' }}>{t('expired')}</span>
@@ -128,7 +135,7 @@ const SeekerDashboard = () => {
                             onClick={() => navigate('/pricing')}
                             style={{ marginLeft: '8px', padding: '8px 16px', borderRadius: '10px', background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '700' }}
                         >
-                            {t('renew') || 'Renew'}
+                            {t('renew')}
                         </button>
                     </div>
                 )}
@@ -147,8 +154,8 @@ const SeekerDashboard = () => {
                                 )}
                             </div>
                             <h3 style={{ fontSize: '1.3rem', fontWeight: '800', marginBottom: '4px' }}>{user?.fullName}</h3>
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0, 128, 128, 0.08)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', marginBottom: '15px' }}>
-                                <Sparkles size={14} /> {user?.tier} Seeker
+                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0, 128, 128, 0.08)', color: 'var(--primary)', padding: '4px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: '700', marginBottom: '15px' }}>
+                                <Sparkles size={14} /> {user?.tier} {t('seeker')}
                             </div>
                         </div>
                         
@@ -158,7 +165,7 @@ const SeekerDashboard = () => {
 
                         <hr style={{ border: '0', borderTop: '1px solid #f1f5f9', margin: '24px 0' }} />
                         <Link to="/profile/edit" className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '12px', textDecoration: 'none', fontWeight: '700' }}>
-                            <FileText size={18} /> {t('settings') || 'Settings'}
+                            <FileText size={18} /> {t('settings')}
                         </Link>
                     </div>
 
@@ -202,20 +209,28 @@ const SeekerDashboard = () => {
                             onClick={() => setActiveTab('jobs')} 
                             style={{ background: 'none', border: 'none', padding: '10px 20px', fontSize: '1rem', fontWeight: activeTab === 'jobs' ? 'bold' : 'normal', color: activeTab === 'jobs' ? 'var(--primary)' : '#666', borderBottom: activeTab === 'jobs' ? '3px solid var(--primary)' : 'none', cursor: 'pointer' }}
                         >
-                            {t('browse_jobs') || 'Browse Jobs'}
+                            {t('browse_jobs')}
                         </button>
                         <button 
                             onClick={() => setActiveTab('agreements')} 
                             style={{ background: 'none', border: 'none', padding: '10px 20px', fontSize: '1rem', fontWeight: activeTab === 'agreements' ? 'bold' : 'normal', color: activeTab === 'agreements' ? 'var(--primary)' : '#666', borderBottom: activeTab === 'agreements' ? '3px solid var(--primary)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                         >
-                            <FileText size={18} /> {t('agreements') || 'Contracts'}
+                            <FileText size={18} /> {t('agreements')}
                         </button>
-                        <button 
-                            onClick={() => setActiveTab('escrow')} 
+                        <button
+                            onClick={() => setActiveTab('escrow')}
                             style={{ background: 'none', border: 'none', padding: '10px 20px', fontSize: '1rem', fontWeight: activeTab === 'escrow' ? 'bold' : 'normal', color: activeTab === 'escrow' ? 'var(--primary)' : '#666', borderBottom: activeTab === 'escrow' ? '3px solid var(--primary)' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                         >
-                            <Shield size={18} /> {t('escrow_tracking') || 'Escrow'}
+                            <Shield size={18} /> {t('escrow_tracking')}
                         </button>
+                        {user?.tier === 'PLATINUM' && (
+                            <button
+                                onClick={() => setActiveTab('financials')}
+                                style={{ background: 'none', border: 'none', padding: '10px 20px', fontSize: '1rem', fontWeight: activeTab === 'financials' ? 'bold' : 'normal', color: activeTab === 'financials' ? '#7c3aed' : '#666', borderBottom: activeTab === 'financials' ? '3px solid #7c3aed' : 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                <TrendingUp size={18} /> {t('financials')}
+                            </button>
+                        )}
                     </div>
 
                     {activeTab === 'jobs' ? (
@@ -227,8 +242,8 @@ const SeekerDashboard = () => {
                                         <BookOpen size={30} />
                                     </div>
                                     <div>
-                                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>EDWL Academy</h3>
-                                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8 }}>Get certified and earn points</p>
+                                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>{t('edwl_academy')}</h3>
+                                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8 }}>{t('academy_dashboard_desc')}</p>
                                     </div>
                                     <ChevronRight style={{ marginLeft: 'auto', opacity: 0.5 }} />
                                 </Link>
@@ -238,8 +253,8 @@ const SeekerDashboard = () => {
                                         <Video size={30} />
                                     </div>
                                     <div>
-                                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>Smart Interview</h3>
-                                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8 }}>Record your pre-screening</p>
+                                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>{t('smart_interview')}</h3>
+                                        <p style={{ margin: '4px 0 0', fontSize: '0.85rem', opacity: 0.8 }}>{t('interview_dashboard_desc')}</p>
                                     </div>
                                     <ChevronRight style={{ marginLeft: 'auto', opacity: 0.5 }} />
                                 </Link>
@@ -253,7 +268,7 @@ const SeekerDashboard = () => {
                                     <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                                     <input
                                         type="text"
-                                        placeholder={t('search_jobs_placeholder') || 'Search by title or skills...'}
+                                        placeholder={t('search_jobs_placeholder')}
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         style={{ width: '100%', padding: '14px 14px 14px 48px', borderRadius: '16px', border: '1px solid #f1f5f9', background: 'white', fontSize: '0.95rem' }}
@@ -264,7 +279,7 @@ const SeekerDashboard = () => {
                                     onChange={(e) => setFilterLocation(e.target.value)}
                                     style={{ padding: '0 20px', borderRadius: '16px', border: '1px solid #f1f5f9', background: 'white', color: 'var(--text)', fontSize: '0.95rem', fontWeight: '600' }}
                                 >
-                                    <option value="">{t('all_locations') || 'All Locations'}</option>
+                                    <option value="">{t('all_locations')}</option>
                                     {uniqueLocations.map(loc => (
                                         <option key={loc} value={loc}>{loc}</option>
                                     ))}
@@ -273,10 +288,10 @@ const SeekerDashboard = () => {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' }}>
                                 <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text)', margin: 0 }}>
-                                    {t('recommended') || 'Smart Picks'}
+                                    {t('recommended')}
                                 </h2>
                                 <span style={{ fontSize: '0.9rem', color: 'var(--text-light)', fontWeight: '600' }}>
-                                    {filteredJobs.length} {t('jobs_found') || 'Opportunities'}
+                                    {filteredJobs.length} {t('jobs_found')}
                                 </span>
                             </div>
 
@@ -329,12 +344,12 @@ const SeekerDashboard = () => {
                                             <div style={{ width: '100px', height: '100px', background: '#f1f5f9', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
                                                 <Search size={48} color="#94a3b8" />
                                             </div>
-                                            <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text)', marginBottom: '12px' }}>{t('no_jobs_matches') || 'No Matches Found Yet'}</h3>
+                                            <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text)', marginBottom: '12px' }}>{t('no_jobs_matches')}</h3>
                                             <p style={{ color: 'var(--text-light)', fontSize: '1.1rem', maxWidth: '400px', margin: '0 auto 30px' }}>
-                                                {t('empty_jobs_desc') || "We're looking for jobs that match your skills. In the meantime, try completing your profile to stand out!"}
+                                                {t('empty_jobs_desc')}
                                             </p>
                                             <button onClick={() => navigate('/profile/edit')} className="btn-primary" style={{ padding: '14px 30px', borderRadius: '16px', fontWeight: '700', gap: '10px' }}>
-                                                <Sparkles size={18} /> {t('complete_profile') || 'Enhance My Profile'}
+                                                <Sparkles size={18} /> {t('complete_profile')}
                                             </button>
                                         </div>
                                     )}
@@ -343,11 +358,13 @@ const SeekerDashboard = () => {
                         </>
                     ) : activeTab === 'agreements' ? (
                         <div style={{ display: 'grid', gap: '24px' }}>
+                            {/* ✅ Safe Check-In Widget — shown whenever there are active contracts */}
+                            <SafeCheckIn contracts={contracts} />
                             {contracts.length === 0 ? (
                                 <div style={{ textAlign: 'center', padding: '50px' }}>
                                     <FileText size={48} color="#ccc" style={{ marginBottom: '15px' }} />
-                                    <h3>No contracts found</h3>
-                                    <p>Employers will send you contracts once they're interested.</p>
+                                    <h3>{t('no_contracts_found')}</h3>
+                                    <p>{t('employer_will_send_contracts')}</p>
                                 </div>
                             ) : (
                                 contracts.map(contract => (
@@ -360,23 +377,99 @@ const SeekerDashboard = () => {
                                 ))
                             )}
                         </div>
-                    ) : (
+                    ) : activeTab === 'escrow' ? (
                         <div style={{ display: 'grid', gap: '24px' }}>
                             {escrows.length === 0 ? (
                                 <div style={{ textAlign: 'center', padding: '50px' }}>
                                     <Shield size={48} color="#ccc" style={{ marginBottom: '15px' }} />
-                                    <h3>No payments held</h3>
-                                    <p>Escrow payments appear here when an employer funds your contract.</p>
+                                    <h3>{t('no_payments_held')}</h3>
+                                    <p>{t('escrow_fund_msg')}</p>
                                 </div>
                             ) : (
                                 escrows.map(escrow => (
-                                    <EscrowTracker 
-                                        key={escrow.id} 
-                                        escrow={escrow} 
-                                        userRole="seeker" 
+                                    <EscrowTracker
+                                        key={escrow.id}
+                                        escrow={escrow}
+                                        userRole="seeker"
                                         onUpdate={() => window.location.reload()}
                                     />
                                 ))
+                            )}
+                        </div>
+                    ) : (
+                        /* Financials / Micro-Loan Tab */
+                        <div style={{ display: 'grid', gap: '24px' }}>
+                            {/* Loan Request Card */}
+                            <div className="card" style={{ background: 'linear-gradient(135deg, #faf5ff, #ede9fe)', border: '1px solid #c4b5fd', borderRadius: '20px', padding: '28px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                                    <div style={{ background: '#7c3aed', width: '44px', height: '44px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <TrendingUp size={22} color="white" />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ margin: 0, fontWeight: '800', color: '#4c1d95' }}>{t('salary_advance')}</h3>
+                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#7c3aed' }}>{t('collateral_msg')}</p>
+                                    </div>
+                                    <div style={{ marginLeft: 'auto', background: '#ede9fe', color: '#6d28d9', padding: '4px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: '800', border: '1px solid #c4b5fd' }}>{t('platinum_only')}</div>
+                                </div>
+
+                                <div style={{ background: 'white', borderRadius: '12px', padding: '16px', marginBottom: '16px', border: '1px solid #e9d5ff' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '700', color: '#6d28d9', marginBottom: '10px' }}>
+                                        <span>{t('request_amount')}</span>
+                                        <span>{loanAmount.toLocaleString()} ETB</span>
+                                    </div>
+                                    <input type="range" min="500" max="10000" step="250" value={loanAmount}
+                                        onChange={e => setLoanAmount(+e.target.value)}
+                                        style={{ width: '100%', accentColor: '#7c3aed' }} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#a78bfa', marginTop: '6px' }}>
+                                        <span>500 ETB</span><span>10,000 ETB</span>
+                                    </div>
+                                </div>
+
+                                <div style={{ background: 'rgba(124,58,237,0.06)', borderRadius: '10px', padding: '12px', marginBottom: '16px', fontSize: '0.82rem', color: '#5b21b6' }}>
+                                    ℹ️ {t('loan_repayment_msg')}
+                                </div>
+
+                                {loanMsg && (
+                                    <div style={{ background: loanMsg.type === 'success' ? '#f0fdf4' : '#fef2f2', color: loanMsg.type === 'success' ? '#15803d' : '#dc2626', border: `1px solid ${loanMsg.type === 'success' ? '#86efac' : '#fca5a5'}`, borderRadius: '10px', padding: '12px', marginBottom: '12px', fontWeight: '600', fontSize: '0.88rem' }}>
+                                        {loanMsg.text}
+                                    </div>
+                                )}
+
+                                <button
+                                    disabled={loanLoading}
+                                    onClick={async () => {
+                                        setLoanLoading(true); setLoanMsg(null);
+                                        try {
+                                            await api.post('/loans/request', { amount: loanAmount });
+                                            setLoanMsg({ type: 'success', text: `✅ ${t('loan_approved_msg', { amount: loanAmount.toLocaleString() })}` });
+                                            const res = await api.get('/loans');
+                                            setLoans(res.data || []);
+                                        } catch (err) {
+                                            setLoanMsg({ type: 'error', text: err?.response?.data?.error || 'Request failed. Check your eligibility.' });
+                                        } finally { setLoanLoading(false); }
+                                    }}
+                                    style={{ width: '100%', padding: '14px', background: loanLoading ? '#a78bfa' : '#7c3aed', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                                >
+                                    {loanLoading ? <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> {t('processing')}</> : `${t('request_advance')} ${loanAmount.toLocaleString()} ETB`}
+                                </button>
+                            </div>
+
+                            {/* Loan History */}
+                            {loans.length > 0 && (
+                                <div className="card" style={{ borderRadius: '20px', padding: '24px' }}>
+                                    <h3 style={{ marginBottom: '16px', fontWeight: '800', color: '#0f172a' }}>Loan History</h3>
+                                    {loans.map(loan => (
+                                        <div key={loan.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                            <div>
+                                                <div style={{ fontWeight: '700', color: '#0f172a' }}>{loan.amount.toLocaleString()} ETB</div>
+                                                <div style={{ fontSize: '0.78rem', color: '#64748b' }}>Due: {new Date(loan.dueDate).toLocaleDateString()}</div>
+                                            </div>
+                                            <div style={{ background: loan.status === 'REPAID' ? '#dcfce7' : loan.status === 'ACTIVE' ? '#eff6ff' : '#fef9c3', color: loan.status === 'REPAID' ? '#15803d' : loan.status === 'ACTIVE' ? '#1d4ed8' : '#854d0e', padding: '4px 12px', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '800' }}>
+                                                {loan.status}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     )}

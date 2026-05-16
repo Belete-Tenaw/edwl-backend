@@ -1,72 +1,100 @@
-const TelegramBot = require('node-telegram-bot-api');
 const prisma = require('../utils/prisma');
+const telegramService = require('./telegramService');
 
-// Initialize Telegram Bot
-const token = process.env.TELEGRAM_BOT_TOKEN;
-let bot = null;
+/**
+ * Notification Service
+ * Handles real-time alerts via Socket.IO and persists them for the user.
+ */
+class NotificationService {
+    constructor() {
+        this.io = null;
+    }
 
-if (token) {
-    bot = new TelegramBot(token);
-} else {
-    console.warn('[NotificationService] TELEGRAM_BOT_TOKEN missing in .env. Telegram alerts will be skipped.');
+    /**
+     * Initialize the service with the Socket.IO instance
+     * @param {Object} io - Socket.IO server instance
+     */
+    init(io) {
+        this.io = io;
+        console.log('[NotificationService] Socket.IO initialized');
+    }
+
+    /**
+     * Send a notification to a specific user
+     * @param {string} userId - Target user ID
+     * @param {string} userType - 'JOB_SEEKER' or 'EMPLOYER'
+     * @param {Object} data - { title, message, type }
+     */
+    async notify(userId, userType, { title, message, type = 'SYSTEM' }) {
+        try {
+            // 1. Persist to Database
+            const notification = await prisma.notification.create({
+                data: {
+                    userId,
+                    userType,
+                    title,
+                    message,
+                    type
+                }
+            });
+
+            // 2. Emit via Socket.IO
+            if (this.io) {
+                // Users join a room with their ID upon connection (handled in server.js)
+                this.io.to(userId).emit('notification', notification);
+                console.log(`[NotificationService] Real-time emit to ${userId}: ${title}`);
+            }
+
+            // 3. Optional: Telegram Integration
+            // Fetch user's telegramChatId
+            let user;
+            if (userType === 'JOB_SEEKER') {
+                user = await prisma.jobSeeker.findUnique({ where: { id: userId }, select: { telegramChatId: true } });
+            } else {
+                user = await prisma.employer.findUnique({ where: { id: userId }, select: { telegramChatId: true } });
+            }
+
+            if (user?.telegramChatId) {
+                const telegramText = `🔔 <b>${title}</b>\n\n${message}`;
+                await telegramService.sendMessage(user.telegramChatId, telegramText).catch(err => {
+                    console.error('[NotificationService] Telegram fail:', err.message);
+                });
+            }
+
+            return notification;
+        } catch (error) {
+            console.error('[NotificationService] Error:', error);
+        }
+    }
+
+    /**
+     * Broadcast to all users
+     */
+    async broadcast({ title, message, type = 'ANNOUNCEMENT' }) {
+        if (this.io) {
+            this.io.emit('broadcast_notification', { title, message, type, createdAt: new Date() });
+        }
+    }
+
+    /**
+     * Specialized SOS/Emergency Alert
+     */
+    async emergencyAlert(userId, userType, { latitude, longitude, message }) {
+        const title = '🚨 CRITICAL SOS ALERT';
+        const fullMessage = `Emergency detected! Location: ${latitude},${longitude}. Message: ${message}`;
+        
+        // 1. Notify Admins immediately via Telegram
+        const adminText = `🚨 <b>CRITICAL SOS</b>\n\nUser: ${userId} (${userType})\nCoords: <code>${latitude},${longitude}</code>\nMsg: ${message}\n\n<a href="https://www.google.com/maps?q=${latitude},${longitude}">View on Maps</a>`;
+        await telegramService.notifyAdmin(adminText);
+
+        // 2. Persist as high-priority notification
+        return await this.notify(userId, userType, {
+            title,
+            message: 'Emergency responders have been notified of your location.',
+            type: 'EMERGENCY'
+        });
+    }
 }
 
-/**
- * Creates a persistent notification in the database and emits via Socket.io.
- * @param {string} userId - Target user ID.
- * @param {string} userType - 'JOB_SEEKER' or 'EMPLOYER'.
- * @param {string} title - Title of the notification.
- * @param {string} message - Content of the notification.
- * @param {string} type - 'MATCH', 'MESSAGE', 'PAYMENT', 'SYSTEM'.
- * @param {object} io - Socket.io instance.
- */
-exports.createInAppNotification = async (userId, userType, title, message, type = 'SYSTEM', io = null) => {
-    try {
-        const notification = await prisma.notification.create({
-            data: {
-                userId,
-                userType,
-                title,
-                message,
-                type
-            }
-        });
-
-        if (io) {
-            // Emit to the specific user's room
-            io.to(userId).emit('new_notification', notification);
-        }
-
-        return notification;
-    } catch (error) {
-        console.error('[NotificationService] Failed to create in-app notification:', error.message);
-    }
-};
-
-/**
- * Sends an alert message to a user via Telegram.
- * @param {string} telegramChatId - The user's Telegram chat ID.
- * @param {string} message - The content of the alert.
- */
-exports.sendTelegramAlert = async (telegramChatId, message) => {
-    if (!bot || !telegramChatId) return;
-
-    try {
-        await bot.sendMessage(telegramChatId, message, { parse_mode: 'HTML' });
-    } catch (error) {
-        console.error(`[Telegram] Failed to send alert to ${telegramChatId}:`, error.message);
-    }
-};
-
-/**
- * Sends an alert message via SMS.
- */
-exports.sendSMSAlert = async (phoneNumber, message) => {
-    if (!phoneNumber) return;
-    try {
-        // Africa's Talking or local gateway integration logic here
-    } catch (error) {
-        console.error(`[SMS] Failed to send alert to ${phoneNumber}:`, error.message);
-    }
-};
+module.exports = new NotificationService();
 

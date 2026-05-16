@@ -3,15 +3,14 @@ import { useTranslation } from 'react-i18next';
 import api, { API_BASE_URL } from '../../services/api';
 import { Users, Briefcase, CreditCard, Shield, AlertTriangle, FileText, Activity, Camera } from 'lucide-react';
 import PremiumCodeFactory from '../admin/PremiumCodeFactory';
+import DisputeManager from '../admin/DisputeManager';
 import AdminInsights from './AdminInsights';
+import PredictiveAnalytics from '../admin/PredictiveAnalytics';
 
 // Helper function to get full document URL
 const getDocumentUrl = (path) => {
-    // Handle null, undefined, empty string, or string literals 'undefined'/'null'
     if (!path || path === 'undefined' || path === 'null' || path.trim() === '') return null;
-    if (path.startsWith('http')) return path; // Already a full URL
-
-    // Ensure path doesn't result in double slashes if API_BASE_URL ends with /
+    if (path.startsWith('http')) return path;
     const cleanPath = path.startsWith('/') ? path : `/${path}`;
     return `${API_BASE_URL}${cleanPath}`;
 };
@@ -22,8 +21,8 @@ const AdminDashboard = () => {
     const [reports, setReports] = useState([]);
     const [generatedCode, setGeneratedCode] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('verification'); // verification, reports, codes, pulse, insights
-    const [statusFilter, setStatusFilter] = useState('ALL'); // ALL, PENDING, APPROVED, REJECTED, BLOCKED
+    const [activeTab, setActiveTab] = useState('verification'); 
+    const [statusFilter, setStatusFilter] = useState('ALL');
     const [stats, setStats] = useState(null);
     const [days, setDays] = useState(30);
 
@@ -101,20 +100,31 @@ const AdminDashboard = () => {
         return `${Math.floor(hours / 24)}d`;
     };
 
-    if (loading) return <div className="container" style={{ padding: '40px 20px' }}>{t('loading')}</div>;
+    if (loading) return <div style={{ background: '#020617', minHeight: '100vh', color: 'white', padding: '100px' }}>{t('loading')}</div>;
 
     return (
-        <div className="container" style={{ padding: '40px 20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h2 style={{ color: 'var(--primary)', margin: 0 }}>{t('admin_dashboard')}</h2>
-                <div style={{ display: 'flex', gap: '10px', background: '#f0f0f0', padding: '5px', borderRadius: '10px' }}>
-                    <button onClick={() => setActiveTab('verification')} style={{ padding: '8px 15px', borderRadius: '8px', border: 'none', background: activeTab === 'verification' ? 'white' : 'transparent', fontWeight: '500', cursor: 'pointer' }}>{t('verification')}</button>
-                    <button onClick={() => setActiveTab('reports')} style={{ padding: '8px 15px', borderRadius: '8px', border: 'none', background: activeTab === 'reports' ? 'white' : 'transparent', fontWeight: '500', cursor: 'pointer' }}>{t('reports')}</button>
-                    <button onClick={() => setActiveTab('pulse')} style={{ padding: '8px 15px', borderRadius: '8px', border: 'none', background: activeTab === 'pulse' ? 'white' : 'transparent', fontWeight: '500', cursor: 'pointer' }}>📊 Pulse</button>
-                    <button onClick={() => setActiveTab('insights')} style={{ padding: '8px 15px', borderRadius: '8px', border: 'none', background: activeTab === 'insights' ? 'white' : 'transparent', fontWeight: '500', cursor: 'pointer' }}>📈 Insights</button>
-                    <button onClick={() => setActiveTab('codes')} style={{ padding: '8px 15px', borderRadius: '8px', border: 'none', background: activeTab === 'codes' ? 'white' : 'transparent', fontWeight: '500', cursor: 'pointer' }}>{t('codes')}</button>
+        <div style={{ background: '#020617', minHeight: '100vh', color: '#f8fafc', padding: '40px 0', fontFamily: "'Outfit', sans-serif" }}>
+            <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '48px', flexWrap: 'wrap', gap: '24px' }}>
+                    <div>
+                        <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'white', margin: 0 }}>Command Center</h2>
+                        <p style={{ color: '#94a3b8', marginTop: '8px' }}>Autonomous platform oversight and intelligence.</p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <button onClick={() => setActiveTab('verification')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'verification' ? '#38bdf8' : 'transparent', color: activeTab === 'verification' ? '#0f172a' : '#94a3b8', fontWeight: '800', cursor: 'pointer', transition: 'all 0.3s' }}>Verification</button>
+                        <button onClick={() => setActiveTab('predictive')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'predictive' ? '#8b5cf6' : 'transparent', color: activeTab === 'predictive' ? 'white' : '#94a3b8', fontWeight: '800', cursor: 'pointer', transition: 'all 0.3s' }}>🧠 AI Pulse</button>
+                        <button onClick={() => setActiveTab('pulse')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'pulse' ? 'white' : 'transparent', color: activeTab === 'pulse' ? '#0f172a' : '#94a3b8', fontWeight: '800', cursor: 'pointer' }}>📊 Ops</button>
+                        <button onClick={() => setActiveTab('disputes')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'disputes' ? 'white' : 'transparent', color: activeTab === 'disputes' ? '#0f172a' : '#94a3b8', fontWeight: '800', cursor: 'pointer' }}>⚖️ Disputes</button>
+                    </div>
                 </div>
-            </div>
+
+            {activeTab === 'predictive' && (
+                <PredictiveAnalytics stats={stats} />
+            )}
+
+            {activeTab === 'disputes' && (
+                <DisputeManager fetchData={fetchData} />
+            )}
 
             {activeTab === 'verification' && (
                 <div>

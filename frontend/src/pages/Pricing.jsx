@@ -141,7 +141,7 @@ const Pricing = () => {
                             gap: '8px'
                         }}
                     >
-                        <CreditCard size={18} /> {t('automated_payment') || 'Instant Pay (Chapa/Telebirr)'}
+                        <CreditCard size={18} /> {t('automated_payment')}
                     </button>
                     <button 
                         onClick={() => setPaymentMethod('MANUAL')}
@@ -158,7 +158,7 @@ const Pricing = () => {
                             gap: '8px'
                         }}
                     >
-                        <MessageSquare size={18} /> {t('manual_payment') || 'Manual Pay (Telegram)'}
+                        <MessageSquare size={18} /> {t('manual_payment')}
                     </button>
                 </div>
             </div>
@@ -180,8 +180,8 @@ const Pricing = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <LogIn size={24} color="#64748b" />
                         <div>
-                            <h4 style={{ margin: 0, fontSize: '1rem', color: '#334155' }}>{t('returning_user') || 'Already have an account?'}</h4>
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>{t('login_to_subscribe') || 'Log in to apply the subscription to your existing account.'}</p>
+                            <h4 style={{ margin: 0, fontSize: '1rem', color: '#334155' }}>{t('returning_user')}</h4>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>{t('login_to_subscribe')}</p>
                         </div>
                     </div>
                     <button 
@@ -196,7 +196,7 @@ const Pricing = () => {
 
             {loading && (
                 <div style={{ textAlign: 'center', padding: '100px' }}>
-                    <div className="loader" style={{ fontSize: '1.2rem', color: '#666' }}>Loading plans...</div>
+                    <div className="loader" style={{ fontSize: '1.2rem', color: '#666' }}>{t('loading_plans')}</div>
                 </div>
             )}
 
@@ -282,9 +282,9 @@ const Pricing = () => {
                                         }}
                                     >
                                         {initiating && selectedPlan?.id === plan.id ? (
-                                            <><Loader className="spin" size={20} /> {t('initiating') || 'Initiating...'}</>
+                                            <><Loader className="spin" size={20} /> {t('initiating')}</>
                                         ) : (
-                                            <><ExternalLink size={18} /> {t('pay_local') || 'Pay Local (Chapa)'}</>
+                                            <><ExternalLink size={18} /> {t('pay_local')}</>
                                         )}
                                     </button>
                                     <button
@@ -299,9 +299,9 @@ const Pricing = () => {
                                         }}
                                     >
                                         {initiating && selectedPlan?.id === plan.id ? (
-                                            <><Loader className="spin" size={20} /> {t('initiating') || 'Initiating...'}</>
+                                            <><Loader className="spin" size={20} /> {t('initiating')}</>
                                         ) : (
-                                            <><CreditCard size={18} /> {t('pay_global') || 'Pay Global (Stripe)'}</>
+                                            <><CreditCard size={18} /> {t('pay_global')}</>
                                         )}
                                     </button>
                                 </div>
@@ -316,7 +316,7 @@ const Pricing = () => {
                                         border: 'none', color: 'white', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'
                                     }}
                                 >
-                                    <MessageSquare size={18} /> {t('select_plan_name', { name: plan.name }) || 'Request via Telegram'}
+                                    <MessageSquare size={18} /> {t('select_plan_name', { name: plan.name })}
                                 </button>
                             )}
                         </div>
@@ -337,7 +337,7 @@ const Pricing = () => {
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}>
                 <h2 style={{ fontSize: '2rem', marginBottom: '10px', color: 'var(--primary)', fontWeight: 'bold' }}>{t('manual_payment_title')}</h2>
-                <p style={{ color: '#666', marginBottom: '40px' }}>Quick & Secure Activation via Telegram</p>
+                <p style={{ color: '#666', marginBottom: '40px' }}>{t('manual_payment_subtitle')}</p>
 
                 {/* Visual Infographic */}
                 <div style={{

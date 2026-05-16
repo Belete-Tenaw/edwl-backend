@@ -1,11 +1,13 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
 import SOSButton from './components/SOSButton';
 import { AdminRoute } from './components/AdminRoute';
 import { ToastProvider } from './components/Toast';
+import { SocketProvider } from './context/SocketContext';
 import authService from './services/authService';
 
 // Helper to handle Chunk Load Errors
@@ -42,7 +44,8 @@ const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
 const TermsAndConditions = lazyWithRetry(() => import('./pages/TermsAndConditions'));
 const About = lazyWithRetry(() => import('./pages/About'));
 const Safety = lazyWithRetry(() => import('./pages/Safety'));
-const Academy = lazyWithRetry(() => import('./pages/Academy'));
+const Academy = lazy(() => import('./pages/Academy'));
+const IntelligenceCenter = lazy(() => import('./pages/admin/IntelligenceCenter'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword'));
 const PaymentSuccess = lazyWithRetry(() => import('./pages/PaymentSuccess'));
@@ -51,6 +54,8 @@ const RewardsDashboard = lazyWithRetry(() => import('./pages/RewardsDashboard'))
 const AcademyDashboard = lazyWithRetry(() => import('./pages/AcademyDashboard'));
 const SmartInterview = lazyWithRetry(() => import('./pages/SmartInterview'));
 const MarketingDashboard = lazyWithRetry(() => import('./pages/admin/MarketingDashboard'));
+const AgencyDashboard = lazyWithRetry(() => import('./pages/dashboards/AgencyDashboard'));
+const Wallet = lazyWithRetry(() => import('./pages/Wallet'));
 
 const Loading = () => (
     <div style={{
@@ -106,9 +111,12 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
 function App() {
     return (
-        <ToastProvider>
-            <Router>
-                <div className="app">
+        <HelmetProvider>
+            <ToastProvider>
+                <Router>
+                    <SocketProvider>
+                    <div className="bg-mesh" />
+                    <div className="app">
                     <Suspense fallback={<Loading />}>
                         <Navbar />
                         <ErrorBoundary>
@@ -155,6 +163,12 @@ function App() {
                                         </ProtectedRoute>
                                     } />
 
+                                    <Route path="/wallet" element={
+                                        <ProtectedRoute allowedRoles={['JOB_SEEKER', 'EMPLOYER']}>
+                                            <Wallet />
+                                        </ProtectedRoute>
+                                    } />
+
                                     <Route path="/dashboard/seeker" element={
                                         <ProtectedRoute allowedRoles={['JOB_SEEKER']}>
                                             <SeekerDashboard />
@@ -162,10 +176,16 @@ function App() {
                                     } />
 
                                     <Route path="/dashboard/employer" element={
-                                        <ProtectedRoute allowedRoles={['EMPLOYER']}>
-                                            <EmployerDashboard />
-                                        </ProtectedRoute>
-                                    } />
+                                         <ProtectedRoute allowedRoles={['EMPLOYER']}>
+                                             <EmployerDashboard />
+                                         </ProtectedRoute>
+                                     } />
+
+                                     <Route path="/dashboard/agency" element={
+                                         <ProtectedRoute allowedRoles={['AGENCY']}>
+                                             <AgencyDashboard />
+                                         </ProtectedRoute>
+                                     } />
 
                                     <Route path="/admin" element={
                                         <AdminRoute>
@@ -186,9 +206,11 @@ function App() {
                         <SOSButton />
                         <Footer />
                     </Suspense>
-                </div>
-            </Router>
+                        </div>
+                    </SocketProvider>
+                </Router>
         </ToastProvider>
+        </HelmetProvider>
     );
 }
 

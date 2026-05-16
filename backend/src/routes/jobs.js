@@ -6,6 +6,7 @@ const checkLimits = require('../middleware/checkLimits');
 const { authorize, Roles } = require('../middleware/rbac');
 
 router.get('/', auth, jobController.getAllJobs);
+router.get('/salary/benchmark', auth, require('../controllers/salaryController').getSalaryBenchmark);
 router.get('/:id', auth, checkLimits, jobController.getJobById);
 router.post('/', auth, authorize([Roles.EMPLOYER]), jobController.createJobPost);
 router.get('/:id/matches', auth, authorize([Roles.EMPLOYER]), jobController.getMatchesForJob);

@@ -1,6 +1,12 @@
 const multer = require('multer');
+const Sentry = require('@sentry/node');
 
 const errorHandler = (err, req, res, next) => {
+    // Log to Sentry in production
+    if (process.env.NODE_ENV === 'production') {
+        Sentry.captureException(err);
+    }
+
     console.error("Global Error Handler caught:", {
         name: err.name,
         message: err.message,
@@ -38,12 +44,22 @@ const errorHandler = (err, req, res, next) => {
         return res.status(400).json({ error: 'Invalid data provided.' });
     }
 
+    const isProduction = process.env.NODE_ENV === 'production';
+
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+    
+    // Sanitize message for production
+    let clientMessage = err.message || 'An unexpected error occurred.';
+    if (isProduction && statusCode === 500) {
+        clientMessage = 'A serious server error occurred. Our engineering team has been notified.';
+    }
+
     res.status(statusCode).json({
         error: err.name || 'ServerError',
-        message: err.message || 'An unexpected error occurred.',
-        stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+        message: clientMessage,
+        stack: isProduction ? null : err.stack,
     });
 };
 
 module.exports = errorHandler;
+

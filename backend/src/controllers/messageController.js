@@ -1,9 +1,10 @@
 const prisma = require('../utils/prisma');
 const telegramService = require('../services/telegramService');
+const translationService = require('../services/translationService');
 
 exports.sendMessage = async (req, res) => {
     try {
-        const { receiverId, receiverType, content } = req.body;
+        const { receiverId, receiverType, content, targetLang = 'am' } = req.body;
         const senderId = req.user.id;
         const senderRole = req.user.role;
 
@@ -117,9 +118,22 @@ exports.sendMessage = async (req, res) => {
             console.error('[Metrics Error] Failed to compute response time:', metricErr.message);
         }
 
+        // 🌐 Real-Time AI Translation
+        let translatedText = null;
+        let detectedLanguage = null;
+        try {
+            const translation = await translationService.translate(content, targetLang);
+            translatedText = translation.translatedText;
+            detectedLanguage = translation.detectedLanguage;
+        } catch (transErr) {
+            console.error('[Translation Error] Failed to translate message:', transErr.message);
+        }
+
         const message = await prisma.message.create({
             data: {
                 content,
+                translatedText,
+                detectedLanguage,
                 senderJSId: senderRole === 'JOB_SEEKER' ? senderId : null,
                 senderEmpId: senderRole === 'EMPLOYER' ? senderId : null,
                 receiverJSId: receiverType === 'JOB_SEEKER' ? receiverId : null,
@@ -140,14 +154,29 @@ exports.sendMessage = async (req, res) => {
 
         // 💬 Send Telegram Alert to Receiver (Proactive Betterment)
         try {
-            const receiver = await prisma[receiverType === 'JOB_SEEKER' ? 'jobSeeker' : 'employer'].findUnique({
+            const isSeeker = receiverType === 'JOB_SEEKER';
+            const selectFields = { telegramChatId: true };
+            if (isSeeker) {
+                selectFields.fullName = true;
+            } else {
+                selectFields.contactName = true;
+            }
+
+            const receiver = await prisma[isSeeker ? 'jobSeeker' : 'employer'].findUnique({
                 where: { id: receiverId },
-                select: { telegramChatId: true, fullName: receiverType === 'JOB_SEEKER', contactName: receiverType === 'EMPLOYER' }
+                select: selectFields
             });
 
             if (receiver && receiver.telegramChatId) {
                 const senderName = senderRole === 'JOB_SEEKER' ? message.senderJS.fullName : message.senderEmp.contactName;
-                const telegramText = `📩 <b>New Message from ${senderName}</b>\n\n"${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"\n\nReply here: https://edwl-ethio-domesticworkerslink.web.app/messages`;
+                let telegramText = `📩 <b>New Message from ${senderName}</b>\n\n"${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"`;
+                
+                if (translatedText && translatedText !== content) {
+                    telegramText += `\n\n🌐 <i>Translation:</i> "${translatedText.substring(0, 100)}..."`;
+                }
+                
+                telegramText += `\n\nReply here: https://edwl.et/messages`;
+                
                 await telegramService.sendMessage(receiver.telegramChatId, telegramText);
             }
         } catch (alertError) {

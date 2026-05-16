@@ -2,6 +2,7 @@ const prisma = require('../utils/prisma');
 const { logAction } = require('./auditService');
 const chapaService = require('./chapaService');
 const telegramService = require('./telegramService');
+const notificationService = require('./notificationService');
 
 class PaymentService {
     /**
@@ -193,6 +194,17 @@ class PaymentService {
             const adminNotifyText = `💹 <b>New Subscription!</b>\n\nUser: <b>${userName}</b>\nTier: <b>${tier.tier}</b>\nAmount: <b>${tier.priceETB} ETB</b>\nProvider: <b>${payment.provider}</b>\nRef: <code>${payment.transactionReference}</code>`;
             await telegramService.notifyAdmin(adminNotifyText);
 
+            // 8. Real-time User Notification
+            await notificationService.notify(
+                payment.jobSeekerId || payment.employerId,
+                payment.jobSeekerId ? 'JOB_SEEKER' : 'EMPLOYER',
+                {
+                    title: 'Subscription Activated! 🚀',
+                    message: `Welcome to the ${tier.tier} tier! You now have full access for the next ${tier.durationDays} days.`,
+                    type: 'PAYMENT'
+                }
+            );
+
             return updatedPayment;
         });
     }
@@ -261,8 +273,74 @@ class PaymentService {
                 { code, durationDays: subCode.durationDays }
             );
 
+            // Real-time Notification
+            await notificationService.notify(
+                userId,
+                userType === 'seeker' ? 'JOB_SEEKER' : 'EMPLOYER',
+                {
+                    title: 'Code Redeemed! ✅',
+                    message: `Your ${tierToApply} access has been activated until ${expiryDate.toLocaleDateString()}.`,
+                    type: 'SYSTEM'
+                }
+            );
+
             return updatedUser;
         });
+    }
+
+    /**
+     * Activate a subscription by paymentId (used by Stripe Webhook after payment confirmed)
+     * @param {string} paymentId
+     */
+    async activateSubscription(paymentId) {
+        const payment = await prisma.payment.findUnique({
+            where: { id: paymentId },
+            include: { jobSeeker: true, employer: true }
+        });
+
+        if (!payment || payment.status !== 'COMPLETED') return;
+
+        const tier = await prisma.subscriptionTier.findUnique({ where: { id: payment.tierId } });
+        if (!tier) return;
+
+        const durationMs = (tier.durationDays || 30) * 24 * 60 * 60 * 1000;
+        const expiryDate = new Date(Date.now() + durationMs);
+
+        // Check if subscription already exists (idempotent)
+        const existing = await prisma.subscription.findUnique({ where: { paymentId } });
+        if (existing) return;
+
+        await prisma.$transaction(async (tx) => {
+            await tx.subscription.create({
+                data: {
+                    [payment.jobSeekerId ? 'jobSeekerId' : 'employerId']: payment.jobSeekerId || payment.employerId,
+                    tierId: tier.id,
+                    endDate: expiryDate,
+                    status: 'ACTIVE',
+                    paymentId
+                }
+            });
+
+            if (payment.jobSeekerId) {
+                await tx.jobSeeker.update({
+                    where: { id: payment.jobSeekerId },
+                    data: { tier: tier.tier, subscriptionExpiry: expiryDate, isSubscribed: true }
+                });
+            } else {
+                await tx.employer.update({
+                    where: { id: payment.employerId },
+                    data: { tier: tier.tier, subscriptionExpiry: expiryDate, isSubscribed: true }
+                });
+            }
+
+            await tx.invoice.create({
+                data: { invoiceNumber: `INV-STRIPE-${Date.now()}`, paymentId }
+            });
+        });
+
+        const userName = payment.jobSeeker?.fullName || payment.employer?.contactName || 'User';
+        const adminText = `💹 <b>Stripe Payment!</b>\n\nUser: <b>${userName}</b>\nTier: <b>${tier.tier}</b>\nAmount: <b>${tier.priceETB} ETB</b>`;
+        await telegramService.notifyAdmin(adminText).catch(() => {});
     }
 
     /**

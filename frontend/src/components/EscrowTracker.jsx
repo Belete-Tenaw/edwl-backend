@@ -3,11 +3,13 @@ import { Shield, ArrowRight, CheckCircle2, AlertCircle, Info } from 'lucide-reac
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './Toast';
+import DisputePortal from './DisputePortal';
 
 const EscrowTracker = ({ escrow, userRole, onUpdate }) => {
     const { t } = useTranslation();
     const addToast = useToast();
     const [releasing, setReleasing] = useState(false);
+    const [showDispute, setShowDispute] = useState(false);
 
     const handleRelease = async () => {
         if (!window.confirm(t('confirm_escrow_release') || "CONFIRM RELEASE: This will pay the worker immediately. Only do this if the work is completed to your satisfaction.")) return;
@@ -39,18 +41,46 @@ const EscrowTracker = ({ escrow, userRole, onUpdate }) => {
                         <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{escrow.amount} ETB</div>
                     </div>
                 </div>
-                <div style={{ 
-                    padding: '4px 12px', 
-                    borderRadius: '20px', 
-                    background: isReleased ? '#dcfce7' : '#ffedd5', 
-                    color: isReleased ? '#166534' : '#9a3412',
-                    fontSize: '0.7rem',
-                    fontWeight: 'bold',
-                    border: `1px solid ${isReleased ? '#bbf7d0' : '#fed7aa'}`
-                }}>
-                    {escrow.status.replace(/_/g, ' ')}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                    <div style={{ 
+                        padding: '4px 12px', 
+                        borderRadius: '20px', 
+                        background: isReleased ? '#dcfce7' : '#ffedd5', 
+                        color: isReleased ? '#166534' : '#9a3412',
+                        fontSize: '0.7rem',
+                        fontWeight: 'bold',
+                        border: `1px solid ${isReleased ? '#bbf7d0' : '#fed7aa'}`
+                    }}>
+                        {escrow.status.replace(/_/g, ' ')}
+                    </div>
+                    {escrow.provider && (
+                        <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 'bold' }}>
+                            via {escrow.provider}
+                        </span>
+                    )}
                 </div>
             </div>
+
+            {/* Handshake Verification Status */}
+            {!isReleased && (
+                <div style={{ display: 'flex', gap: '10px', padding: '10px', background: '#f8fafc', borderRadius: '10px', border: '1px dashed #e2e8f0' }}>
+                    <div style={{ flex: 1, textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.6rem', color: '#64748b', marginBottom: '2px' }}>Employer Handshake</div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: escrow.employerConfirmed ? '#10b981' : '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            {escrow.employerConfirmed ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                            {escrow.employerConfirmed ? 'CONFIRMED' : 'PENDING'}
+                        </div>
+                    </div>
+                    <div style={{ width: '1px', background: '#e2e8f0' }}></div>
+                    <div style={{ flex: 1, textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.6rem', color: '#64748b', marginBottom: '2px' }}>Worker Handshake</div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: escrow.workerConfirmed ? '#10b981' : '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                            {escrow.workerConfirmed ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                            {escrow.workerConfirmed ? 'CONFIRMED' : 'PENDING'}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px' }}>
                 <div style={{ flex: 1 }}>
@@ -90,8 +120,40 @@ const EscrowTracker = ({ escrow, userRole, onUpdate }) => {
             )}
 
             {userRole === 'seeker' && !isReleased && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 'bold', fontSize: '0.9rem', justifyContent: 'center', background: '#fffbeb', padding: '12px', borderRadius: '8px' }}>
-                    <AlertCircle size={18} /> Payment held in secure escrow
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 'bold', fontSize: '0.9rem', justifyContent: 'center', background: '#fffbeb', padding: '12px', borderRadius: '8px' }}>
+                        <AlertCircle size={18} /> Payment held in secure escrow
+                    </div>
+                    <button 
+                        onClick={() => setShowDispute(true)}
+                        style={{ background: 'none', border: '1px solid #ef4444', color: '#ef4444', padding: '10px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', cursor: 'pointer' }}
+                    >
+                        {t('report_problem')}
+                    </button>
+                </div>
+            )}
+
+            {userRole === 'employer' && !isReleased && (
+                <button 
+                    onClick={() => setShowDispute(true)}
+                    style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', textDecoration: 'underline', cursor: 'pointer', marginTop: '10px' }}
+                >
+                    {t('issue_open_dispute')}
+                </button>
+            )}
+
+            {/* Dispute Modal */}
+            {showDispute && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 11000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                    <div style={{ background: 'white', borderRadius: '24px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflow: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                        <DisputePortal 
+                            contractId={escrow.contractId} 
+                            onClose={() => {
+                                setShowDispute(false);
+                                if (onUpdate) onUpdate();
+                            }} 
+                        />
+                    </div>
                 </div>
             )}
         </div>

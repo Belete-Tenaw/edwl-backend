@@ -250,7 +250,7 @@ const Messages = () => {
                         {/* Security Banner */}
                         <div style={{ background: '#f0fdf4', padding: '8px 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.75rem', color: '#166534', borderBottom: '1px solid #dcfce7' }}>
                             <Shield size={14} />
-                            <span>Messages are end-to-end encrypted. Nobody outside of this chat, not even EDWL, can read them.</span>
+                            <span>{t('encryption_msg')}</span>
                         </div>
 
                         <div ref={scrollRef} style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -269,6 +269,21 @@ const Messages = () => {
                                             borderRadius: isMe ? '12px 12px 0 12px' : '12px 12px 12px 0'
                                         }}>
                                             {msg.content}
+                                            {msg.translatedText && (
+                                                <div style={{ 
+                                                    marginTop: '8px', 
+                                                    paddingTop: '8px', 
+                                                    borderTop: `1px solid ${isMe ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}`,
+                                                    fontSize: '0.85rem',
+                                                    fontStyle: 'italic',
+                                                    color: isMe ? 'rgba(255,255,255,0.9)' : '#555'
+                                                }}>
+                                                    <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 'bold', letterSpacing: '0.5px' }}>
+                                                        ✨ {t('ai_translation')} ({msg.detectedLanguage})
+                                                    </div>
+                                                    {msg.translatedText}
+                                                </div>
+                                            )}
                                         </div>
                                         {msg.timestamp && (
                                             <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '4px', textAlign: isMe ? 'right' : 'left' }}>
@@ -290,15 +305,15 @@ const Messages = () => {
                             {/* Smart Quick Replies */}
                             <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '5px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                 {(currentUser.role === 'EMPLOYER' ? [
-                                    "Are you available for an interview?",
-                                    "Can you start immediately?",
-                                    "What is your expected salary?",
-                                    "Please share your references."
+                                    t('quick_reply_interview'),
+                                    t('quick_reply_start'),
+                                    t('quick_reply_salary'),
+                                    t('quick_reply_references')
                                 ] : [
-                                    "Yes, I am available.",
-                                    "When would you like to schedule an interview?",
-                                    "Thank you for reaching out!",
-                                    "I can start immediately."
+                                    t('quick_reply_available'),
+                                    t('quick_reply_schedule'),
+                                    t('quick_reply_thanks'),
+                                    t('quick_reply_start_now')
                                 ]).map((reply, idx) => (
                                     <button
                                         key={idx}
@@ -331,7 +346,7 @@ const Messages = () => {
                                         onClick={() => setAmharicMode(!amharicMode)}
                                         style={{ fontSize: '0.75rem', padding: '2px 10px', borderRadius: '15px', border: amharicMode ? '1px solid var(--primary)' : '1px solid #ddd', background: amharicMode ? '#fff7ed' : 'white', color: amharicMode ? 'var(--primary)' : '#666', display: 'flex', alignItems: 'center', gap: '4px' }}
                                     >
-                                        <Keyboard size={12} /> {amharicMode ? 'Amharic ON' : 'Easy Amharic'}
+                                        <Keyboard size={12} /> {amharicMode ? t('amharic_on') : t('easy_amharic')}
                                     </button>
                                 </div>
                                 <div style={{ display: 'flex', gap: '10px' }}>

@@ -153,3 +153,36 @@ exports.uploadVideoBio = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// Upload Voice Bio (Accessibility & Inclusivity Feature)
+exports.uploadVoiceBio = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const role = req.user.role;
+
+        if (role !== 'JOB_SEEKER') {
+            return res.status(403).json({ error: 'Only job seekers can upload a voice bio' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ error: 'Audio file is required' });
+        }
+
+        // Upload to Firebase (stored in 'voice-bios' folder)
+        const result = await uploadFileToFirebase(req.file, 'voice-bios', false);
+        const voiceUrl = result.storagePath;
+
+        // Update seeker record (basic field update, transcription happens via AI route)
+        await prisma.jobSeeker.update({
+            where: { id: userId },
+            data: { voiceBioUrl: voiceUrl }
+        });
+
+        res.json({
+            message: 'Voice bio uploaded successfully',
+            voiceUrl
+        });
+    } catch (error) {
+        console.error("Voice Upload Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+};

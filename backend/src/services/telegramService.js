@@ -46,6 +46,29 @@ class TelegramService {
     }
 
     /**
+     * Send a rich message with inline buttons
+     */
+    async sendRichMessage(chatId, text, buttons = []) {
+        if (!this.botToken || !chatId) return false;
+
+        try {
+            const endpoint = `${this.baseUrl}/sendMessage`;
+            const response = await axios.post(endpoint, {
+                chat_id: chatId,
+                text: text,
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: buttons
+                }
+            });
+            return response.data.ok;
+        } catch (error) {
+            console.error('[TelegramService] Rich message error:', error.message);
+            return false;
+        }
+    }
+
+    /**
      * Send revenue/payment alerts to the platform admin
      */
     async notifyAdmin(text) {
@@ -54,9 +77,10 @@ class TelegramService {
             console.warn('[TelegramService] Admin Telegram Chat ID not configured.');
             return false;
         }
-        return await this.sendMessage(adminChatId, `💰 <b>Revenue Alert</b>\n\n${text}`);
+        return await this.sendMessage(adminChatId, text);
     }
 }
 
 module.exports = new TelegramService();
+
 

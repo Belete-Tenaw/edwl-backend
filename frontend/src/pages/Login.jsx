@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
-import { User, Briefcase, ShieldCheck, Lock, Mail, Phone, ArrowRight, MessageSquare, LogIn, KeyRound } from 'lucide-react';
+import { User, Briefcase, ShieldCheck, Lock, Mail, Phone, ArrowRight, MessageSquare, LogIn, KeyRound, Users } from 'lucide-react';
 import { auth } from '../firebase';
 import { SmartAuth } from '../components/SmartAuth';
 
@@ -43,6 +43,7 @@ const Login = () => {
         if (role === 'seeker') navigate('/dashboard/seeker');
         else if (role === 'employer') navigate('/dashboard/employer');
         else if (role === 'admin') navigate('/admin');
+        else if (role === 'AGENCY') navigate('/dashboard/agency');
     };
 
     const handleAdminSubmit = async (e) => {
@@ -66,7 +67,7 @@ const Login = () => {
                 <h2 style={{ textAlign: 'center', marginBottom: '30px', color: 'var(--primary)' }}>{t('login')}</h2>
 
                 <div className="tabs-container" style={{ display: 'flex', marginBottom: '30px', background: '#f0f0f0', borderRadius: '12px', padding: '5px' }}>
-                    {['seeker', 'employer', 'admin'].map((tab) => (
+                    {['seeker', 'employer', 'agency', 'admin'].map((tab) => (
                         <button
                             key={tab}
                             type="button"
@@ -77,11 +78,11 @@ const Login = () => {
                                 background: activeTab === tab ? 'white' : 'transparent',
                                 color: activeTab === tab ? 'var(--primary)' : '#666',
                                 borderRadius: '8px',
-                                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '0.9rem',
+                                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '0.8rem',
                                 border: 'none', cursor: 'pointer', boxShadow: activeTab === tab ? '0 2px 5px rgba(0,0,0,0.1)' : 'none'
                             }}
                         >
-                            {tab === 'seeker' ? <User size={16} /> : tab === 'employer' ? <Briefcase size={16} /> : <ShieldCheck size={16} />}
+                            {tab === 'seeker' ? <User size={14} /> : tab === 'employer' ? <Briefcase size={14} /> : tab === 'agency' ? <Users size={14} /> : <ShieldCheck size={14} />}
                             {t(tab === 'seeker' ? 'worker' : tab)}
                         </button>
                     ))}

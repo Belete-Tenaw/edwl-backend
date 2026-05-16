@@ -1,5 +1,15 @@
-
 require('dotenv').config();
+const Sentry = require('@sentry/node');
+
+// --- HIGH SCALE ERROR TRACKING ---
+if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    environment: process.env.NODE_ENV
+  });
+}
+
 // Initialize Telegram Bot Listener (Non-blocking) - Only outside tests
 if (process.env.NODE_ENV !== 'test') {
   require('./services/telegramBot');
@@ -12,6 +22,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
 const keepAlive = require('./utils/keepAlive');
+const notificationService = require('./services/notificationService');
 
 // Initialize Cron Jobs - Only outside tests
 if (process.env.NODE_ENV !== 'test') {
@@ -19,9 +30,16 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 const app = express();
-// Google Cloud Run sets the PORT variable automatically to 8080
-// Defaulting to 5000 to match vite.config.js and api.js in dev
 const PORT = process.env.PORT || 5000;
+
+// --- WORLD-CLASS AUTH BRUTE FORCE PROTECTION ---
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 login/register requests per window
+  message: { error: 'Too many login attempts. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // ================================
 // 🔌 SOCKET.IO SETUP
@@ -54,6 +72,7 @@ const io = new Server(server, {
 
 // Store io in app for access in controllers
 app.set('io', io);
+notificationService.init(io);
 
 io.on('connection', (socket) => {
   
@@ -221,7 +240,7 @@ app.get('/health', (req, res) => {
 // ================================
 // 📌 ROUTES
 // ================================
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', authLimiter, require('./routes/auth'));
 app.use('/api/seekers', require('./routes/seekers'));
 app.use('/api/employers', require('./routes/employers'));
 app.use('/api/jobs', require('./routes/jobs'));
@@ -238,6 +257,16 @@ app.use('/api/contracts', require('./routes/contracts'));
 app.use('/api/escrow', require('./routes/escrow'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/seeker', require('./routes/academy'));
+app.use('/api/loans', require('./routes/loanRoutes'));
+app.use('/api/agencies', require('./routes/agencyRoutes'));
+app.use('/api/mediation', require('./routes/mediationRoutes'));
+app.use('/api/ai', require('./routes/aiRoutes'));
+
+// ================================
+// 🌐 PHASE 2: OMNICHANNEL WEBHOOK
+// ================================
+const { handleWebhook } = require('./controllers/omnichannelWebhook');
+app.post('/api/webhook/omnichannel', handleWebhook);
 
 // ================================
 // ❌ GLOBAL ERROR HANDLER

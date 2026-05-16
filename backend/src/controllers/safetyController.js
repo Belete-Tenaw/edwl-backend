@@ -43,11 +43,9 @@ exports.triggerSOS = async (req, res) => {
 
         // Send real-time notification via existing service (if it supports admin-wide alerts)
         // For now, we'll just use the notificationService to alert the user themselves (confirmation)
-        await notificationService.createNotification({
-            userId,
-            userType,
-            title: 'SOS Alert Triggered',
-            message: 'We have received your SOS alert. Our team and your emergency contacts are being notified.',
+        await notificationService.notify(userId, userType, {
+            title: '🚨 SOS Alert Triggered',
+            message: 'We have received your SOS alert. Our team and your emergency contacts are being notified immediately.',
             type: 'SYSTEM'
         });
 
@@ -110,5 +108,66 @@ exports.getTransitLocation = async (req, res) => {
         res.json(transit);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch transit location.' });
+    }
+};
+
+/**
+ * GPS Safe Check-In
+ * Workers tap "Checked In" when they arrive at work.
+ * Logs arrival with geolocation and fires real-time notifications to both parties.
+ */
+exports.checkIn = async (req, res) => {
+    try {
+        const { contractId, latitude, longitude } = req.body;
+        const userId = req.user.id;
+        const userType = req.user.role; // 'JOB_SEEKER'
+
+        if (!contractId) {
+            return res.status(400).json({ error: 'contractId is required for safe check-in.' });
+        }
+
+        // 1. Upsert a TransitSession to record arrival location
+        const session = await prisma.transitSession.upsert({
+            where: { id: contractId },
+            update: { latitude: latitude || 0, longitude: longitude || 0, isActive: true, updatedAt: new Date() },
+            create: { id: contractId, contractId, userId, latitude: latitude || 0, longitude: longitude || 0, isActive: true }
+        });
+
+        // 2. Fetch seeker name for notification message
+        const seeker = await prisma.jobSeeker.findUnique({
+            where: { id: userId },
+            select: { fullName: true }
+        });
+
+        // 3. Fetch contract to find employer ID for notification
+        const contract = await prisma.contract.findUnique({
+            where: { id: contractId },
+            select: { employerId: true }
+        });
+
+        // 4. Confirm check-in to worker via real-time notification
+        await notificationService.notify(userId, userType, {
+            title: '✅ Safe Check-In Recorded',
+            message: `Your arrival has been logged at ${new Date().toLocaleTimeString()}. EDWL has your location for your safety.`,
+            type: 'SYSTEM'
+        });
+
+        // 5. Notify employer that worker has arrived
+        if (contract?.employerId) {
+            await notificationService.notify(contract.employerId, 'EMPLOYER', {
+                title: '🏠 Worker Arrived',
+                message: `${seeker?.fullName || 'Your worker'} has safely checked in at ${new Date().toLocaleTimeString()}.`,
+                type: 'SYSTEM'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Safe check-in recorded successfully.',
+            session
+        });
+    } catch (error) {
+        console.error('[CheckIn Error]', error);
+        res.status(500).json({ error: 'Failed to record check-in.' });
     }
 };

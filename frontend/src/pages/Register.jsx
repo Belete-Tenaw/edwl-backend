@@ -77,6 +77,15 @@ const Register = () => {
         referralCodeUsed: ''
     });
 
+    const [agencyData, setAgencyData] = useState({
+        name: '',
+        registrationNo: '',
+        contactPhone: '',
+        contactEmail: '',
+        password: '',
+        address: ''
+    });
+
     const seekerDataRef = useRef(seekerData);
     useEffect(() => {
         seekerDataRef.current = seekerData;
@@ -196,6 +205,21 @@ const Register = () => {
         }
     }, []);
 
+    const handleAgencyChange = useCallback((e) => {
+        const { name, value } = e.target;
+        setAgencyData(prev => ({ ...prev, [name]: value }));
+    }, []);
+
+    const handleAgencyBlur = useCallback((e) => {
+        const { name, value } = e.target;
+        if (name === 'contactPhone' && value) {
+            const validation = validateAndFormatPhone(value);
+            if (validation.isValid) {
+                setAgencyData(prev => ({ ...prev, contactPhone: validation.formatted }));
+            }
+        }
+    }, []);
+
     const handleRegister = async (e) => {
         e.preventDefault();
         setError('');
@@ -300,7 +324,7 @@ const Register = () => {
                 await authService.register(formData, 'seeker');
                 setSuccess(true);
                 setTimeout(() => navigate('/dashboard/seeker'), 3000);
-            } else {
+            } else if (activeTab === 'employer') {
                 // Pre-submission validation for Employer
                 if (!employerData.phone && !employerData.email) {
                     setError(t('email_or_phone_required'));
@@ -341,6 +365,24 @@ const Register = () => {
                 await authService.register(formData, 'employer');
                 setSuccess(true);
                 setTimeout(() => navigate('/dashboard/employer'), 3000);
+            } else if (activeTab === 'agency') {
+                if (!agencyData.name || !agencyData.registrationNo || !agencyData.contactPhone || !agencyData.password) {
+                    setError("All required fields must be filled.");
+                    setLoading(false);
+                    window.scrollTo(0, 0);
+                    return;
+                }
+
+                if (agencyData.password.length < 6) {
+                    setError("Password must be at least 6 characters long.");
+                    setLoading(false);
+                    window.scrollTo(0, 0);
+                    return;
+                }
+
+                await authService.register(agencyData, 'agency');
+                setSuccess(true);
+                setTimeout(() => navigate('/dashboard/agency'), 3000);
             }
         } catch (err) {
             console.error("Full Registration Error Object:", err);
@@ -443,6 +485,19 @@ const Register = () => {
                         }}
                     >
                         {t('i_am_employer')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('agency')}
+                        style={{
+                            flex: 1, padding: '12px',
+                            background: activeTab === 'agency' ? 'white' : 'transparent',
+                            color: activeTab === 'agency' ? 'var(--primary)' : '#666',
+                            boxShadow: activeTab === 'agency' ? '0 2px 5px rgba(0,0,0,0.1)' : 'none',
+                            borderRadius: '8px', fontWeight: 'bold'
+                        }}
+                    >
+                        {t('i_am_agency') || 'B2B Agency'}
                     </button>
                 </div>
             </div>

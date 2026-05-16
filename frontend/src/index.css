@@ -1,45 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=Noto+Sans+Ethiopic:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=Noto+Sans+Ethiopic:wght@400;700&display=swap');
 
 :root {
-  /* Ultra-Premium HSL Palettes */
-  --primary: hsl(180, 100%, 25%); /* Deep Teal */
-  --primary-light: hsl(180, 100%, 45%);
-  --primary-glow: hsla(180, 100%, 25%, 0.15);
-  --secondary: hsl(210, 40%, 98%); /* Soft Blue-Grey Bg */
-  --accent: hsl(14, 100%, 57%); /* Energetic Orange for CTAs */
+  /* Ultra-Premium World-Class HSL Palette */
+  --primary: hsl(182, 100%, 25%); /* Deep Cyan/Teal */
+  --primary-light: hsl(182, 100%, 45%);
+  --primary-dark: hsl(182, 100%, 15%);
+  --primary-glow: hsla(182, 100%, 25%, 0.12);
   
-  --navy: hsl(210, 29%, 24%); /* Professional Navy */
+  --secondary: hsl(210, 40%, 98%); /* Soft Blue-Grey Bg */
+  --accent: hsl(14, 100%, 57%); /* Energetic Orange */
+  
+  --navy: hsl(215, 45%, 15%); /* Sophisticated Deep Navy */
   --white: #ffffff;
-  --text: hsl(215, 25%, 27%); /* Sophisticated Dark Slate */
+  
+  --text: hsl(215, 25%, 27%);
   --text-light: hsl(215, 16%, 47%);
   --text-muted: hsl(215, 13%, 63%);
   
-  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg: rgba(255, 255, 255, 0.6);
   --glass-border: rgba(255, 255, 255, 0.4);
   
-  /* Sophisticated Soft Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
-  --shadow-primary: 0 10px 20px -5px hsla(180, 100%, 25%, 0.3);
+  /* Precision Engineered Shadows */
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --shadow-primary: 0 10px 20px -5px hsla(182, 100%, 25%, 0.25);
   
-  --radius: 20px;
-  --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-sm: 12px;
+  --radius: 24px;
+  --radius-lg: 32px;
+  
+  --transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-theme='dark'] {
-  --primary: hsl(180, 100%, 35%);
-  --primary-light: hsl(180, 100%, 55%);
-  --secondary: hsl(220, 30%, 7%);
-  --white: hsl(220, 30%, 12%);
-  --navy: hsl(210, 40%, 90%);
+  --primary: hsl(182, 100%, 40%);
+  --primary-light: hsl(182, 100%, 60%);
+  --secondary: hsl(222, 47%, 11%);
+  --white: hsl(222, 47%, 14%);
+  --navy: hsl(210, 40%, 98%);
   --text: hsl(210, 40%, 95%);
   --text-light: hsl(210, 20%, 80%);
   --text-muted: hsl(210, 20%, 60%);
   --glass-bg: rgba(15, 23, 42, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
 }
 
 * {
@@ -50,49 +56,58 @@
 }
 
 body {
-  font-family: 'Inter', 'Noto Sans Ethiopic', system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Ethiopic', system-ui, sans-serif;
   background-color: var(--secondary);
   color: var(--text);
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Custom Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary-glow);
+  border-radius: 10px;
+  border: 2px solid var(--secondary);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-light);
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', 'Noto Sans Ethiopic', sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--navy);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
-/* Specific attractive colors for headings */
-h1 { color: var(--primary); }
-h2 { color: var(--navy); }
-h3 { color: hsl(180, 100%, 20%); } /* Darker Teal */
+h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); color: var(--navy); }
+h2 { font-size: clamp(2rem, 5vw, 3rem); }
 
-/* Dual Background Layering for EDWL Logo */
-body::before {
-  content: "";
+/* Animated Gradient Background */
+.bg-mesh {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80vmin;
-  height: 80vmin;
-  max-width: 600px;
-  max-height: 600px;
-  background-image: url('./assets/logo_2024.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.07;
-
-  z-index: -1;
-  pointer-events: none;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: -2;
+  background: 
+    radial-gradient(at 0% 0%, hsla(182, 100%, 25%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(14, 100%, 57%, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(182, 100%, 45%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(215, 45%, 15%, 0.05) 0px, transparent 50%);
+  filter: blur(100px);
+  animation: meshMove 20s ease infinite alternate;
 }
 
-.text-bold-brand {
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  text-transform: uppercase;
+@keyframes meshMove {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
 }
 
 button {
@@ -100,48 +115,53 @@ button {
   border: none;
   border-radius: var(--radius);
   font-family: inherit;
-  font-weight: 500;
+  font-weight: 600;
   transition: var(--transition);
-}
-
-.nav-logo:hover {
-  transform: scale(1.05);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: white;
-  padding: 12px 32px;
+  padding: 16px 36px;
   box-shadow: var(--shadow-primary);
-  border: 1px solid hsla(180, 100%, 10%, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
 }
 
 .btn-primary:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 24px -5px hsla(180, 100%, 25%, 0.4);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 40px -10px hsla(182, 100%, 25%, 0.4);
 }
 
 .btn-login {
-  min-height: 48px;
-  padding: 12px 32px;
-  background-color: transparent;
+  background: var(--white);
   color: var(--primary);
-  border: 2px solid var(--primary);
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 1rem;
-  transition: var(--transition);
+  padding: 14px 32px;
+  border: 1px solid var(--primary-glow);
+  box-shadow: var(--shadow);
 }
 
 .btn-login:hover {
-  background-color: var(--primary);
-  color: white;
+  background: var(--secondary);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-primary);
-}
-
-p {
-  color: var(--text-light);
 }
 
 strong {
@@ -378,6 +398,19 @@ strong {
 .delay-2 { animation-delay: 0.2s; }
 .delay-3 { animation-delay: 0.3s; }
 
+/* Screen reader only utility class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 /* Refined App Entry Animation */
 .app {
   animation: fadeIn 0.8s ease-out;
@@ -387,5 +420,12 @@ strong {
   nav a > div > div:first-child,
   nav a > div > div:last-child {
     font-size: 0.65rem !important;
+  }
+}@media (max-width: 768px) {
+  .nav-logo-text {
+    display: none !important;
+  }
+  .nav-logo {
+    height: 40px !important;
   }
 }

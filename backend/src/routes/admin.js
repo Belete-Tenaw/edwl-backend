@@ -21,4 +21,8 @@ router.get('/stats', auth, authorize([Roles.ADMIN]), adminController.getAdminSta
 router.get('/analytics', auth, authorize([Roles.ADMIN]), analyticsController.getPlatformStats);
 router.get('/insights', auth, authorize([Roles.ADMIN]), analyticsController.getMarketInsights);
 
+// Dispute Management
+router.get('/disputes', auth, authorize([Roles.ADMIN]), adminController.getAllDisputes);
+router.post('/disputes/:id/resolve', auth, authorize([Roles.ADMIN]), adminController.resolveDispute);
+
 module.exports = router;

@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const prisma = require('../utils/prisma');
 const telegramService = require('../services/telegramService');
 const aiTrustEngine = require('../services/aiTrustEngine');
+const { runChurnPreventionAlg } = require('./predictiveRetention');
 
 // JOB 1: Daily "Teaser" Matches (Runs every day at 09:00 AM)
 if (process.env.NODE_ENV !== 'test') {
@@ -137,6 +138,15 @@ if (process.env.NODE_ENV !== 'test') {
             }
         } catch (error) {
             console.error('[CRON Error] LTV Re-engagement Marketing Engine:', error);
+        }
+    });
+
+    // JOB 5: Phase 3 Predictive Analytics & Churn Prevention (Runs every day at 12:00 PM)
+    cron.schedule('0 12 * * *', async () => {
+        try {
+            await runChurnPreventionAlg();
+        } catch (error) {
+            console.error('[CRON Error] Phase 3 Churn Prevention:', error);
         }
     });
 }

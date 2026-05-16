@@ -10,6 +10,7 @@ import { processVideoBio } from '../utils/videoProcessor';
 import CameraCapture from '../components/CameraCapture';
 import { Camera, Calendar } from 'lucide-react';
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
+import VoiceRecorder from '../components/VoiceRecorder';
 
 const EditProfile = () => {
     const { t } = useTranslation();
@@ -280,7 +281,7 @@ const EditProfile = () => {
             localStorage.setItem('user', JSON.stringify(updatedUser));
             setUser(updatedUser);
 
-            alert('Profile updated successfully!');
+            alert(t('profile_updated_success'));
             navigate(-1);
         } catch (err) {
             console.error(err);
@@ -291,7 +292,7 @@ const EditProfile = () => {
         }
     };
 
-    if (loading) return <div className="container" style={{ padding: '50px' }}>Loading...</div>;
+    if (loading) return <div className="container" style={{ padding: '50px' }}>{t('loading')}</div>;
 
     return (
         <div className="container" style={{ padding: '40px 20px', maxWidth: '800px' }}>
@@ -433,6 +434,18 @@ const EditProfile = () => {
                                 )}
                             </div>
 
+                            <div style={{ gridColumn: '1 / -1' }}>
+                                <label className="label">{t('voice_bio')} ({t('optional')})</label>
+                                <VoiceRecorder onComplete={(data) => {
+                                    if (data.extractedSkills && data.extractedSkills.length > 0) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            skills: Array.from(new Set([...(prev.skills || []), ...data.extractedSkills]))
+                                        }));
+                                    }
+                                }} />
+                            </div>
+
                             <div>
                                 <label className="label">{t('profile_photo')} (Image)</label>
                                 <input type="file" className="input" name="profilePhoto" accept="image/*" onChange={handleFileChange} />
@@ -444,25 +457,25 @@ const EditProfile = () => {
                             </div>
 
                             <div style={{ gridColumn: '1 / -1', background: '#eef2ff', padding: '20px', borderRadius: '8px', border: '1px solid #c7d2fe', marginTop: '10px' }}>
-                                <h4 style={{ color: '#3730a3', marginBottom: '10px' }}>🇪🇹 National ID (Fayda) Verification</h4>
+                                <h4 style={{ color: '#3730a3', marginBottom: '10px' }}>🇪🇹 {t('fayda_verification_title')}</h4>
                                 {formData.isFaydaVerified ? (
-                                    <div style={{ color: '#166534', fontWeight: 'bold' }}>✅ Your Fayda ID ({formData.faydaId}) is Verified</div>
+                                    <div style={{ color: '#166534', fontWeight: 'bold' }}>✅ {t('fayda_verified_msg', { id: formData.faydaId })}</div>
                                 ) : (
                                     faydaStep === 0 ? (
                                         <div style={{ display: 'flex', gap: '10px' }}>
-                                            <input className="input" placeholder="Enter 12-digit Fayda ID" value={faydaIdInput} onChange={e => setFaydaIdInput(e.target.value)} />
-                                            <button type="button" className="btn-primary" onClick={handleRequestFaydaOTP}>Verify Fayda</button>
+                                            <input className="input" placeholder={t('fayda_id_placeholder')} value={faydaIdInput} onChange={e => setFaydaIdInput(e.target.value)} />
+                                            <button type="button" className="btn-primary" onClick={handleRequestFaydaOTP}>{t('verify_fayda')}</button>
                                         </div>
                                     ) : faydaStep === 1 ? (
                                         <div style={{ display: 'flex', gap: '10px' }}>
-                                            <input className="input" placeholder="Enter OTP (e.g. 123456)" value={faydaOtpInput} onChange={e => setFaydaOtpInput(e.target.value)} />
-                                            <button type="button" className="btn-primary" onClick={handleVerifyFaydaOTP}>Submit OTP</button>
+                                            <input className="input" placeholder={t('otp_placeholder')} value={faydaOtpInput} onChange={e => setFaydaOtpInput(e.target.value)} />
+                                            <button type="button" className="btn-primary" onClick={handleVerifyFaydaOTP}>{t('submit_otp')}</button>
                                         </div>
                                     ) : (
-                                        <div style={{ color: '#166534', fontWeight: 'bold' }}>✅ Verified in this session. Save changes to keep it!</div>
+                                        <div style={{ color: '#166534', fontWeight: 'bold' }}>✅ {t('verified_session_msg')}</div>
                                     )
                                 )}
-                                <p style={{ fontSize: '0.8rem', color: '#4f46e5', marginTop: '5px' }}>Verified users get priority matching and the highly trusted "Verified" badge.</p>
+                                <p style={{ fontSize: '0.8rem', color: '#4f46e5', marginTop: '5px' }}>{t('fayda_benefits_msg')}</p>
                             </div>
 
                             <div style={{ gridColumn: '1 / -1', marginTop: '20px' }}>
@@ -483,7 +496,7 @@ const EditProfile = () => {
                             </div>
                             <div>
                                 <label className="label">{t('security_question')}</label>
-                                <input className="input" name="securityQuestion" value={formData.securityQuestion || ''} onChange={handleChange} placeholder="e.g. Your first pet?" />
+                                <input className="input" name="securityQuestion" value={formData.securityQuestion || ''} onChange={handleChange} placeholder={t('security_question_placeholder')} />
                             </div>
                             <div>
                                 <label className="label">{t('security_answer')}</label>

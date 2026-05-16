@@ -10,5 +10,6 @@ router.post('/sos', safetyController.triggerSOS);
 router.patch('/sos/:id/resolve', safetyController.resolveSOS);
 router.post('/transit-update', safetyController.updateTransitLocation);
 router.get('/transit-location/:contractId', safetyController.getTransitLocation);
+router.post('/check-in', safetyController.checkIn);
 
 module.exports = router;

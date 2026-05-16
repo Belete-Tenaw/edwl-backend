@@ -1,4 +1,5 @@
 const prisma = require('../utils/prisma');
+const notificationService = require('../services/notificationService');
 
 // Create a digital contract
 exports.createContract = async (req, res) => {
@@ -17,7 +18,7 @@ exports.createContract = async (req, res) => {
                 jobPostId,
                 startDate: new Date(startDate),
                 endDate: endDate ? new Date(endDate) : null,
-                salaryAmount: parseFloat(salaryAmount),
+                salary: parseFloat(salaryAmount),
                 insuranceFee: includeInsurance ? 250.0 : 0,
                 termsConditions,
                 jobType,
@@ -26,6 +27,13 @@ exports.createContract = async (req, res) => {
         });
 
         res.status(201).json(contract);
+
+        // Notify Seeker
+        await notificationService.notify(jobSeekerId, 'JOB_SEEKER', {
+            title: 'New Contract Offer! 📝',
+            message: `You have received a new employment contract offer. Please review and sign.`,
+            type: 'MATCH'
+        });
     } catch (error) {
         console.error("Create contract error:", error);
         res.status(500).json({ error: "Failed to create contract." });
@@ -55,6 +63,13 @@ exports.signContract = async (req, res) => {
         });
 
         res.json(updatedContract);
+
+        // Notify Employer
+        await notificationService.notify(contract.employerId, 'EMPLOYER', {
+            title: 'Contract Signed! ✅',
+            message: `The worker has signed the contract. You can now proceed to fund the escrow.`,
+            type: 'MATCH'
+        });
     } catch (error) {
         console.error("Sign contract error:", error);
         res.status(500).json({ error: "Failed to sign contract." });

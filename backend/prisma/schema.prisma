@@ -11,6 +11,7 @@ datasource db {
 model JobSeeker {
   id                   String                @id @default(uuid())
   fullName             String
+  badges               String[]              @default([])
   gender               Gender
   age                  Int
   religion             String?
@@ -62,6 +63,8 @@ model JobSeeker {
   telegramChatId       String?               @unique
   videoBio             String?
   videoTranscription   Json?
+  voiceBioUrl          String?
+  voiceBioTranscription Json?
   interviewAnswers     Json?
   availability         Json?
   tier                 SeekerTier            @default(BRONZE)
@@ -89,6 +92,13 @@ model JobSeeker {
   viewLogs             ViewLog[]
   notifications        Notification[]
   sosAlerts            SOSAlert[]
+  transitSessions      TransitSession[]
+  agencyId             String?
+  agency               Agency?               @relation(fields: [agencyId], references: [id])
+  isHealthClinicallyVerified Boolean         @default(false)
+  isPoliceApiVerified        Boolean         @default(false)
+  lastVoiceCallAt            DateTime?
+  microLoans                 MicroLoan[]
 
   @@index([tier])
   @@index([createdAt])
@@ -162,6 +172,7 @@ model Employer {
   viewLogs             ViewLog[]
   notifications        Notification[]
   sosAlerts            SOSAlert[]
+  transitSessions      TransitSession[]
 
   @@index([tier])
   @@index([createdAt])
@@ -208,18 +219,20 @@ model JobPost {
 }
 
 model Message {
-  id            String     @id @default(uuid())
-  content       String
-  timestamp     DateTime   @default(now())
-  read          Boolean    @default(false)
-  senderJSId    String?
-  receiverJSId  String?
-  senderEmpId   String?
-  receiverEmpId String?
-  receiverEmp   Employer?  @relation("ReceivedByEmp", fields: [receiverEmpId], references: [id])
-  receiverJS    JobSeeker? @relation("ReceivedByJS", fields: [receiverJSId], references: [id])
-  senderEmp     Employer?  @relation("SentByEmp", fields: [senderEmpId], references: [id])
-  senderJS      JobSeeker? @relation("SentByJS", fields: [senderJSId], references: [id])
+  id               String     @id @default(uuid())
+  content          String
+  translatedText   String?
+  detectedLanguage String?
+  timestamp        DateTime   @default(now())
+  read             Boolean    @default(false)
+  senderJSId       String?
+  receiverJSId     String?
+  senderEmpId      String?
+  receiverEmpId    String?
+  receiverEmp      Employer?  @relation("ReceivedByEmp", fields: [receiverEmpId], references: [id])
+  receiverJS       JobSeeker? @relation("ReceivedByJS", fields: [receiverJSId], references: [id])
+  senderEmp        Employer?  @relation("SentByEmp", fields: [senderEmpId], references: [id])
+  senderJS         JobSeeker? @relation("SentByJS", fields: [senderJSId], references: [id])
 
   @@index([senderJSId])
   @@index([receiverJSId])
@@ -349,6 +362,9 @@ model Contract {
   insuranceFee   Float?         @default(0)
   employerSigned Boolean        @default(false)
   workerSigned   Boolean        @default(false)
+  jobType        String?
+  termsConditions String?
+  signedAt       DateTime?
   createdAt      DateTime       @default(now())
   employer       Employer       @relation(fields: [employerId], references: [id])
   jobPost        JobPost?       @relation(fields: [jobPostId], references: [id])
@@ -357,6 +373,7 @@ model Contract {
   disputes       Dispute[]
   reviews        Review[]
   transitSessions TransitSession[]
+  escrowContracts EscrowContract[]
 
   @@index([employerId])
   @@index([jobSeekerId])
@@ -383,6 +400,9 @@ model Dispute {
   resolution    String?
   adminId       String?
   evidenceUrls  String[]      @default([])
+  aiSuggestedResolution String?
+  aiConfidenceScore     Float?
+  autoMediated          Boolean       @default(false)
   createdAt     DateTime      @default(now())
   admin         Admin?        @relation(fields: [adminId], references: [id])
   contract      Contract?     @relation(fields: [contractId], references: [id])
@@ -474,29 +494,43 @@ model UserTraining {
 }
 
 model EscrowContract {
-  id          String       @id @default(uuid())
-  employerId  String
-  workerId    String
-  jobId       String?
-  amount      Float
-  status      EscrowStatus @default(PENDING)
-  telebirrRef String?      @unique
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  employer    Employer     @relation(fields: [employerId], references: [id])
-  jobPost     JobPost?     @relation(fields: [jobId], references: [id])
-  worker      JobSeeker    @relation(fields: [workerId], references: [id])
+  id                String       @id @default(uuid())
+  contractId        String?
+  employerId        String
+  workerId          String
+  jobId             String?
+  amount            Float
+  status            EscrowStatus @default(PENDING)
+  providerRef       String?      @unique
+  provider          String?      @default("CHAPA") // CHAPA, STRIPE, TELEBIRR
+  telebirrRef       String?      @unique
+  employerConfirmed Boolean      @default(false)
+  workerConfirmed   Boolean      @default(false)
+  transactionHash   String?      // Used for cryptographic verification of the handshake
+  releaseDate       DateTime?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  contract          Contract?    @relation(fields: [contractId], references: [id])
+  employer          Employer     @relation(fields: [employerId], references: [id])
+  jobPost           JobPost?     @relation(fields: [jobId], references: [id])
+  worker            JobSeeker    @relation(fields: [workerId], references: [id])
 }
 
 model TransitSession {
   id          String   @id @default(uuid())
   contractId  String
   userId      String
+  userType    String?  // 'JOB_SEEKER' or 'EMPLOYER'
   latitude    Float
   longitude   Float
   updatedAt   DateTime @updatedAt
   isActive    Boolean  @default(true)
   contract    Contract @relation(fields: [contractId], references: [id])
+  
+  jobSeeker   JobSeeker? @relation(fields: [userId], references: [id], map: "Transit_JobSeeker_fkey")
+  employer    Employer?  @relation(fields: [userId], references: [id], map: "Transit_Employer_fkey")
+
+  @@index([userId, isActive])
 }
 
 enum Gender {
@@ -581,6 +615,8 @@ enum VerificationStatus {
 enum ContractStatus {
   DRAFT
   PENDING_SIGNATURE
+  PENDING_SEEKER_SIGNATURE
+  SIGNED_BY_SEEKER
   ACTIVE
   COMPLETED
   TERMINATED
@@ -632,3 +668,54 @@ model SOSAlert {
   @@index([status])
   @@index([createdAt])
 }
+
+model Agency {
+  id               String      @id @default(uuid())
+  name             String
+  registrationNo   String      @unique
+  contactPhone     String      @unique
+  contactEmail     String?     @unique
+  password         String
+  address          String
+  logo             String?     // Added for B2B branding
+  profilePhoto     String?     // Added for B2B branding
+  isVerified       Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  workers          JobSeeker[]
+  fleetSize        Int         @default(0)
+  escrowBalance    Float       @default(0.0)
+  tier             AgencyTier  @default(STANDARD)
+  isActive         Boolean     @default(true)
+}
+
+model MicroLoan {
+  id             String      @id @default(uuid())
+  jobSeekerId    String
+  amount         Float
+  status         LoanStatus  @default(PENDING)
+  dueDate        DateTime
+  repaidAmount   Float       @default(0.0)
+  escrowContractId String?   @unique
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  jobSeeker      JobSeeker   @relation(fields: [jobSeekerId], references: [id])
+
+  @@index([jobSeekerId])
+  @@index([status])
+}
+
+enum AgencyTier {
+  STANDARD
+  PREMIUM
+  ENTERPRISE
+}
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  REPAID
+  DEFAULTED
+}
+

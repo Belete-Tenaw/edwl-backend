@@ -4,8 +4,17 @@ const authController = require('../controllers/authController');
 const upload = require('../middleware/upload');
 const { authRateLimiter, registerRateLimiter } = require('../middleware/rateLimiter');
 const verifyToken = require('../middleware/auth');
+const {
+    seekerLoginValidator,
+    employerLoginValidator,
+    forgotPasswordValidator,
+    resetPasswordValidator,
+    refreshTokenValidator
+} = require('../middleware/validators');
 
-// Job Seeker Routes
+// =========================================
+// JOB SEEKER ROUTES
+// =========================================
 router.post('/seeker/register', registerRateLimiter, upload.fields([
     { name: 'profilePhoto', maxCount: 1 },
     { name: 'idDocument', maxCount: 1 },
@@ -16,26 +25,47 @@ router.post('/seeker/register', registerRateLimiter, upload.fields([
     { name: 'videoBio', maxCount: 1 }
 ]), upload.enforceImageSizeLimit, authController.registerJobSeeker);
 
-router.post('/seeker/login', authRateLimiter, authController.loginJobSeeker);
+// GAP 2: Login now validates input before hitting DB
+router.post('/seeker/login', authRateLimiter, seekerLoginValidator, authController.loginJobSeeker);
 
-// Employer Routes
+// =========================================
+// EMPLOYER ROUTES
+// =========================================
 router.post('/employer/register', registerRateLimiter, upload.none(), authController.registerEmployer);
-router.post('/employer/login', authRateLimiter, authController.loginEmployer);
 
-// Admin Routes
+// GAP 2: Login now validates input before hitting DB
+router.post('/employer/login', authRateLimiter, employerLoginValidator, authController.loginEmployer);
+
+// =========================================
+// ADMIN ROUTES
+// =========================================
 router.post('/admin/login', authRateLimiter, authController.loginAdmin);
 
-// Firebase integration
+// =========================================
+// FIREBASE
+// =========================================
 router.post('/firebase-login', authController.firebaseLogin);
 
-// Password reset
-router.post('/forgot-password', authRateLimiter, authController.forgotPassword);
-router.post('/reset-password', authRateLimiter, authController.resetPassword);
+// =========================================
+// PASSWORD RESET (GAP 2: Validated)
+// =========================================
+router.post('/forgot-password', authRateLimiter, forgotPasswordValidator, authController.forgotPassword);
+router.post('/reset-password', authRateLimiter, resetPasswordValidator, authController.resetPassword);
 
-// Pre-flight duplicate check (phone or email, no auth required)
+// =========================================
+// GAP 3: JWT REFRESH TOKEN ENDPOINT
+// Allows the frontend to get a new access token without forcing re-login.
+// =========================================
+router.post('/refresh', refreshTokenValidator, authController.refreshToken);
+
+// =========================================
+// PRE-FLIGHT DUPLICATE CHECK
+// =========================================
 router.get('/check-duplicate', authController.checkDuplicate);
 
-// Notification Routes (Authenticated)
+// =========================================
+// NOTIFICATION ROUTES (Authenticated)
+// =========================================
 router.get('/notifications', verifyToken, authController.getNotifications);
 router.put('/notifications/:id/read', verifyToken, authController.markNotificationRead);
 router.put('/notifications/read-all', verifyToken, authController.markAllNotificationsRead);

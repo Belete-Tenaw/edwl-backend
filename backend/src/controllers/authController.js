@@ -608,3 +608,19 @@ exports.markAllNotificationsRead = async (req, res) => {
     }
 };
 
+exports.refreshToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+        if (!refreshToken) return res.status(400).json({ error: "Refresh token required" });
+        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+        const newToken = jwt.sign(
+            { id: decoded.id, role: decoded.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        res.json({ token: newToken });
+    } catch (error) {
+        res.status(401).json({ error: "Invalid session" });
+    }
+};
+

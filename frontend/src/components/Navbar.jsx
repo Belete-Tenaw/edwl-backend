@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { useTranslation } from 'react-i18next';
 import { Menu, LogOut, User, MessageSquare, LogIn, LayoutDashboard, Briefcase, Sun, Moon, Database, Gift } from 'lucide-react';
-import logo from '../assets/logo_premium_v4.png';
+import logo from '../assets/edwl_logo.png';
 import NotificationCenter from './NotificationCenter';
 
 const Navbar = () => {
@@ -49,13 +49,16 @@ const Navbar = () => {
     return (
         <nav className="navbar glass" style={{ position: 'sticky', top: 0, zIndex: 1000, padding: '10px 24px', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226, 232, 240, 0.6)', transition: 'all 0.3s ease' }}>
             <NavLink to="/" onClick={closeMenu} className={({ isActive }) => `nav-logo-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                <img src={logo} alt="EDWL Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease' }} className="nav-logo" />
-                <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column', color: 'var(--navy)' }}>
-                    <span style={{ fontSize: '1.2rem', fontWeight: '900', lineHeight: 1, letterSpacing: '-0.2px' }}>
-                        ኢትዮ ሃገር ውስጥ ሠራተኞች አገናኝ
+                <img src={logo} alt="EDWL Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease', filter: 'contrast(1.2) saturate(1.3)' }} className="nav-logo" />
+                <div className="nav-logo-text" style={{ display: 'flex', flexDirection: 'column', color: 'var(--navy)', gap: '2px' }}>
+                    <span style={{ fontSize: '1.15rem', fontWeight: '900', lineHeight: 1.1, letterSpacing: '-0.2px' }}>
+                        ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ
                     </span>
-                    <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1, marginTop: '5px' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1.1, opacity: 0.9, display: 'flex', alignItems: 'center', gap: '8px' }}>
                         Ethio Domestic Workers Link
+                        <span className="ai-pulse" style={{ fontSize: '0.65rem', marginLeft: '5px' }}>
+                            Live AI
+                        </span>
                     </span>
                 </div>
             </NavLink>
@@ -95,7 +98,12 @@ const Navbar = () => {
                 <NavLink to="/about" onClick={closeMenu} className={getNavLinkClass}>{t('about_us')}</NavLink>
                 <NavLink to="/contact" onClick={closeMenu} className={getNavLinkClass}>{t('contact_us')}</NavLink>
                 <NavLink to="/pricing" onClick={closeMenu} className={getNavLinkClass}>{t('plans')}</NavLink>
-                {user && <NavLink to="/rewards" onClick={closeMenu} className={getNavLinkClass}>{t('rewards') || 'Rewards'}</NavLink>}
+                {user && (
+                    <>
+                        <NavLink to="/rewards" onClick={closeMenu} className={getNavLinkClass}>{t('rewards') || 'Rewards'}</NavLink>
+                        <NavLink to="/wallet" onClick={closeMenu} className={getNavLinkClass}>{t('wallet') || 'Wallet'}</NavLink>
+                    </>
+                )}
 
                 {/* Desktop language toggle */}
                 <div className="desktop-only">
@@ -144,7 +152,7 @@ const Navbar = () => {
                             <span className="desktop-only">{t('messages')}</span>
                         </NavLink>
                         <NavLink
-                            to={user.role === 'JOB_SEEKER' ? '/dashboard/seeker' : user.role === 'EMPLOYER' ? '/dashboard/employer' : '/admin'}
+                            to={user.role === 'JOB_SEEKER' ? '/dashboard/seeker' : user.role === 'EMPLOYER' ? '/dashboard/employer' : user.role === 'AGENCY' ? '/dashboard/agency' : '/admin'}
                             onClick={closeMenu}
                             className={getNavLinkClass}
                         >
@@ -255,7 +263,7 @@ const Navbar = () => {
                                     zIndex: 1100,
                                     border: '1px solid #eee'
                                 }}>
-                                    <Link to={user.role === 'JOB_SEEKER' ? '/dashboard/seeker' : user.role === 'EMPLOYER' ? '/dashboard/employer' : '/admin'} onClick={() => setIsProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', textDecoration: 'none', color: '#333', fontSize: '0.9rem', borderRadius: '8px' }} className="dropdown-item">
+                                    <Link to={user.role === 'JOB_SEEKER' ? '/dashboard/seeker' : user.role === 'EMPLOYER' ? '/dashboard/employer' : user.role === 'AGENCY' ? '/dashboard/agency' : '/admin'} onClick={() => setIsProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', textDecoration: 'none', color: '#333', fontSize: '0.9rem', borderRadius: '8px' }} className="dropdown-item">
                                         <LayoutDashboard size={18} color="#666" />
                                         <span>{t('dashboard')}</span>
                                     </Link>
@@ -266,6 +274,10 @@ const Navbar = () => {
                                     <Link to="/pricing" onClick={() => setIsProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', textDecoration: 'none', color: '#333', fontSize: '0.9rem', borderRadius: '8px' }} className="dropdown-item">
                                         <Briefcase size={18} color="#666" />
                                         <span>{t('subscription') || t('plans')}</span>
+                                    </Link>
+                                    <Link to="/wallet" onClick={() => setIsProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', textDecoration: 'none', color: '#333', fontSize: '0.9rem', borderRadius: '8px' }} className="dropdown-item">
+                                        <CreditCard size={18} color="#666" />
+                                        <span>{t('wallet') || 'Wallet'}</span>
                                     </Link>
                                     <div style={{ height: '1px', background: '#eee', margin: '8px 0' }}></div>
                                     <button 
