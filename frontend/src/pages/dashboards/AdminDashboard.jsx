@@ -6,6 +6,7 @@ import PremiumCodeFactory from '../admin/PremiumCodeFactory';
 import DisputeManager from '../admin/DisputeManager';
 import AdminInsights from './AdminInsights';
 import PredictiveAnalytics from '../admin/PredictiveAnalytics';
+import OwnerAutopilot from '../admin/OwnerAutopilot';
 
 // Helper function to get full document URL
 const getDocumentUrl = (path) => {
@@ -21,7 +22,7 @@ const AdminDashboard = () => {
     const [reports, setReports] = useState([]);
     const [generatedCode, setGeneratedCode] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('verification'); 
+    const [activeTab, setActiveTab] = useState('autopilot'); 
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [stats, setStats] = useState(null);
     const [days, setDays] = useState(30);
@@ -110,13 +111,18 @@ const AdminDashboard = () => {
                         <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: 'white', margin: 0 }}>Command Center</h2>
                         <p style={{ color: '#94a3b8', marginTop: '8px' }}>Autonomous platform oversight and intelligence.</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '6px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', flexWrap: 'wrap' }}>
+                        <button onClick={() => setActiveTab('autopilot')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'autopilot' ? '#10b981' : 'transparent', color: activeTab === 'autopilot' ? '#052e16' : '#94a3b8', fontWeight: '800', cursor: 'pointer', transition: 'all 0.3s' }}>Owner Autopilot</button>
                         <button onClick={() => setActiveTab('verification')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'verification' ? '#38bdf8' : 'transparent', color: activeTab === 'verification' ? '#0f172a' : '#94a3b8', fontWeight: '800', cursor: 'pointer', transition: 'all 0.3s' }}>Verification</button>
                         <button onClick={() => setActiveTab('predictive')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'predictive' ? '#8b5cf6' : 'transparent', color: activeTab === 'predictive' ? 'white' : '#94a3b8', fontWeight: '800', cursor: 'pointer', transition: 'all 0.3s' }}>🧠 AI Pulse</button>
                         <button onClick={() => setActiveTab('pulse')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'pulse' ? 'white' : 'transparent', color: activeTab === 'pulse' ? '#0f172a' : '#94a3b8', fontWeight: '800', cursor: 'pointer' }}>📊 Ops</button>
                         <button onClick={() => setActiveTab('disputes')} style={{ padding: '10px 20px', borderRadius: '12px', border: 'none', background: activeTab === 'disputes' ? 'white' : 'transparent', color: activeTab === 'disputes' ? '#0f172a' : '#94a3b8', fontWeight: '800', cursor: 'pointer' }}>⚖️ Disputes</button>
                     </div>
                 </div>
+
+            {activeTab === 'autopilot' && (
+                <OwnerAutopilot />
+            )}
 
             {activeTab === 'predictive' && (
                 <PredictiveAnalytics stats={stats} />
@@ -495,6 +501,7 @@ const AdminDashboard = () => {
             {activeTab === 'codes' && (
                 <PremiumCodeFactory />
             )}
+            </div>
         </div>
     );
 };

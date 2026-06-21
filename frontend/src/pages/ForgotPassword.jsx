@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { KeyRound, Mail, ArrowLeft, CheckCircle, Lock, ShieldCheck, HeartPulse } from 'lucide-react';
 import authService from '../services/authService';
 import { useToast } from '../components/Toast';
+import Seo, { BRAND_EN } from '../components/Seo';
 
 const ForgotPassword = () => {
     const { t } = useTranslation();
@@ -68,6 +69,13 @@ const ForgotPassword = () => {
     };
 
     return (
+        <>
+        <Seo
+            title={`Reset Password - ${BRAND_EN}`}
+            description="Reset an EDWL account password."
+            path="/forgot-password"
+            noIndex
+        />
         <div className="container" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
             <div className="card reveal" style={{ width: '100%', maxWidth: '440px', padding: '40px', borderRadius: '24px', boxShadow: 'var(--shadow)' }}>
 
@@ -214,6 +222,7 @@ const ForgotPassword = () => {
                 @keyframes progress { from { width: 0; } to { width: 100%; } }
             `}</style>
         </div>
+        </>
     );
 };
 

@@ -22,7 +22,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
+        const isPublicRequest = error.config?.url?.includes('/seekers/public');
+        if (error.response && error.response.status === 401 && !isPublicRequest) {
             // Session expired
             localStorage.removeItem('token');
             localStorage.removeItem('user');

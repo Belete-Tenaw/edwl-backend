@@ -10,6 +10,7 @@ import DigitalContractViewer from '../../components/DigitalContractViewer';
 import EscrowTracker from '../../components/EscrowTracker';
 import CandidateComparisonModal from '../../components/CandidateComparisonModal';
 import { FileText, Columns } from 'lucide-react';
+import { OCCUPATION_CATEGORIES } from '../../constants/occupations';
 
 const EmployerDashboard = () => {
     const { t } = useTranslation();
@@ -85,8 +86,10 @@ const EmployerDashboard = () => {
     };
 
     const handleJobPosted = (newJob) => {
+        setMyJobs(prev => [newJob, ...prev]);
         alert(t('job_posted_success') || 'Job posted successfully!');
         setShowJobModal(false);
+        fetchMatches(newJob.id);
     };
 
     const handleRedeemCode = async () => {
@@ -122,10 +125,22 @@ const EmployerDashboard = () => {
     };
 
     const displayedWorkers = selectedJobForMatches ? matches : workers;
+
+    const getOccupationLabel = (worker) => {
+        const categoryValue = worker.occupationCategory || worker.occupation_category;
+        const customOccupation = worker.customOccupation || worker.custom_occupation;
+
+        if (categoryValue === 'OTHER' && customOccupation) return customOccupation;
+
+        const category = OCCUPATION_CATEGORIES.find(item => item.value === categoryValue);
+        return category ? t(category.labelKey, category.defaultLabel) : (customOccupation || '');
+    };
     
     const filteredWorkers = displayedWorkers.filter(worker => {
+        const occupationLabel = getOccupationLabel(worker).toLowerCase();
         const matchesSearch = (worker.fullName || worker.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              ((worker.skills || []).join(' ')).toLowerCase().includes(searchTerm.toLowerCase());
+                              ((worker.skills || []).join(' ')).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              occupationLabel.includes(searchTerm.toLowerCase());
         const matchesLocation = filterLocation ? (worker.preferredLocation === filterLocation) : true;
         return matchesSearch && matchesLocation;
     });
@@ -618,6 +633,11 @@ const EmployerDashboard = () => {
                                                 {worker.match_score && (
                                                     <div style={{ marginBottom: '8px', color: 'var(--primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                                         <Star size={16} fill="var(--primary)" /> {worker.match_score}% {t('skills_match')}
+                                                    </div>
+                                                )}
+                                                {getOccupationLabel(worker) && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
+                                                        <Briefcase size={16} /> {getOccupationLabel(worker)}
                                                     </div>
                                                 )}
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>

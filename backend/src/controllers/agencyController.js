@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -30,7 +29,18 @@ exports.registerAgency = async (req, res) => {
             }
         });
 
-        res.status(201).json({ message: 'Agency registered successfully.', agency });
+        const token = jwt.sign(
+            { id: agency.id, role: 'AGENCY' },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            message: 'Agency registered successfully.',
+            agency,
+            token,
+            user: { id: agency.id, name: agency.name, role: 'AGENCY' }
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server error' });

@@ -32,6 +32,31 @@ if (process.env.NODE_ENV !== 'test') {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const parseOriginList = (value) => (value || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const officialFrontendUrl = 'https://ethiodomesticworkers.web.app';
+const legacyFrontendUrls = [
+  'https://edwl-ethio-domesticworkerslink.web.app',
+  'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
+];
+const defaultFrontendOrigins = [
+  officialFrontendUrl,
+  'https://ethiodomesticworkers.firebaseapp.com',
+  ...legacyFrontendUrls,
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+const allowedOrigins = Array.from(new Set([
+  ...defaultFrontendOrigins,
+  ...parseOriginList(process.env.CORS_ORIGIN),
+  ...parseOriginList(process.env.FRONTEND_URL),
+]));
+
 // --- WORLD-CLASS AUTH BRUTE FORCE PROTECTION ---
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -54,13 +79,7 @@ const io = new Server(server, {
   cors: {
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
-      const socketAllowed = [
-        'https://edwl-ethio-domesticworkerslink.web.app',
-        'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
-        'http://localhost:3000',
-        ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [])
-      ];
-      if (socketAllowed.includes(origin) || process.env.NODE_ENV !== 'production') {
+      if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
         callback(null, true);
       } else {
         callback(new Error('Socket.IO connection not allowed from: ' + origin));
@@ -149,8 +168,7 @@ app.use(helmet({
         "'self'",
         "https://*.firebaseio.com",
         "https://*.googleapis.com",
-        "https://edwl-ethio-domesticworkerslink.web.app",
-        "https://edwl-ethio-domesticworkerslink.firebaseapp.com"
+        ...allowedOrigins
       ],
     },
   },
@@ -167,15 +185,6 @@ app.use(express.json({ limit: '10mb' }));
 // ================================
 // 🔐 DYNAMIC CORS CONFIGURATION
 // ================================
-const envOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
-const allowedOrigins = [
-  'https://edwl-ethio-domesticworkerslink.web.app',
-  'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  ...envOrigins
-];
-
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
@@ -217,7 +226,7 @@ app.use('/uploads', express.static(uploadsPath, {
 // 🏠 ROOT ROUTE (Redirect to Frontend)
 // ================================
 app.get('/', (req, res) => {
-  const frontendUrl = 'https://edwl-ethio-domesticworkerslink.web.app';
+  const frontendUrl = process.env.FRONTEND_URL || officialFrontendUrl;
   if (process.env.NODE_ENV === 'production') {
     return res.redirect(frontendUrl);
   }
@@ -257,10 +266,11 @@ app.use('/api/contracts', require('./routes/contracts'));
 app.use('/api/escrow', require('./routes/escrow'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/seeker', require('./routes/academy'));
-app.use('/api/loans', require('./routes/loanRoutes'));
+app.use('/api/did', require('./routes/didRoutes'));
 app.use('/api/agencies', require('./routes/agencyRoutes'));
-app.use('/api/mediation', require('./routes/mediationRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/mediation', require('./routes/mediationRoutes'));
+app.use('/api/loans', require('./routes/loanRoutes'));
 
 // ================================
 // 🌐 PHASE 2: OMNICHANNEL WEBHOOK

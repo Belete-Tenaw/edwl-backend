@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { validateAndFormatPhone } from '../utils/validation';
 import authService from '../services/authService';
+import { getFriendlyApiError } from '../utils/apiErrors';
 
 /**
  * SmartAuth Component
@@ -52,18 +53,11 @@ export const SmartAuth = ({ activeTab, onSuccess, onError, initialIdentifier = '
         } catch (error) {
             console.error('SmartAuth Error:', error);
             
-            // Map common error patterns to translated messages with robust fallbacks
             let errorMessage = '';
-            const apiError = error.response?.data?.error || error.response?.data?.message;
-            
-            if (apiError === 'Invalid credentials' || error.message === 'Invalid credentials' || error.response?.status === 401) {
-                errorMessage = t('invalid_credentials', 'Invalid email/phone or password. Please check and try again.');
-            } else if (error.message && error.message.includes('Invalid phone number')) {
+            if (error.message && error.message.includes('Invalid phone number')) {
                 errorMessage = t('invalid_phone', 'Please enter a valid phone number (e.g. 09... or +251...)');
-            } else if (error.response?.status === 429) {
-                errorMessage = t('too_many_requests', 'Too many login attempts. Please try again later.');
             } else {
-                errorMessage = apiError || error.message || t('auth_error', 'Authentication failed. Please try again.');
+                errorMessage = getFriendlyApiError(error, t, 'auth_error');
             }
             
             if (onError) onError(errorMessage);
@@ -87,6 +81,7 @@ export const SmartAuth = ({ activeTab, onSuccess, onError, initialIdentifier = '
                     required
                     disabled={loading}
                     autoComplete="username"
+                    autoFocus
                 />
 
                 <label style={{ fontSize: '0.9rem', fontWeight: '500' }}>{t('password_placeholder', 'Password')}</label>

@@ -3,6 +3,10 @@ const prisma = require('../utils/prisma');
 const telegramService = require('../services/telegramService');
 const aiTrustEngine = require('../services/aiTrustEngine');
 const { runChurnPreventionAlg } = require('./predictiveRetention');
+const { escalateStalemates } = require('../controllers/escrowController');
+const { runOwnerAutopilotDigest } = require('../services/ownerAutopilotService');
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ethiodomesticworkers.web.app';
 
 // JOB 1: Daily "Teaser" Matches (Runs every day at 09:00 AM)
 if (process.env.NODE_ENV !== 'test') {
@@ -25,8 +29,8 @@ if (process.env.NODE_ENV !== 'test') {
 
                     if (matches && matches.length > 0) {
                         const topMatch = matches[0];
-                        if (topMatch.s_score > 70 && topMatch.s_tier === 'PLATINUM') {
-                            const message = `🎯 <b>Great News!</b>\n\nWe found a highly-rated <b>${topMatch.s_score}% Match</b> for your "${job.title}" post today. This worker is <b>PLATINUM Verified</b> (Police & Medically Cleared).\n\n🔒 Upgrade your Trust Access to view their contact info and hire them securely!\n\nVisit: https://edwl-ethio-domesticworkerslink.web.app`;
+                        if (topMatch.match_score > 70 && topMatch.tier === 'PLATINUM') {
+                            const message = `🎯 <b>Great News!</b>\n\nWe found a strong reviewed match for your "${job.title}" post today.\n\n🔒 Upgrade your Trust Access to review profile details and hire securely.\n\nVisit: ${FRONTEND_URL}`;
 
                             // Send Telegram Message if linked
                             if (employer.telegramChatId) {
@@ -65,7 +69,7 @@ if (process.env.NODE_ENV !== 'test') {
             });
 
             for (const employer of expiringEmployers) {
-                const message = `⚠️ <b>Subscription Alert</b>\n\nYour EDWL Time Access expires in exactly <b>3 days</b>. \n\nPlease renew your subscription to maintain access to worker profiles and messaging.\n\nVisit: https://edwl-ethio-domesticworkerslink.web.app`;
+                const message = `⚠️ <b>Subscription Alert</b>\n\nYour EDWL Time Access expires in exactly <b>3 days</b>. \n\nPlease renew your subscription to maintain access to worker profiles and messaging.\n\nVisit: ${FRONTEND_URL}`;
 
                 if (employer.telegramChatId) {
                     await telegramService.sendMessage(employer.telegramChatId, message);
@@ -120,7 +124,7 @@ if (process.env.NODE_ENV !== 'test') {
                 });
 
                 // Blast the localized, urgency-driven marketing message
-                const message = `✨ <b>Exclusive EDWL Offer!</b>\n\nHi ${employer.contactName}, we noticed you haven't hired your ideal domestic worker yet. \n\nWe just added 50+ AI-Vetted workers in your area! Use code <b>${promoCode}</b> within the next 72 hours to get a FREE 30-Day Silver Trust Upgrade.\n\nClaim here: https://edwl-ethio-domesticworkerslink.web.app`;
+                const message = `✨ <b>EDWL Trust Upgrade</b>\n\nHi ${employer.contactName}, we noticed you have not completed a hire yet.\n\nUse code <b>${promoCode}</b> within the next 72 hours to review available worker profiles with a 30-day Silver Trust Upgrade.\n\nClaim here: ${FRONTEND_URL}`;
 
                 if (employer.telegramChatId) {
                     await telegramService.sendMessage(employer.telegramChatId, message);
@@ -147,6 +151,26 @@ if (process.env.NODE_ENV !== 'test') {
             await runChurnPreventionAlg();
         } catch (error) {
             console.error('[CRON Error] Phase 3 Churn Prevention:', error);
+        }
+    });
+
+    // JOB 6: 🤝 Smart-Contract Escrow Stalemate Auto-Escalation (Runs every day at 03:00 AM)
+    // If only one party confirmed completion after 7 days → auto-open AI mediation dispute
+    cron.schedule('0 3 * * *', async () => {
+        try {
+            await escalateStalemates();
+        } catch (error) {
+            console.error('[CRON Error] Escrow Stalemate Escalation:', error);
+        }
+    });
+
+    // JOB 7: Owner Autopilot Morning Brief (Runs every day at 06:30 AM)
+    // Sends revenue, trust, retention, and action queue intelligence to the owner.
+    cron.schedule('30 6 * * *', async () => {
+        try {
+            await runOwnerAutopilotDigest({ notify: true });
+        } catch (error) {
+            console.error('[CRON Error] Owner Autopilot Digest:', error);
         }
     });
 }

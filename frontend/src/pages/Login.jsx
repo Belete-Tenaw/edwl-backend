@@ -5,6 +5,8 @@ import authService from '../services/authService';
 import { User, Briefcase, ShieldCheck, Lock, Mail, Phone, ArrowRight, MessageSquare, LogIn, KeyRound, Users } from 'lucide-react';
 import { auth } from '../firebase';
 import { SmartAuth } from '../components/SmartAuth';
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
+import { getFriendlyApiError } from '../utils/apiErrors';
 
 const Login = () => {
     const { t } = useTranslation();
@@ -55,13 +57,19 @@ const Login = () => {
             await authService.login({ identifier: formData.identifier, password: formData.password }, 'admin');
             navigate('/admin');
         } catch (err) {
-            setError(err.response?.data?.error || err.response?.data?.message || t('login_failed'));
+            setError(getFriendlyApiError(err, t, 'login_failed'));
         } finally {
             setLoading(false);
         }
     };
 
     return (
+        <>
+        <Seo
+            title={`Login - ${BRAND_EN}`}
+            description={`Log in to ${BRAND_EN} (${BRAND_AM}) to manage domestic worker or employer account access.`}
+            path="/login"
+        />
         <div className="container" style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
             <div className="card" style={{ width: '100%', maxWidth: '450px', padding: '40px' }}>
                 <h2 style={{ textAlign: 'center', marginBottom: '30px', color: 'var(--primary)' }}>{t('login')}</h2>
@@ -177,6 +185,7 @@ const Login = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

@@ -1,6 +1,8 @@
 const cron = require('node-cron');
 const prisma = require('../utils/prisma');
 
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ethiodomesticworkers.web.app';
+
 // Mock Email Sender (Replace with your actual SendGrid/Mailgun implementation)
 const sendEmail = async ({ to, subject, html }) => {
     console.log(`[Email Mock] Sent to: ${to} | Subject: ${subject}`);
@@ -80,7 +82,7 @@ async function runChurnPreventionAlg() {
           <p>We noticed you haven't been active on EDWL recently. We wanted to let you know that several top-rated, highly vetted domestic professionals have just joined in your area (${employer.locationRegion || 'your city'}).</p>
           <ul>${workerListHtml}</ul>
           <p>Login today to review these exclusive profiles before they are hired!</p>
-          <a href="https://edwl-ethio-domesticworkerslink.web.app/dashboard">Return to Dashboard</a>
+          <a href="${FRONTEND_URL}/dashboard">Return to Dashboard</a>
         `;
 
         if (employer.email) {

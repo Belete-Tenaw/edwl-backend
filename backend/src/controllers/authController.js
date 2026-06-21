@@ -12,6 +12,35 @@ const crypto = require('crypto');
 // HELPERS
 // =============================
 // Removed local calculateSeekerTier as it's now handled by calculateWorkerRank in utils
+const parseStringArrayField = (value) => {
+    if (Array.isArray(value)) {
+        return value.map(item => String(item).trim()).filter(Boolean);
+    }
+
+    if (typeof value !== 'string') return [];
+
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+            return parsed.map(item => String(item).trim()).filter(Boolean);
+        }
+    } catch (error) {
+        // Fall back to comma-separated input from older clients.
+    }
+
+    return trimmed.split(',').map(item => item.trim()).filter(Boolean);
+};
+
+const normalizeOptionalText = (value, maxLength = 120) => {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed ? trimmed.slice(0, maxLength) : undefined;
+};
+
+const isOtherOccupation = (value) => value && value.toUpperCase() === 'OTHER';
 
 // =============================
 // JOB SEEKER REGISTER
@@ -22,7 +51,8 @@ exports.registerJobSeeker = async (req, res, next) => {
             fullName, email, password, phone, gender,
             age, maritalStatus, expectedSalary,
             preferredLocation, preferredArrangement,
-            experienceYears, skills, bio, guarantorPhone,
+            experienceYears, skills, languages, bio, guarantorPhone,
+            occupationCategory, customOccupation,
             passwordHint, securityQuestion, securityAnswer,
             referralCodeUsed
         } = req.body;
@@ -34,6 +64,12 @@ exports.registerJobSeeker = async (req, res, next) => {
         let formattedPhone = normalizePhone(phone);
         if (phone && !formattedPhone) {
             return res.status(400).json({ error: "Invalid phone number format. Use 09... or +countrycode..." });
+        }
+
+        const normalizedOccupationCategory = normalizeOptionalText(occupationCategory, 80);
+        const normalizedCustomOccupation = normalizeOptionalText(customOccupation, 120);
+        if (isOtherOccupation(normalizedOccupationCategory) && !normalizedCustomOccupation) {
+            return res.status(400).json({ error: "Please specify the occupation when selecting Other." });
         }
 
         const photoFile = req.files && req.files['profilePhoto'] ? req.files['profilePhoto'][0] : null;
@@ -111,7 +147,10 @@ exports.registerJobSeeker = async (req, res, next) => {
                 preferredLocation: preferredLocation || 'Addis Ababa',
                 preferredArrangement: preferredArrangement || 'LIVE_IN',
                 experienceYears: parseInt(experienceYears) || 0,
-                skills: skills ? (Array.isArray(skills) ? skills : [skills]) : [],
+                skills: parseStringArrayField(skills),
+                languages: parseStringArrayField(languages),
+                occupationCategory: normalizedOccupationCategory || null,
+                customOccupation: normalizedCustomOccupation || null,
                 bio: bio || '',
                 profilePhoto: photo || '', // Required field
                 idDocument: idDoc,
@@ -148,7 +187,14 @@ exports.registerJobSeeker = async (req, res, next) => {
         res.status(201).json({ 
             message: "Job Seeker registered successfully", 
             userId: newSeeker.id,
-            token 
+            token,
+            user: {
+                id: newSeeker.id,
+                name: newSeeker.fullName,
+                role: 'JOB_SEEKER',
+                referralCode: newSeeker.referralCode,
+                referralCount: newSeeker.referralCount
+            }
         });
 
         // Audit Log
@@ -297,7 +343,14 @@ exports.registerEmployer = async (req, res, next) => {
         res.status(201).json({
             message: "Employer registered successfully",
             userId: newEmployer.id,
-            token
+            token,
+            user: {
+                id: newEmployer.id,
+                name: newEmployer.contactName,
+                role: 'EMPLOYER',
+                referralCode: newEmployer.referralCode,
+                referralCount: newEmployer.referralCount
+            }
         });
 
         // Audit Log

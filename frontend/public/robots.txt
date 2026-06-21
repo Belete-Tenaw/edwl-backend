@@ -2,8 +2,14 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /dashboard/
+Disallow: /academy/dashboard
 Disallow: /messages/
-Disallow: /payments/
-Disallow: /*?*
+Disallow: /profile/edit
+Disallow: /wallet
+Disallow: /payment-success
+Disallow: /rewards
+Disallow: /smart-interview
+Disallow: /forgot-password
+Disallow: /activate
 
-Sitemap: https://edwl-ethio-domesticworkerslink.web.app/sitemap.xml
+Sitemap: https://ethiodomesticworkers.web.app/sitemap.xml

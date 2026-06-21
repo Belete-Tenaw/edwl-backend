@@ -18,8 +18,8 @@ async function testTeaserLogic() {
             const matches = await prisma.$queryRawUnsafe(`SELECT * FROM match_seekers_for_job($1::uuid) LIMIT 3`, job.id);
             if (matches && matches.length > 0) {
                 const topMatch = matches[0];
-                console.log(`  - Job: ${job.title} | Top Match Score: ${topMatch.s_score}% | Tier: ${topMatch.s_tier}`);
-                if (topMatch.s_score > 70 && topMatch.s_tier === 'PLATINUM') {
+                console.log(`  - Job: ${job.title} | Top Match Score: ${topMatch.match_score}% | Tier: ${topMatch.tier}`);
+                if (topMatch.match_score > 70 && topMatch.tier === 'PLATINUM') {
                     console.log(`  >>> TRIGGER: Teaser for HIGH-VALUE Match!`);
                 }
             }

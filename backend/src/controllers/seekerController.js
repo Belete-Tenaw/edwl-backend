@@ -3,8 +3,59 @@ const { calculateWorkerRank, calculateTrustScore } = require('../utils/rankLogic
 const { uploadFileToFirebase } = require('../services/firebaseStorageService');
 const faydaService = require('../services/faydaService');
 const cacheService = require('../services/cacheService');
+const matchingService = require('../services/matchingService');
 
 // Removed local calculateSeekerTier as it's now handled by calculateWorkerRank in utils
+const parseStringArrayField = (value) => {
+    if (Array.isArray(value)) {
+        return value.map(item => String(item).trim()).filter(Boolean);
+    }
+
+    if (typeof value !== 'string') return [];
+
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+            return parsed.map(item => String(item).trim()).filter(Boolean);
+        }
+    } catch (error) {
+        // Fall back to comma-separated input from older clients.
+    }
+
+    return trimmed.split(',').map(item => item.trim()).filter(Boolean);
+};
+
+const normalizeOptionalText = (value, maxLength = 120) => {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed ? trimmed.slice(0, maxLength) : undefined;
+};
+
+const isOtherOccupation = (value) => value && value.toUpperCase() === 'OTHER';
+
+const toPublicDisplayName = (fullName = '') => {
+    const parts = String(fullName).trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'Reviewed worker';
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[1].charAt(0)}.`;
+};
+
+const toSalaryBand = (salary) => {
+    if (!Number.isFinite(salary) || salary <= 0) return null;
+    const lower = Math.max(0, Math.floor(salary / 1000) * 1000);
+    const upper = lower + 1000;
+    return `${lower.toLocaleString()}-${upper.toLocaleString()} ETB`;
+};
+
+const getOccupationLabel = (seeker) => {
+    if (isOtherOccupation(seeker.occupationCategory) && seeker.customOccupation) {
+        return seeker.customOccupation;
+    }
+    return seeker.occupationCategory || 'Domestic support';
+};
 
 const maskPlatinumBadge = (seeker, employerTier) => {
     const maskedSeeker = { ...seeker };
@@ -35,6 +86,110 @@ const maskPlatinumBadge = (seeker, employerTier) => {
         }
     }
     return maskedSeeker;
+};
+
+exports.getPublicSeekers = async (req, res) => {
+    try {
+        const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+        const category = typeof req.query.category === 'string' ? req.query.category.trim() : '';
+        const location = typeof req.query.location === 'string' ? req.query.location.trim() : '';
+
+        const where = {
+            isActive: true,
+            verificationStatus: 'APPROVED',
+            ...(category ? { occupationCategory: category } : {})
+        };
+
+        const searchTerms = [];
+        if (q) {
+            searchTerms.push(
+                { occupationCategory: { contains: q, mode: 'insensitive' } },
+                { customOccupation: { contains: q, mode: 'insensitive' } },
+                { preferredLocation: { contains: q, mode: 'insensitive' } }
+            );
+        }
+
+        if (location) {
+            searchTerms.push(
+                { preferredLocation: { contains: location, mode: 'insensitive' } },
+                { locationRegion: { contains: location, mode: 'insensitive' } },
+                { locationWoreda: { contains: location, mode: 'insensitive' } }
+            );
+        }
+
+        if (searchTerms.length > 0) {
+            where.OR = searchTerms;
+        }
+
+        const seekers = await prisma.jobSeeker.findMany({
+            where,
+            orderBy: [
+                { isFeatured: 'desc' },
+                { updatedAt: 'desc' }
+            ],
+            take: 24,
+            select: {
+                id: true,
+                fullName: true,
+                bio: true,
+                skills: true,
+                languages: true,
+                occupationCategory: true,
+                customOccupation: true,
+                experienceYears: true,
+                expectedSalary: true,
+                preferredLocation: true,
+                preferredArrangement: true,
+                profilePhoto: true,
+                certificates: true,
+                isVerified: true,
+                verificationStatus: true,
+                rating: true,
+                completedJobs: true,
+                badge: true,
+                tier: true,
+                locationRegion: true,
+                locationWoreda: true,
+                updatedAt: true
+            }
+        });
+
+        const items = seekers.map((seeker) => ({
+            id: seeker.id,
+            displayName: toPublicDisplayName(seeker.fullName),
+            occupation: getOccupationLabel(seeker),
+            experienceYears: seeker.experienceYears,
+            salaryBand: toSalaryBand(seeker.expectedSalary),
+            preferredLocation: seeker.preferredLocation,
+            preferredArrangement: seeker.preferredArrangement,
+            locationRegion: seeker.locationRegion,
+            locationWoreda: seeker.locationWoreda,
+            profilePhoto: seeker.profilePhoto,
+            skills: (seeker.skills || []).slice(0, 5),
+            languages: (seeker.languages || []).slice(0, 4),
+            certificateCount: (seeker.certificates || []).length,
+            isVerified: seeker.isVerified,
+            verificationStatus: seeker.verificationStatus,
+            rating: seeker.rating,
+            completedJobs: seeker.completedJobs,
+            badge: seeker.badge,
+            tier: seeker.tier,
+            updatedAt: seeker.updatedAt
+        }));
+
+        res.json({
+            items,
+            count: items.length,
+            policy: {
+                publicDataOnly: true,
+                contactHiddenUntilSignup: true,
+                approvalRequired: true
+            }
+        });
+    } catch (error) {
+        console.error('Public seeker browse error:', error);
+        res.status(500).json({ error: 'Unable to load public profiles right now.' });
+    }
 };
 
 exports.getSeekerProfile = async (req, res) => {
@@ -92,7 +247,11 @@ exports.updateProfile = async (req, res) => {
         const id = req.user.id;
         if (req.user.role !== 'JOB_SEEKER') return res.status(403).json({ error: 'Forbidden' });
 
-        const { fullName, bio, skills, experienceYears, expectedSalary, preferredLocation, preferredArrangement, guarantorPhone, videoBio, availability, videoTranscription } = req.body;
+        const {
+            fullName, bio, skills, languages, occupationCategory, customOccupation,
+            experienceYears, expectedSalary, preferredLocation, preferredArrangement,
+            guarantorPhone, videoBio, availability, videoTranscription
+        } = req.body;
 
         const updateData = {
             fullName, bio,
@@ -103,15 +262,25 @@ exports.updateProfile = async (req, res) => {
         };
 
         if (skills) {
-            let formattedSkills = skills;
-            if (typeof skills === 'string') {
-                try {
-                    formattedSkills = JSON.parse(skills);
-                } catch (e) {
-                    formattedSkills = skills.split(',').map(s => s.trim());
-                }
+            updateData.skills = parseStringArrayField(skills);
+        }
+
+        if (languages) {
+            updateData.languages = parseStringArrayField(languages);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(req.body, 'occupationCategory')) {
+            const normalizedOccupationCategory = normalizeOptionalText(occupationCategory, 80);
+            const normalizedCustomOccupation = normalizeOptionalText(customOccupation, 120);
+
+            if (isOtherOccupation(normalizedOccupationCategory) && !normalizedCustomOccupation) {
+                return res.status(400).json({ error: "Please specify the occupation when selecting Other." });
             }
-            updateData.skills = Array.isArray(formattedSkills) ? formattedSkills : [];
+
+            updateData.occupationCategory = normalizedOccupationCategory || null;
+            updateData.customOccupation = isOtherOccupation(normalizedOccupationCategory)
+                ? normalizedCustomOccupation
+                : null;
         }
 
         if (req.files) {
@@ -170,8 +339,17 @@ exports.updateProfile = async (req, res) => {
         // Recalculate Tier using unified logic
         updateData.tier = calculateWorkerRank(mergedData);
 
+        const updated = await prisma.jobSeeker.update({
+            where: { id },
+            data: updateData
+        });
+
         // Flush cache on update
         cacheService.del('all_seekers');
+
+        matchingService.notifyEmployersForSeekerUpdate(updated.id).catch((err) => {
+            console.error('[Profile Match Notification Error]:', err.message);
+        });
 
         res.json(updated);
     } catch (error) {

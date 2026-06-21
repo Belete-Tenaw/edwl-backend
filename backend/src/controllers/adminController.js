@@ -4,6 +4,7 @@ const { logAction } = require('../services/auditService');
 const { sendSMSAlert } = require('../services/notificationService');
 const { auth } = require('../utils/firebaseAdmin');
 const telegramService = require('../services/telegramService');
+const { buildOwnerAutopilotBrief, runOwnerAutopilotDigest } = require('../services/ownerAutopilotService');
 
 exports.grantSuperAdminRole = async (req, res) => {
     try {
@@ -27,6 +28,38 @@ exports.grantSuperAdminRole = async (req, res) => {
     } catch (error) {
         console.error('Error granting superAdmin role:', error);
         res.status(500).json({ error: 'Failed to assign Super Admin claim.' });
+    }
+};
+
+exports.getOwnerAutopilotBrief = async (req, res) => {
+    try {
+        const brief = await buildOwnerAutopilotBrief();
+        res.json(brief);
+    } catch (error) {
+        console.error('Owner autopilot brief error:', error);
+        res.status(500).json({ error: 'Failed to build owner autopilot brief' });
+    }
+};
+
+exports.sendOwnerAutopilotDigest = async (req, res) => {
+    try {
+        const brief = await runOwnerAutopilotDigest({ notify: true });
+
+        await logAction(
+            'ADMIN_OWNER_AUTOPILOT_DIGEST_TRIGGERED',
+            req.user.id,
+            'ADMIN',
+            {
+                sleepScore: brief.sleepScore,
+                riskLevel: brief.riskLevel,
+                notificationSent: brief.notificationSent
+            }
+        );
+
+        res.json(brief);
+    } catch (error) {
+        console.error('Owner autopilot digest error:', error);
+        res.status(500).json({ error: 'Failed to send owner autopilot digest' });
     }
 };
 
@@ -461,12 +494,116 @@ exports.getAllDisputes = async (req, res) => {
 exports.resolveDispute = async (req, res) => {
     try {
         const { id } = req.params;
-        const { resolution, status } = req.body; // status: RESOLVED or CLOSED
+        const { resolution, status, workerPercent, employerPercent } = req.body; // status: RESOLVED or CLOSED
+
+        // 1. Fetch Dispute details with Contract and Escrow Contracts
+        const dispute = await prisma.dispute.findUnique({
+            where: { id },
+            include: {
+                contract: {
+                    include: { escrowContracts: true }
+                }
+            }
+        });
+
+        if (!dispute) {
+            return res.status(404).json({ error: 'Dispute not found' });
+        }
+
+        const escrow = dispute.contract?.escrowContracts.find(
+            e => e.status === 'FUNDED' || e.status === 'DISPUTED'
+        );
+
+        let escrowResult = null;
+        if (escrow && typeof workerPercent === 'number' && typeof employerPercent === 'number') {
+            const totalAmount = escrow.amount;
+            const workerAmount = Math.round((totalAmount * workerPercent) / 100);
+            const employerAmount = Math.round((totalAmount * employerPercent) / 100);
+
+            // CRYPTOGRAPHIC VERIFICATION: Re-verify HMAC before releasing any funds in dispute
+            if (escrow.transactionHash) {
+                const expectedHash = crypto
+                    .createHmac('sha256', process.env.JWT_SECRET || 'test_secret')
+                    .update(`${escrow.contractId}:${escrow.amount}:${escrow.workerId}:${escrow.employerId}`)
+                    .digest('hex');
+                if (expectedHash !== escrow.transactionHash) {
+                    console.error(`[SECURITY ALERT] Dispute ${id}: Escrow HMAC mismatch! Possible data tampering.`);
+                    return res.status(403).json({ error: 'Security validation failed: Escrow integrity check failed. Payout blocked.' });
+                }
+            }
+
+            // Transactional update for Escrow and Contract
+            escrowResult = await prisma.$transaction(async (tx) => {
+                const updatedEscrow = await tx.escrowContract.update({
+                    where: { id: escrow.id },
+                    data: {
+                        status: 'RELEASED',
+                        releaseDate: new Date()
+                    }
+                });
+
+                await tx.contract.update({
+                    where: { id: dispute.contractId },
+                    data: { status: 'COMPLETED' }
+                });
+
+                return { updatedEscrow, workerAmount, employerAmount };
+            });
+
+            // Handle worker payout & pension contributions
+            if (workerAmount > 0) {
+                const pensionService = require('../services/pensionService');
+                const notificationService = require('../services/notificationService');
+                
+                const pensionContribution = Math.round(workerAmount * 0.03);
+                const workerPocketAmount = workerAmount - pensionContribution;
+
+                if (pensionContribution > 0) {
+                    try {
+                        await pensionService.depositToPension(
+                            escrow.workerId,
+                            pensionContribution,
+                            'CONTRIBUTION',
+                            dispute.contractId
+                        );
+                    } catch (pensionErr) {
+                        console.error('Pension deposit failed:', pensionErr);
+                    }
+                }
+
+                await notificationService.notify(escrow.workerId, 'JOB_SEEKER', {
+                    title: 'Dispute Resolved & Payout Released! 🏦',
+                    message: `The admin has resolved the dispute. Your payout of ${workerPocketAmount} ETB (net of pension) has been released to your wallet.`,
+                    type: 'PAYMENT'
+                });
+            }
+
+            // Handle employer refund notification
+            if (employerAmount > 0) {
+                const notificationService = require('../services/notificationService');
+                await notificationService.notify(escrow.employerId, 'EMPLOYER', {
+                    title: 'Dispute Resolved & Refunded! 💰',
+                    message: `The admin has resolved the dispute. A refund of ${employerAmount} ETB has been credited back to your account.`,
+                    type: 'PAYMENT'
+                });
+            }
+
+            // Broadcast to Admin Telegram Channel
+            await telegramService.notifyAdmin(
+                `⚖️ <b>Dispute Escrow Arbitrated</b>\n\n` +
+                `Dispute ID: ${id}\n` +
+                `Reason: ${dispute.reason}\n` +
+                `Escrow Amount: ${totalAmount} ETB\n` +
+                `Outcome:\n` +
+                `- Worker: ${workerPercent}% (${workerAmount} ETB)\n` +
+                `- Employer: ${employerPercent}% (${employerAmount} ETB)`
+            );
+        }
 
         const updatedDispute = await prisma.dispute.update({
             where: { id },
             data: {
-                resolution,
+                resolution: resolution + (escrowResult ? ` | Escrow Split Executed: Worker ${workerPercent}% / Employer ${employerPercent}%` : ''),
                 status,
                 adminId: req.user.id
             }
@@ -477,11 +614,12 @@ exports.resolveDispute = async (req, res) => {
             'ADMIN_DISPUTE_RESOLVED',
             req.user.id,
             'ADMIN',
-            { disputeId: id, resolution, status }
+            { disputeId: id, resolution: updatedDispute.resolution, status, workerPercent, employerPercent }
         );
 
-        res.json({ message: 'Dispute updated successfully', dispute: updatedDispute });
+        res.json({ message: 'Dispute resolved successfully', dispute: updatedDispute });
     } catch (error) {
+        console.error('Resolve dispute error:', error);
         res.status(500).json({ error: 'Failed to resolve dispute' });
     }
 };

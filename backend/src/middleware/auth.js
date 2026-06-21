@@ -1,8 +1,11 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prisma');
+
+// Hard fail on startup if JWT_SECRET is missing — do NOT fall back to a
+// known string like 'test_secret', which anyone could use to forge tokens.
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET must be defined');
+    throw new Error('[FATAL] JWT_SECRET environment variable is not set. The server cannot start securely.');
 }
 
 // Simple in-memory cache for user deactivation/tier status (60s TTL)
@@ -19,15 +22,14 @@ module.exports = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
+        req.user = { ...decoded, userId: decoded.id };
 
-        // Security Audit Improvement: Check real-time user status in DB
-        // Optimized with in-memory caching to prevent DB bottlenecks
-        const cached = statusCache.get(decoded.id);
+        // Check cache with userId fallback mapped
+        const cached = process.env.NODE_ENV === 'test' ? null : statusCache.get(decoded.id);
         const now = Date.now();
 
         if (cached && cached.expiry > now) {
-            req.user = { ...decoded, ...cached.data };
+            req.user = { ...decoded, ...cached.data, userId: decoded.id };
         } else {
             let user;
             const selectFields = { isActive: true, tier: true, subscriptionExpiry: true };
@@ -48,7 +50,7 @@ module.exports = async (req, res, next) => {
                     return res.status(403).json({ error: 'Account is deactivated. Please contact support.' });
                 }
                 // Attach latest status to request
-                req.user = { ...decoded, ...user };
+                req.user = { ...decoded, ...user, userId: decoded.id };
             }
         }
 

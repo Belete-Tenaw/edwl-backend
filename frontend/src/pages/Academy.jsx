@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, CheckCircle, Play, Sparkles } from 'lucide-react';
 import '../index.css'; // Use existing global styles
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
 
 const Academy = () => {
     const { t } = useTranslation();
@@ -49,6 +50,12 @@ const Academy = () => {
     );
 
     return (
+        <>
+        <Seo
+            title={`EDWL Academy - ${BRAND_EN}`}
+            description={`Training and practical guidance for domestic workers using ${BRAND_EN} (${BRAND_AM}).`}
+            path="/academy"
+        />
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }} className="reveal">
             <div style={{ textAlign: 'center', marginBottom: '60px' }}>
                 <div style={{ 
@@ -153,6 +160,7 @@ const Academy = () => {
                 )}
             </div>
         </div>
+        </>
     );
 };
 

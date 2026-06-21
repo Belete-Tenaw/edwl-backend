@@ -4,8 +4,8 @@ async function testLogin() {
     try {
         console.log('Testing login against production API...');
         const response = await axios.post('https://edwl-backend.onrender.com/api/auth/admin/login', {
-            username: 'EDWL2026',
-            password: 'TwaBel2026'
+            username: process.env.TEST_ADMIN_USER || 'REPLACE_WITH_USERNAME',
+            password: process.env.TEST_ADMIN_PASSWORD || 'REPLACE_WITH_PASSWORD'
         });
 
         console.log('Login successful:');

@@ -8,6 +8,7 @@ import ReviewForm from './ReviewForm';
 import UpgradeModal from './UpgradeModal';
 import TrustScorecard from './TrustScorecard';
 import ContractCreateModal from './ContractCreateModal';
+import { OCCUPATION_CATEGORIES } from '../constants/occupations';
 
 const WorkerProfileModal = ({ worker, onClose }) => {
     const { t } = useTranslation();
@@ -82,6 +83,12 @@ const WorkerProfileModal = ({ worker, onClose }) => {
     const hasPolice = !!worker.policeClearanceUrl && worker.policeClearanceUrl !== 'undefined';
     const hasHealth = !!worker.healthCertificateUrl && worker.healthCertificateUrl !== 'undefined';
     const hasGuarantor = !!worker.guarantorIdUrl && worker.guarantorIdUrl !== 'undefined';
+    const categoryValue = worker.occupationCategory || worker.occupation_category;
+    const customOccupation = worker.customOccupation || worker.custom_occupation;
+    const occupationCategory = OCCUPATION_CATEGORIES.find(item => item.value === categoryValue);
+    const occupationLabel = categoryValue === 'OTHER' && customOccupation
+        ? customOccupation
+        : occupationCategory ? t(occupationCategory.labelKey, occupationCategory.defaultLabel) : customOccupation;
 
     const Badge = ({ icon: Icon, label, color, bgColor }) => (
         <div title={label} style={{
@@ -236,6 +243,12 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                             <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '5px' }}>{t('experience')}</div>
                             <div style={{ fontWeight: '600', fontSize: '1.1rem' }}>{worker.experienceYears} {t('years')}</div>
                         </div>
+                        {occupationLabel && (
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '5px' }}>{t('occupation_category', 'Occupation Category')}</div>
+                                <div style={{ fontWeight: '600', fontSize: '1rem' }}>{occupationLabel}</div>
+                            </div>
+                        )}
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '5px' }}>{t('expected_salary')}</div>
                             <div style={{ fontWeight: '600', fontSize: '1.1rem', color: 'var(--primary)' }}>{worker.expectedSalary} <small>ETB</small></div>
@@ -300,7 +313,7 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                     </div>
 
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '25px' }}>
-                        {worker.skills.map(skill => (
+                        {(worker.skills || []).map(skill => (
                             <span key={skill} style={{ background: '#f1f5f9', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', color: '#475569', border: '1px solid #e2e8f0' }}>
                                 {skill}
                             </span>

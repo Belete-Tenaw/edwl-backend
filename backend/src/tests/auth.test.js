@@ -45,10 +45,27 @@ describe('Auth Endpoints', () => {
             .field('preferredLocation', 'Addis Ababa')
             .field('preferredArrangement', 'LIVE_IN')
             .field('maritalStatus', 'SINGLE')
+            .field('occupationCategory', 'OTHER')
+            .field('customOccupation', 'Spa Assistant')
+            .field('skills', JSON.stringify(['cleaning', 'other']))
+            .field('languages', JSON.stringify(['amharic', 'english']))
             .attach('profilePhoto', Buffer.from('fake image'), 'profile.jpg')
             .attach('idDocument', Buffer.from('fake id'), 'id.jpg');
 
         expect(res.statusCode).toEqual(201);
         expect(res.body).toHaveProperty('token');
+        expect(res.body.user).toEqual(expect.objectContaining({
+            id: '123',
+            name: 'Test User',
+            role: 'JOB_SEEKER'
+        }));
+        expect(prisma.jobSeeker.create).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({
+                occupationCategory: 'OTHER',
+                customOccupation: 'Spa Assistant',
+                skills: ['cleaning', 'other'],
+                languages: ['amharic', 'english']
+            })
+        }));
     });
 });

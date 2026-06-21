@@ -45,6 +45,19 @@ const employerLoginValidator = [
     validate
 ];
 
+// Admin login — stricter username pattern, no injection bypass
+const adminLoginValidator = [
+    body('username')
+        .trim()
+        .notEmpty().withMessage('Username is required')
+        .isLength({ min: 3, max: 80 }).withMessage('Username must be 3-80 characters')
+        .matches(/^[a-zA-Z0-9_@.-]+$/).withMessage('Username contains invalid characters'),
+    body('password')
+        .notEmpty().withMessage('Password is required')
+        .isLength({ min: 6, max: 128 }).withMessage('Password must be 6-128 characters'),
+    validate
+];
+
 const forgotPasswordValidator = [
     body('identifier')
         .trim()
@@ -155,6 +168,7 @@ module.exports = {
     validate,
     seekerLoginValidator,
     employerLoginValidator,
+    adminLoginValidator,
     forgotPasswordValidator,
     resetPasswordValidator,
     refreshTokenValidator,

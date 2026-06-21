@@ -1,13 +1,70 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Lock down default access - all profile reads/writes happen via backend API
-    match /{document=**} {
-      allow read, write: if request.auth != null && request.auth.token.superAdmin == true;
+
+    // Helper functions for role-based access control
+    function isAuthenticated() {
+      return request.auth != null;
     }
-    // Allow secure chat/message endpoints if migrating off Socket.io
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.superAdmin == true;
+    }
+
+    function isEmployer() {
+      return isAuthenticated() && request.auth.token.role == 'employer';
+    }
+
+    function isWorker() {
+      return isAuthenticated() && request.auth.token.role == 'worker';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if isSuperAdmin();
+    }
+
+    // Workers Collection
+    match /workers/{workerId} {
+      // Workers can read and update their own full profile
+      allow read, update: if isOwner(workerId);
+      
+      // Employers can read limited worker profiles ONLY if the worker is 'active' and approved
+      allow read: if isEmployer() && resource.data.isActive == true && resource.data.isVerified == true;
+
+      // Sensitive Sub-collections under Worker Profile
+      
+      // Trust Metrics (Only readable by the system and super admins)
+      match /trust_metrics/{metricId} {
+        allow read, write: if isSuperAdmin();
+      }
+      
+      // Voice Profiles (Readable by worker and system)
+      match /voice_profiles/{profileId} {
+        allow read, write: if isOwner(workerId) || isSuperAdmin();
+      }
+
+      // Skills Ledger (Readable by employers if worker is active)
+      match /skills_ledger/{skillId} {
+        allow read: if isOwner(workerId) || (isEmployer() && get(/databases/$(database)/documents/workers/$(workerId)).data.isActive == true);
+        allow write: if isSuperAdmin(); // Usually updated by backend after verification
+      }
+    }
+
+    // Escrow Ledger (Strictly locked down)
+    match /escrow_ledger/{transactionId} {
+      // Users can view their own transactions (either as employer or worker)
+      allow read: if isAuthenticated() && (resource.data.employerId == request.auth.uid || resource.data.workerId == request.auth.uid);
+      allow write: if isSuperAdmin(); // Financial transactions strictly handled via Cloud Functions/Backend
+    }
+
+    // Messages / Chat Collection
     match /messages/{messageId} {
-      allow read, write: if request.auth != null && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+      allow read, write: if isAuthenticated() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
     }
   }
 }

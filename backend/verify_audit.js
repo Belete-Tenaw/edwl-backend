@@ -16,6 +16,19 @@ async function runTests() {
 
     // 2. Safe Layer: Check Document Verification Logic
     console.log("2. Checking Verification Transaction...");
+    
+    // Create mock Admin to satisfy foreign key constraints for AuditLog
+    await prisma.admin.upsert({
+        where: { id: "admin-123" },
+        update: {},
+        create: {
+            id: "admin-123",
+            username: "audit-admin-temp",
+            password: "hash",
+            role: "SUPERADMIN"
+        }
+    });
+
     // Create dummy seeker and request
     const mockUser = await prisma.jobSeeker.create({
         data: {
@@ -79,9 +92,18 @@ async function runTests() {
     }
 
     // Cleanup
+    await prisma.auditLog.deleteMany({
+        where: {
+            OR: [
+                { userId: "admin-123" },
+                { jobSeekerId: mockUser.id }
+            ]
+        }
+    });
     await prisma.verificationRequest.deleteMany({ where: { jobSeekerId: mockUser.id }});
     await prisma.jobSeeker.delete({ where: { id: mockUser.id }});
     await prisma.subscriptionCode.delete({ where: { code: mockCode }});
+    await prisma.admin.delete({ where: { id: "admin-123" } });
 
     console.log("--- EDWL Audit Verification Complete ---");
     process.exit(0);

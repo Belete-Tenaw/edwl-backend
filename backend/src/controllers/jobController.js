@@ -1,8 +1,7 @@
 const prisma = require('../utils/prisma');
-const telegramService = require('../services/telegramService');
-const notificationService = require('../services/notificationService');
 const cacheService = require('../services/cacheService');
 const { calculateTrustScore } = require('../utils/rankLogic');
+const matchingService = require('../services/matchingService');
 
 exports.createJobPost = async (req, res) => {
     try {
@@ -54,45 +53,9 @@ exports.createJobPost = async (req, res) => {
             }
         });
 
-        // 🎯 Proactive Match Notifications (Optimized)
-        (async () => {
-            try {
-                const matches = await prisma.$queryRawUnsafe(
-                    `SELECT * FROM match_seekers_for_job($1::uuid)`,
-                    job.id
-                );
-
-                const topMatches = matches.filter(m => m.match_score >= 70);
-                const io = req.app.get('io');
-                
-                for (const match of topMatches) {
-                    const seeker = await prisma.jobSeeker.findUnique({
-                        where: { id: match.seeker_id },
-                        select: { id: true, telegramChatId: true, fullName: true, isActive: true }
-                    });
-
-                    if (seeker?.isActive) {
-                        // 1. Persistent In-App Notification
-                        await notificationService.createInAppNotification(
-                            seeker.id,
-                            'JOB_SEEKER',
-                            'Perfect Job Match!',
-                            `We found a new job "${job.title}" that matches your profile perfectly.`,
-                            'MATCH',
-                            io
-                        );
-
-                        // 2. Telegram Alert
-                        if (seeker.telegramChatId) {
-                            const message = `🔔 <b>Perfect Match!</b>\n\nHello ${seeker.fullName},\n\nWe found a job matching your skills: <b>"${job.title}"</b>.\n\n💰 Salary: ${job.salaryOffered} ETB\n📍 Location: ${job.locationWoreda || job.locationRegion || 'Near You'}\n\nApply now: https://edwl-ethio-domesticworkerslink.web.app/jobs/${job.id}`;
-                            await telegramService.sendMessage(seeker.telegramChatId, message);
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error('[Match Notification Error]:', err.message);
-            }
-        })();
+        matchingService.notifySeekersForNewJob(job.id).catch((err) => {
+            console.error('[Match Notification Error]:', err.message);
+        });
 
         // Flush cache on new post
         cacheService.del('all_jobs');
@@ -105,6 +68,15 @@ exports.createJobPost = async (req, res) => {
 
 exports.getAllJobs = async (req, res) => {
     try {
+        if (req.user.role === 'JOB_SEEKER') {
+            const { matches } = await matchingService.matchJobsForSeeker(req.user.id, {
+                minScore: 0,
+                limit: 100,
+                scanLimit: 250
+            });
+            return res.json(matches);
+        }
+
         const cachedJobs = cacheService.get('all_jobs');
         if (cachedJobs) return res.json(cachedJobs);
 
@@ -181,65 +153,23 @@ exports.getMatchesForJob = async (req, res) => {
             return res.status(403).json({ error: 'Only employers can see matches' });
         }
 
-        // Use raw query to call the weighted matching function
-        // This function calculates scores based on skills, location, and tier.
-        const matches = await prisma.$queryRawUnsafe(
-            `SELECT * FROM match_seekers_for_job($1::uuid)`,
-            id
-        );
+        const { job, matches } = await matchingService.matchSeekersForJob(id, {
+            minScore: 0,
+            limit: 50,
+            scanLimit: 300
+        });
+
+        if (!job) return res.status(404).json({ error: 'Job not found' });
 
         if (matches.length === 0) {
             return res.json([]);
         }
 
-        // Fetch full masked profiles using the new SQL function
-        const matchedIds = matches.map(m => m.seeker_id);
-        const employer = await prisma.employer.findUnique({ where: { id: req.user.id }, select: { tier: true } });
-        const employerTier = employer?.tier || 'FREE';
-
-        const enrichedMatches = await Promise.all(matches.map(async (match) => {
-            const [profile] = await prisma.$queryRawUnsafe(
-                `SELECT get_seeker_visibility_with_id($1::uuid, $2::text) as data`,
-                match.seeker_id,
-                employerTier
-            );
-            
-            const profileData = profile.data;
-            if (!profileData) return null;
-
-            // 🎯 Generate Smart Insights V2
-            const insights = [];
-            if (match.match_score >= 90) insights.push("Exceptional Match");
-            else if (match.match_score >= 80) insights.push("Strong Skill Fit");
-            
-            if (profileData.behaviorScore >= 90) insights.push("Highly Reliable");
-            if (profileData.isFaydaVerified) insights.push("Identity Verified");
-            if (profileData.experienceYears >= 5) insights.push("Veteran Experience");
-            if (profileData.completedJobs >= 10) insights.push("Platform Expert");
-            if (profileData.responseTimeMs && profileData.responseTimeMs < 3600000) insights.push("Quick Responder");
-            
-            // Economic Insight
-            if (profileData.expectedSalary <= job.salaryOffered) insights.push("Budget Friendly");
-            
-            // 2026 World Class Reference: Stability Indicator
-            if (profileData.completedJobs > 0 && profileData.rating >= 4.5) {
-                insights.push("High Retention Rate");
-            }
-
-            // Add Trust Score for global context
-            profileData.trustScore = calculateTrustScore(profileData);
-
-            return {
-                ...profileData,
-                match_score: Math.round(match.match_score),
-                matchInsights: insights
-            };
+        const finalMatches = matches.map((match) => ({
+            ...match,
+            match_score: Math.round(match.matchScore),
+            trustScore: calculateTrustScore(match)
         }));
-
-        const finalMatches = enrichedMatches.filter(m => m !== null);
-        
-        // Final sort by match score descending
-        finalMatches.sort((a, b) => b.match_score - a.match_score);
 
         res.json(finalMatches);
     } catch (error) {

@@ -8,10 +8,14 @@ const auth = require('../middleware/auth');
 // --- EDWL Voice Routes ---
 router.post('/voice/process', auth, voiceController.processVoiceBio);
 
-// --- Predictive Analytics ---
+// --- Predictive Analytics & Smart Matchmaking ---
 router.get('/churn/:employerId', auth, aiController.predictChurn);
 router.get('/match/insights', auth, aiController.getMatchInsights);
+router.get('/match/rank/:jobId', auth, aiController.getRankedWorkers);
 router.get('/market/trends', auth, aiController.getMarketTrends);
+
+// --- AI Safety & Moderation ---
+router.post('/safety/check-text', auth, aiController.checkContentSafety);
 
 // --- AI Mediation Routes (Centralized here or in mediationRoutes) ---
 router.post('/mediate/dispute', auth, aiMediationController.autoMediateDispute);

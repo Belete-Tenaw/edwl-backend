@@ -8,6 +8,8 @@ const checkPremiumAccess = require('../middleware/checkPremiumAccess');
 const upload = require('../middleware/upload');
 const { authRateLimiter } = require('../middleware/rateLimiter');
 
+router.get('/public', seekerController.getPublicSeekers);
+
 router.get('/', auth, authorize([Roles.EMPLOYER, Roles.ADMIN]), checkPremiumAccess, async (req, res, next) => {
     // Log browsing action for audit trail
     const { logAction } = require('../services/auditService');

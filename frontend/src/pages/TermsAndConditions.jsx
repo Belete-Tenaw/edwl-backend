@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Shield, FileText } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
 
 const TermsAndConditions = () => {
     const { t } = useTranslation();
@@ -11,6 +12,11 @@ const TermsAndConditions = () => {
 
     return (
         <>
+            <Seo
+                title={`Terms and Conditions - ${BRAND_EN}`}
+                description={`Terms and platform rules for ${BRAND_EN} (${BRAND_AM}).`}
+                path="/terms-and-conditions"
+            />
             <div className="container" style={{ padding: '40px 20px', maxWidth: '900px' }}>
                 <div className="card">
                     <div style={{ textAlign: 'center', marginBottom: '40px', borderBottom: '1px solid #eee', paddingBottom: '20px' }}>

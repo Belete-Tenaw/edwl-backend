@@ -67,6 +67,10 @@ class NotificationService {
         }
     }
 
+    async createInAppNotification(userId, userType, title, message, type = 'SYSTEM') {
+        return this.notify(userId, userType, { title, message, type });
+    }
+
     /**
      * Broadcast to all users
      */
@@ -97,4 +101,3 @@ class NotificationService {
 }
 
 module.exports = new NotificationService();
-

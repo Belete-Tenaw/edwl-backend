@@ -5,6 +5,8 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
 import SOSButton from './components/SOSButton';
+import PwaInstallPrompt from './components/PwaInstallPrompt';
+import PlatformStatusBanner from './components/PlatformStatusBanner';
 import { AdminRoute } from './components/AdminRoute';
 import { ToastProvider } from './components/Toast';
 import { SocketProvider } from './context/SocketContext';
@@ -30,11 +32,12 @@ const lazyWithRetry = (componentImport) =>
 
 // Lazy Load Pages
 const Home = lazyWithRetry(() => import('./pages/Home'));
+const Browse = lazyWithRetry(() => import('./pages/Browse'));
 const Login = lazyWithRetry(() => import('./pages/Login'));
 const Register = lazyWithRetry(() => import('./pages/Register'));
 const Contact = lazyWithRetry(() => import('./pages/Contact'));
-const SeekerDashboard = lazyWithRetry(() => import('./pages/dashboards/SeekerDashboard'));
-const EmployerDashboard = lazyWithRetry(() => import('./pages/dashboards/EmployerDashboard'));
+const SeekerDashboard = lazyWithRetry(() => import('./pages/dashboards/WorkerDashboardNextGen'));
+const EmployerDashboard = lazyWithRetry(() => import('./pages/dashboards/EmployerDashboardNextGen'));
 const AdminDashboard = lazyWithRetry(() => import('./pages/dashboards/AdminDashboard'));
 const Messages = lazyWithRetry(() => import('./pages/Messages'));
 const EditProfile = lazyWithRetry(() => import('./pages/EditProfile'));
@@ -119,10 +122,12 @@ function App() {
                     <div className="app">
                     <Suspense fallback={<Loading />}>
                         <Navbar />
+                        <PlatformStatusBanner />
                         <ErrorBoundary>
                             <main>
                                 <Routes>
                                     <Route path="/" element={<Home />} />
+                                    <Route path="/browse" element={<Browse />} />
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/register" element={<Register />} />
                                     <Route path="/pricing" element={<Pricing />} />
@@ -140,7 +145,7 @@ function App() {
                                             <RewardsDashboard />
                                         </ProtectedRoute>
                                     } />
-                                    <Route path="/academy" element={
+                                    <Route path="/academy/dashboard" element={
                                         <ProtectedRoute allowedRoles={['JOB_SEEKER']}>
                                             <AcademyDashboard />
                                         </ProtectedRoute>
@@ -204,6 +209,7 @@ function App() {
                             </main>
                         </ErrorBoundary>
                         <SOSButton />
+                        <PwaInstallPrompt />
                         <Footer />
                     </Suspense>
                         </div>

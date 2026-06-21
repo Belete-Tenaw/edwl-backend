@@ -11,6 +11,7 @@ import CameraCapture from '../components/CameraCapture';
 import { Camera, Calendar } from 'lucide-react';
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import VoiceRecorder from '../components/VoiceRecorder';
+import { OCCUPATION_CATEGORIES } from '../constants/occupations';
 
 const EditProfile = () => {
     const { t } = useTranslation();
@@ -67,7 +68,15 @@ const EditProfile = () => {
                     customLanguage = customLang;
                 }
             }
-            setFormData({ ...data, skills: currentSkills, customSkill, languages: currentLanguages, customLanguage });
+            setFormData({
+                ...data,
+                occupationCategory: data.occupationCategory || 'HOUSEHOLD_SERVICES',
+                customOccupation: data.customOccupation || '',
+                skills: currentSkills,
+                customSkill,
+                languages: currentLanguages,
+                customLanguage
+            });
         } catch (err) {
             console.error("Failed to fetch profile", err);
             alert("Could not load profile data.");
@@ -191,6 +200,10 @@ const EditProfile = () => {
                     formData.phone = validation.formatted;
                 }
 
+                if (formData.occupationCategory === 'OTHER' && !formData.customOccupation?.trim()) {
+                    throw new Error(t('specify_other_occupation', 'Please specify other occupation'));
+                }
+
                 let finalSkills = Array.isArray(formData.skills) ? [...formData.skills] : [];
                 if (finalSkills.includes('other') && formData.customSkill) {
                     finalSkills = finalSkills.filter(s => s !== 'other');
@@ -208,6 +221,8 @@ const EditProfile = () => {
                 dataToSend.append('age', formData.age);
                 dataToSend.append('maritalStatus', formData.maritalStatus || 'SINGLE');
                 dataToSend.append('religion', formData.religion || '');
+                dataToSend.append('occupationCategory', formData.occupationCategory || '');
+                dataToSend.append('customOccupation', formData.occupationCategory === 'OTHER' ? (formData.customOccupation || '') : '');
                 dataToSend.append('skills', JSON.stringify(finalSkills));
                 dataToSend.append('languages', JSON.stringify(finalLanguages));
                 dataToSend.append('experienceYears', formData.experienceYears);
@@ -331,6 +346,35 @@ const EditProfile = () => {
                                 <label className="label">{t('religion')}</label>
                                 <input className="input" name="religion" value={formData.religion || ''} onChange={handleChange} />
                             </div>
+                            <div>
+                                <label className="label">{t('occupation_category', 'Occupation Category')}</label>
+                                <select
+                                    className="input"
+                                    name="occupationCategory"
+                                    value={formData.occupationCategory || 'HOUSEHOLD_SERVICES'}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    {OCCUPATION_CATEGORIES.map(category => (
+                                        <option key={category.value} value={category.value}>
+                                            {t(category.labelKey, category.defaultLabel)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            {formData.occupationCategory === 'OTHER' && (
+                                <div>
+                                    <label className="label">{t('specify_other_occupation', 'Please specify other occupation')}</label>
+                                    <input
+                                        className="input"
+                                        name="customOccupation"
+                                        value={formData.customOccupation || ''}
+                                        onChange={handleChange}
+                                        placeholder={t('occupation_other_placeholder', 'e.g. Spa assistant, gaming hall attendant')}
+                                        required
+                                    />
+                                </div>
+                            )}
                             <div style={{ gridColumn: '1 / -1' }}>
                                 <label className="label">{t('skills_required')} (Select multiple)</label>
                                 <div style={{

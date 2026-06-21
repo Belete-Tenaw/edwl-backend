@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { Shield, Lock, Eye, Database, UserCheck, Globe, ChevronDown, ChevronUp, Cpu, Landmark, Fingerprint } from 'lucide-react';
 import BackButton from '../components/BackButton';
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
 
 const PrivacyPolicy = () => {
     const { t } = useTranslation();
@@ -19,10 +19,11 @@ const PrivacyPolicy = () => {
 
     return (
         <div style={{ background: '#020617', minHeight: '100vh', color: '#f8fafc', fontFamily: "'Outfit', sans-serif" }}>
-            <Helmet>
-                <title>Privacy & Security | EDWL Global</title>
-                <meta name="description" content="EDWL World-Class Privacy Standards" />
-            </Helmet>
+            <Seo
+                title={`Privacy Policy - ${BRAND_EN}`}
+                description={`Privacy and data protection information for ${BRAND_EN} (${BRAND_AM}).`}
+                path="/privacy-policy"
+            />
 
             <style>{`
                 .glass-panel {
@@ -103,4 +104,3 @@ const PrivacyPolicy = () => {
 };
 
 export default PrivacyPolicy;
-

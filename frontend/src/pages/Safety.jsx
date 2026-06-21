@@ -1,8 +1,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Helmet } from 'react-helmet-async';
 import { Shield, AlertTriangle, Lock, Phone, UserCheck, FileCheck, CheckCircle, HelpCircle, Eye, Handshake, ShieldCheck } from 'lucide-react';
 import BackButton from '../components/BackButton';
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
 
 const getSafetyTips = (t) => [
     {
@@ -33,10 +33,11 @@ const Safety = () => {
 
     return (
         <div style={{ background: '#020617', minHeight: '100vh', color: '#f8fafc', fontFamily: "'Outfit', sans-serif" }}>
-            <Helmet>
-                <title>{t('safety_page_title')} | EDWL Global</title>
-                <meta name="description" content={t('safety_page_desc')} />
-            </Helmet>
+            <Seo
+                title={`${t('safety_page_title')} - ${BRAND_EN}`}
+                description={`${t('safety_page_desc')} ${BRAND_AM}.`}
+                path="/safety"
+            />
 
             <style>{`
                 @keyframes float {
@@ -275,4 +276,3 @@ const Safety = () => {
 };
 
 export default Safety;
-

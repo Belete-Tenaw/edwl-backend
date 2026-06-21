@@ -22,6 +22,8 @@ model JobSeeker {
   bio                  String?
   skills               String[]
   languages            String[]              @default([])
+  occupationCategory   String?
+  customOccupation     String?
   experienceYears      Int
   expectedSalary       Int
   preferredLocation    String
@@ -99,10 +101,13 @@ model JobSeeker {
   isPoliceApiVerified        Boolean         @default(false)
   lastVoiceCallAt            DateTime?
   microLoans                 MicroLoan[]
+  microPension               MicroPension?
+
 
   @@index([tier])
   @@index([createdAt])
   @@index([isVerified])
+  @@index([occupationCategory])
   @@index([preferredLocation])
   @@index([experienceYears])
   @@index([expectedSalary])
@@ -719,3 +724,60 @@ enum LoanStatus {
   DEFAULTED
 }
 
+// Model to manage Offline USSD and SMS interactive sessions
+model USSDSession {
+  id           String   @id @default(uuid())
+  phone        String   @unique
+  sessionState String   // 'AWAITING_ROLE', 'BROWSING_JOBS', 'ACTIVE_SOS'
+  lastInput    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([phone])
+}
+
+// Micro-Pension Account tracking to build long-term worker wealth
+model MicroPension {
+  id           String      @id @default(uuid())
+  jobSeekerId  String      @unique
+  balance      Float       @default(0.0)
+  currency     String      @default("ETB")
+  lastDeposit  DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  jobSeeker    JobSeeker   @relation(fields: [jobSeekerId], references: [id], onDelete: Cascade)
+  transactions PensionTx[]
+}
+
+// Individual ledger records for micro-pension transactions
+model PensionTx {
+  id             String       @id @default(uuid())
+  pensionId      String
+  amount         Float
+  type           String       // 'CONTRIBUTION', 'WITHDRAWAL', 'INTEREST'
+  contractId     String?
+  timestamp      DateTime     @default(now())
+  pensionAccount MicroPension @relation(fields: [pensionId], references: [id], onDelete: Cascade)
+}
+
+model Did {
+  id        String   @id @default(uuid())
+  did       String   @unique
+  userId    String
+  userType  String   // 'AGENCY','EMPLOYER','JOB_SEEKER'
+  document  Json
+  createdAt DateTime @default(now())
+}
+
+// Enhanced Active Geofencing configuration for Transit Sessions
+model GeofenceConfig {
+  id               String   @id @default(uuid())
+  transitSessionId String   @unique
+  startLatitude    Float
+  startLongitude   Float
+  endLatitude      Float
+  endLongitude     Float
+  allowedDeviation Float    @default(0.005) // Allowed distance margin
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+}

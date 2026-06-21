@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { Key, CheckCircle, XCircle, MessageSquare, LogIn } from 'lucide-react';
 import debounce from 'lodash/debounce';
+import Seo, { BRAND_EN } from '../components/Seo';
 
 const Activate = () => {
     const { t } = useTranslation();
@@ -98,6 +99,13 @@ const Activate = () => {
     };
 
     return (
+        <>
+        <Seo
+            title={`Activate Access - ${BRAND_EN}`}
+            description="Activate an EDWL access code."
+            path="/activate"
+            noIndex
+        />
         <div className="container" style={{ padding: '80px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             
             {/* Guest Nudge for Activation Page */}
@@ -276,6 +284,7 @@ const Activate = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 

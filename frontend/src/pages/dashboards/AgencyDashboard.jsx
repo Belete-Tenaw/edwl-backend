@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async';
 import { 
     Users, 
+    Star,
     Briefcase, 
     TrendingUp, 
     Shield, 
@@ -49,12 +50,12 @@ const AgencyDashboard = () => {
                 setWorkers(normalized);
             } catch (err) {
                 console.error('Failed to fetch fleet:', err);
-                // Mock data for premium demo
+                // Fallback review-state data while the agency API is unavailable.
                 setWorkers([
-                    { id: '1', name: 'Almaz Tadesse', status: 'MATCHED', rating: 4.9, experience: '5 years', earnings: 12500, lastActive: '2 min ago' },
-                    { id: '2', name: 'Sara Kebede', status: 'AVAILABLE', rating: 4.7, experience: '3 years', earnings: 8400, lastActive: '1 hour ago' },
-                    { id: '3', name: 'Mulu Solomon', status: 'MATCHED', rating: 4.8, experience: '8 years', earnings: 15200, lastActive: 'Recently' },
-                    { id: '4', name: 'Hanna Alemu', status: 'DISPUTED', rating: 4.2, experience: '2 years', earnings: 3100, lastActive: 'Just now' },
+                    { id: '1', name: 'Almaz Tadesse', status: 'REVIEW', rating: null, experience: '5 years', earnings: 0, lastActive: 'Review pending' },
+                    { id: '2', name: 'Sara Kebede', status: 'AVAILABLE', rating: null, experience: '3 years', earnings: 0, lastActive: 'Review pending' },
+                    { id: '3', name: 'Mulu Solomon', status: 'REVIEW', rating: null, experience: '8 years', earnings: 0, lastActive: 'Review pending' },
+                    { id: '4', name: 'Hanna Alemu', status: 'REVIEW', rating: null, experience: '2 years', earnings: 0, lastActive: 'Review pending' },
                 ]);
             } finally {
                 setLoading(false);
@@ -66,14 +67,14 @@ const AgencyDashboard = () => {
     const stats = [
         { label: 'Total Fleet', value: workers.length, icon: Users, color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.1)' },
         { label: 'Active Matches', value: workers.filter(w => w.status === 'MATCHED').length, icon: Briefcase, color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
-        { label: 'Fleet Revenue', value: `${workers.reduce((acc, w) => acc + w.earnings, 0).toLocaleString()} ETB`, icon: DollarSign, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-        { label: 'Reliability', value: '98.4%', icon: Zap, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
+        { label: 'Recorded Payments', value: `${workers.reduce((acc, w) => acc + w.earnings, 0).toLocaleString()} ETB`, icon: DollarSign, color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+        { label: 'Review Status', value: workers.length ? 'Needs Data' : 'Pending', icon: Zap, color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
     ];
 
     return (
         <div style={{ background: '#020617', minHeight: '100vh', color: '#f8fafc', fontFamily: "'Outfit', sans-serif" }}>
             <Helmet>
-                <title>Agency AaaS | EDWL Premium Dashboard</title>
+                <title>Agency Dashboard | EDWL</title>
             </Helmet>
 
             <style>{`
@@ -114,7 +115,7 @@ const AgencyDashboard = () => {
                         <div style={{ padding: '0 8px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#38bdf8', marginBottom: '8px' }}>
                                 <Cpu size={20} />
-                                <span style={{ fontWeight: '900', letterSpacing: '2px', fontSize: '0.8rem' }}>EDWL AGENTIC</span>
+                                <span style={{ fontWeight: '900', letterSpacing: '2px', fontSize: '0.8rem' }}>EDWL AGENCY</span>
                             </div>
                             <div style={{ fontSize: '1.2rem', fontWeight: '900', color: 'white' }}>{user?.name || 'AaaS Portal'}</div>
                         </div>
@@ -225,15 +226,15 @@ const AgencyDashboard = () => {
                                 </div>
                                 <div>
                                     <span className="status-badge" style={{ 
-                                        background: worker.status === 'MATCHED' ? 'rgba(16, 185, 129, 0.1)' : worker.status === 'AVAILABLE' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                        color: worker.status === 'MATCHED' ? '#10b981' : worker.status === 'AVAILABLE' ? '#38bdf8' : '#ef4444',
-                                        border: `1px solid ${worker.status === 'MATCHED' ? 'rgba(16, 185, 129, 0.2)' : worker.status === 'AVAILABLE' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                                        background: worker.status === 'MATCHED' ? 'rgba(16, 185, 129, 0.1)' : worker.status === 'AVAILABLE' ? 'rgba(56, 189, 248, 0.1)' : worker.status === 'REVIEW' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                        color: worker.status === 'MATCHED' ? '#10b981' : worker.status === 'AVAILABLE' ? '#38bdf8' : worker.status === 'REVIEW' ? '#f59e0b' : '#ef4444',
+                                        border: `1px solid ${worker.status === 'MATCHED' ? 'rgba(16, 185, 129, 0.2)' : worker.status === 'AVAILABLE' ? 'rgba(56, 189, 248, 0.2)' : worker.status === 'REVIEW' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
                                     }}>
                                         {worker.status}
                                     </span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: '900' }}>
-                                    <Star size={16} fill="#f59e0b" /> {worker.rating}
+                                    <Star size={16} fill="#f59e0b" /> {worker.rating ?? 'Review'}
                                 </div>
                                 <div style={{ fontWeight: '900', color: 'white', fontSize: '1rem' }}>
                                     {worker.earnings.toLocaleString()} <small style={{ color: '#64748b' }}>ETB</small>
@@ -292,4 +293,3 @@ const AgencyDashboard = () => {
 };
 
 export default AgencyDashboard;
-

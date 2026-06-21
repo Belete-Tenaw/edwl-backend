@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 
 // Your Firebase configuration (Keep exactly as is)
 const firebaseConfig = {
@@ -22,5 +23,6 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);      // For Login/OTP
 export const db = getFirestore(app);   // For Worker Profiles & Badges
 export const storage = getStorage(app); // For ID/Photo uploads
+export const functions = getFunctions(app); // For Next-Gen Cloud Functions
 
 export default app;

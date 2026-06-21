@@ -1,120 +1,206 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, Link } from 'react-router-dom';
-import { Users, Briefcase, ArrowRight, LogIn, LayoutDashboard, Shield, Star, Zap, Award, Globe, Heart, Activity } from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
+import { useNavigate } from 'react-router-dom';
+import { 
+    Users, 
+    Briefcase, 
+    ArrowRight, 
+    Shield, 
+    Zap, 
+    Award, 
+    Globe, 
+    Heart, 
+    Search,
+    ShieldCheck,
+    CheckCircle2,
+    Home as HomeIcon,
+    UserPlus,
+    Megaphone
+} from 'lucide-react';
 import authService from '../services/authService';
+import ShareEdwlButton from '../components/ShareEdwlButton';
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
+import TrustIntelligencePanel from '../components/TrustIntelligencePanel';
 
-const LIVE_FEED = [
-    { city: 'Addis Ababa', actionKey: 'employer_hired_nanny', agoKey: 'min_ago', n: 2, icon: '🏠' },
-    { city: 'Dire Dawa', actionKey: 'new_platinum_worker', agoKey: 'min_ago', n: 4, icon: '⭐' },
-    { city: 'Bahir Dar', actionKey: 'escrow_released', amount: 4500, agoKey: 'min_ago', n: 7, icon: '💳' },
-    { city: 'Hawassa', actionKey: 'worker_earned_badge', agoKey: 'min_ago', n: 10, icon: '🎓' },
-    { city: 'Mekelle', actionKey: 'match_score_hired', score: 97, agoKey: 'min_ago', n: 12, icon: '🎯' },
-    { city: 'Addis Ababa', actionKey: 'background_verified', agoKey: 'min_ago', n: 15, icon: '✅' },
+const TRUST_SIGNALS = [
+    { actionKey: 'profile_review_enabled', detailKey: 'review_before_public_listing', icon: ShieldCheck },
+    { actionKey: 'free_browsing_enabled', detailKey: 'free_browsing_enabled_desc', icon: Search },
+    { actionKey: 'subscription_chat_guard', detailKey: 'subscription_chat_guard_desc', icon: Shield },
+    { actionKey: 'configurable_plans_enabled', detailKey: 'configurable_plans_enabled_desc', icon: Briefcase },
 ];
 
-const TESTIMONIALS = [
-    { name: 'Meron T.', roleKey: 'verified_nanny', textKey: 'testimonial_meron', stars: 5, avatar: '👩‍💼' },
-    { name: 'Tigist A.', roleKey: 'platinum_worker', textKey: 'testimonial_tigist', stars: 5, avatar: '👩' },
-    { name: 'Dawit M.', roleKey: 'diaspora_employer', textKey: 'testimonial_dawit', stars: 5, avatar: '👨‍💻' },
+const GOVERNANCE_PROMISES = [
+    { titleKey: 'governance_profile_review_title', descKey: 'governance_profile_review_desc', icon: ShieldCheck },
+    { titleKey: 'governance_platform_role_title', descKey: 'governance_platform_role_desc', icon: CheckCircle2 },
+    { titleKey: 'governance_private_by_default_title', descKey: 'governance_private_by_default_desc', icon: Users },
 ];
 
-const MatchSimulator = ({ onUnlock }) => {
+const SHARE_PROMPTS = [
+    { titleKey: 'share_household_title', descKey: 'share_household_desc', icon: HomeIcon },
+    { titleKey: 'share_worker_title', descKey: 'share_worker_desc', icon: UserPlus },
+    { titleKey: 'share_trust_title', descKey: 'share_trust_desc', icon: Megaphone },
+];
+
+const HERO_STEPS = [
+    { icon: Search, titleKey: 'hero_browse_step_title', descKey: 'hero_browse_step_desc' },
+    { icon: ShieldCheck, titleKey: 'hero_review_step_title', descKey: 'hero_review_step_desc' },
+    { icon: CheckCircle2, titleKey: 'hero_signup_step_title', descKey: 'hero_signup_step_desc' },
+];
+
+const HeroActionShowcase = ({ onBrowse, onSignup }) => {
     const { t } = useTranslation();
-    const [salary, setSalary] = useState(3500);
-    const [experience, setExperience] = useState(3);
-    const [simulating, setSimulating] = useState(false);
-    const [matched, setMatched] = useState(false);
-
-    const handleSimulate = () => {
-        setSimulating(true);
-        setTimeout(() => { setSimulating(false); setMatched(true); }, 1800);
-    };
-
-    const matchScore = Math.min(98, Math.round(72 + (experience * 2) + (salary > 5000 ? 5 : 0)));
 
     return (
-        <div className="glass" style={{ borderRadius: 'var(--radius-lg)', padding: '32px', width: '400px', border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-xl)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                <div style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-light))', width: '42px', height: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Zap size={22} color="white" fill="white" />
+        <div className="hero-action-showcase reveal delay-1">
+            <div className="hero-action-panel">
+                <div className="hero-action-topline">
+                    <span>{t('hero_action_label')}</span>
+                    <Zap size={16} />
                 </div>
-                <div>
-                    <div style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--navy)' }}>{t('ai_match_simulator')}</div>
-                    <div className="ai-pulse" style={{ fontSize: '0.65rem' }}>Processing Live Data</div>
-                </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text)', marginBottom: '10px' }}>
-                    <span>{t('expected_monthly_salary')}</span>
-                    <span style={{ color: 'var(--primary)', fontWeight: '800' }}>{salary.toLocaleString()} ETB</span>
-                </div>
-                <input type="range" min="1500" max="12000" step="100" value={salary}
-                    onChange={e => setSalary(+e.target.value)}
-                    style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer', height: '6px', borderRadius: '3px' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '6px' }}>
-                    <span>1,500 ETB</span><span>12,000 ETB</span>
-                </div>
-            </div>
-
-            <div style={{ marginBottom: '28px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '700', color: 'var(--text)', marginBottom: '10px' }}>
-                    <span>{t('min_experience')}</span>
-                    <span style={{ color: 'var(--primary)', fontWeight: '800' }}>{experience}+ {t('years')}</span>
-                </div>
-                <input type="range" min="0" max="10" step="1" value={experience}
-                    onChange={e => setExperience(+e.target.value)}
-                    style={{ width: '100%', accentColor: 'var(--primary)', cursor: 'pointer', height: '6px', borderRadius: '3px' }} />
-            </div>
-
-            {!matched ? (
-                <button onClick={handleSimulate} disabled={simulating} className="btn-primary"
-                    style={{ width: '100%', padding: '16px' }}>
-                    {simulating ? (
-                        <><Activity size={18} className="spin" /> {t('scanning_profiles')}</>
-                    ) : (
-                        <><Zap size={18} /> {t('find_perfect_match')}</>
-                    )}
-                </button>
-            ) : (
-                <div style={{ animation: 'fadeInUp 0.5s var(--transition)' }}>
-                    <div className="glass" style={{ background: 'var(--primary-glow)', borderRadius: '16px', padding: '20px', marginBottom: '16px', textAlign: 'center' }}>
-                        <div className="gradient-text" style={{ fontSize: '2.5rem', fontWeight: '900', marginBottom: '4px' }}>{matchScore}%</div>
-                        <div style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '0.9rem' }}>🎯 {t('match_score')} — 12 {t('profiles_found')}</div>
-                    </div>
-                    <button onClick={onUnlock} className="btn-primary"
-                        style={{ width: '100%', padding: '16px' }}>
-                        Unlock Matches — Free <ArrowRight size={18} />
+                <h3>{t('hero_action_title')}</h3>
+                <p>{t('hero_action_desc')}</p>
+                <div className="hero-action-buttons">
+                    <button type="button" className="btn-primary" onClick={onBrowse}>
+                        <Search size={18} /> {t('browse_edwl')}
+                    </button>
+                    <button type="button" className="btn-login" onClick={onSignup}>
+                        {t('sign_up')} <ArrowRight size={18} />
                     </button>
                 </div>
-            )}
-            
-            <style>{`
-                .spin { animation: rotate 2s linear infinite; }
-                @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-            `}</style>
+                <div className="hero-path-list">
+                    {HERO_STEPS.map(({ icon: Icon, titleKey, descKey }) => (
+                        <div key={titleKey} className="hero-path-row">
+                            <div className="hero-path-icon">
+                                <Icon size={18} />
+                            </div>
+                            <div>
+                                <strong>{t(titleKey)}</strong>
+                                <span>{t(descKey)}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="hero-action-ribbon">
+                <span>{t('hero_no_login_note')}</span>
+                <ArrowRight size={16} />
+            </div>
         </div>
     );
 };
 
-const LiveFeed = () => {
+const TrustSignal = () => {
     const [idx, setIdx] = useState(0);
     useEffect(() => {
-        const timer = setInterval(() => setIdx(i => (i + 1) % LIVE_FEED.length), 3500);
+        const timer = setInterval(() => setIdx(i => (i + 1) % TRUST_SIGNALS.length), 3200);
         return () => clearInterval(timer);
     }, []);
     const { t } = useTranslation();
-    const item = LIVE_FEED[idx];
+    const item = TRUST_SIGNALS[idx];
+    const Icon = item.icon;
     return (
-        <div className="glass" style={{ display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '16px', padding: '12px 20px', boxShadow: 'var(--shadow)', maxWidth: '450px', border: '1px solid var(--glass-border)' }}>
-            <span style={{ fontSize: '1.6rem' }}>{item.icon}</span>
+        <div className="glass hero-trust-signal" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px', 
+            borderRadius: '16px', 
+            padding: '10px 20px', 
+            boxShadow: 'var(--shadow)', 
+            maxWidth: '420px', 
+            border: '1px solid rgba(255,255,255,0.4)',
+            transition: 'var(--transition)'
+        }}>
+            <Icon size={22} color="var(--primary)" />
             <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(item.actionKey, { amount: item.amount, score: item.score })}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: '500' }}>{item.city} · {t(item.agoKey, { n: item.n })}</div>
+                <div className="hero-trust-title">{t(item.actionKey)}</div>
+                <div className="hero-trust-detail">{t(item.detailKey)}</div>
             </div>
-            <div className="ai-pulse" style={{ color: 'transparent', width: '10px' }} />
+            <div className="ai-pulse" style={{ color: 'transparent', width: '8px' }} />
+        </div>
+    );
+};
+
+const SkillExplorer = () => {
+    const { t } = useTranslation();
+    const [selectedSkill, setSelectedSkill] = useState('childcare');
+    
+    const SKILLS_DATA = {
+        childcare: { labelKey: 'skill_childcare', statusKey: 'home_skill_admin_review', verificationKey: 'home_skill_id_references', categoryKey: 'home_skill_core_service', icon: 'CC', color: '#008080' },
+        traditionalCooking: { labelKey: 'skill_traditional_cooking', statusKey: 'home_skill_skill_notes', verificationKey: 'home_skill_experience_details', categoryKey: 'home_skill_household_fit', icon: 'TC', color: '#ff5722' },
+        eldercare: { labelKey: 'skill_eldercare', statusKey: 'home_skill_care_context', verificationKey: 'home_skill_references_first', categoryKey: 'home_skill_sensitive_care', icon: 'EC', color: '#673ab7' },
+        generalCleaning: { labelKey: 'skill_general_cleaning', statusKey: 'home_skill_scope_clarity', verificationKey: 'home_skill_task_history', categoryKey: 'home_skill_daily_support', icon: 'GC', color: '#ff9800' },
+        homeTutoring: { labelKey: 'skill_home_tutoring', statusKey: 'home_skill_learning_fit', verificationKey: 'home_skill_education_notes', categoryKey: 'home_skill_subject_details', icon: 'HT', color: '#00bcd4' },
+    };
+
+    const current = SKILLS_DATA[selectedSkill];
+
+    return (
+        <div className="glass" style={{ 
+            borderRadius: '24px', 
+            padding: '40px', 
+            border: '1px solid rgba(255,255,255,0.4)', 
+            boxShadow: 'var(--shadow-lg)', 
+            maxWidth: '900px', 
+            margin: '0 auto',
+            backdropFilter: 'blur(20px)'
+        }}>
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--primary)', letterSpacing: '2px', background: 'var(--primary-glow)', padding: '6px 16px', borderRadius: '30px' }}>
+                    {t('startup_talent_governance')}
+                </span>
+                <h3 style={{ fontSize: '1.8rem', color: 'var(--navy)', marginTop: '16px', marginBottom: '12px', fontWeight: '800' }}>
+                    {t('browse_skills_with_review_controls')}
+                </h3>
+                <p style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>
+                    {t('skill_explorer_desc')}
+                </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '32px' }}>
+                {Object.entries(SKILLS_DATA).map(([skillId, data]) => {
+                    const isSelected = selectedSkill === skillId;
+                    return (
+                        <button 
+                            key={skillId}
+                            onClick={() => setSelectedSkill(skillId)}
+                            style={{ 
+                                padding: '10px 20px', 
+                                borderRadius: '30px', 
+                                background: isSelected ? data.color : 'white', 
+                                color: isSelected ? 'white' : 'var(--text)', 
+                                border: '1px solid rgba(0,0,0,0.05)', 
+                                fontSize: '0.9rem',
+                                fontWeight: '700',
+                                boxShadow: isSelected ? `0 8px 16px -4px ${data.color}60` : 'var(--shadow-sm)',
+                                transform: isSelected ? 'translateY(-2px)' : 'none',
+                                transition: 'var(--transition-fast)'
+                            }}
+                        >
+                            <span style={{ marginRight: '6px' }}>{data.icon}</span> {t(data.labelKey)}
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', animation: 'fadeIn 0.5s ease-out' }} key={selectedSkill}>
+                <div className="glass" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.6)', textAlign: 'center', background: 'rgba(255, 255, 255, 0.4)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{t('profile_status')}</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: '900', color: current.color, minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t(current.statusKey)}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>{t('profile_status_note')}</div>
+                </div>
+                <div className="glass" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.6)', textAlign: 'center', background: 'rgba(255, 255, 255, 0.4)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{t('verification_focus')}</div>
+                    <div style={{ fontSize: '1.35rem', fontWeight: '900', color: '#ff9800', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {t(current.verificationKey)}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>{t('verification_focus_note')}</div>
+                </div>
+                <div className="glass" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.6)', textAlign: 'center', background: 'rgba(255, 255, 255, 0.4)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-light)', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>{t('category_handling')}</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--navy)', minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t(current.categoryKey)}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>{t('category_handling_note')}</div>
+                </div>
+            </div>
         </div>
     );
 };
@@ -123,152 +209,208 @@ const Home = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [user, setUser] = useState(authService.getCurrentUser());
-    const [activeTesti, setActiveTesti] = useState(0);
 
     useEffect(() => { setUser(authService.getCurrentUser()); }, []);
 
-    useEffect(() => {
-        const timer = setInterval(() => setActiveTesti(i => (i + 1) % TESTIMONIALS.length), 5000);
-        return () => clearInterval(timer);
-    }, []);
+    const handleBrowseEdwl = () => {
+        navigate('/browse');
+    };
 
     return (
         <div className="home-page app">
-            <Helmet>
-                <title>{t('home_seo_title')} | EDWL</title>
-                <meta name="description" content={t('home_seo_desc')} />
-            </Helmet>
+            <Seo
+                title={`${BRAND_AM} - ${BRAND_EN}`}
+                description={`${t('home_seo_desc')} ${BRAND_AM} - ${BRAND_EN}.`}
+                path="/"
+                structuredData={{
+                    '@context': 'https://schema.org',
+                    '@type': 'WebSite',
+                    '@id': 'https://ethiodomesticworkers.web.app/#website',
+                    url: 'https://ethiodomesticworkers.web.app/',
+                    name: `${BRAND_AM} - ${BRAND_EN}`,
+                    alternateName: ['EDWL', BRAND_EN, BRAND_AM, 'ኢትዮ የቤት ውስጥ ሠራተኞች አገናኝ'],
+                    inLanguage: ['en', 'am']
+                }}
+            />
 
             {/* HERO SECTION */}
-            <header style={{ minHeight: '92vh', display: 'flex', alignItems: 'center', position: 'relative', overflow: 'hidden', padding: '100px 0' }}>
-                <div className="container" style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '80px', alignItems: 'center' }}>
-                    <div className="reveal">
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', background: 'var(--primary-glow)', border: '1px solid var(--primary-light)', borderRadius: '30px', padding: '8px 20px', marginBottom: '32px', fontSize: '0.85rem', fontWeight: '800', color: 'var(--primary)' }}>
-                            <span className="ai-pulse">System Active</span>
-                            {t('active_workers_count')}
+            <header className="hero-section">
+                <div className="container hero-shell">
+                    <div className="reveal hero-copy">
+                        <div className="hero-kicker">
+                            <span className="ai-pulse hero-kicker-badge">{t('startup_pilot')}</span>
+                            <span className="hero-kicker-text">{t('active_workers_count')}</span>
                         </div>
-                        <h1 style={{ marginBottom: '24px' }}>
+                        <h1 className="hero-title">
                             <span className="gradient-text">{t('welcome')}</span>
                         </h1>
-                        <h2 style={{ fontSize: '2rem', color: 'var(--navy)', fontWeight: '600', marginBottom: '32px', opacity: 0.9 }}>{t('motto')}</h2>
-                        <p style={{ fontSize: '1.2rem', color: 'var(--text-light)', maxWidth: '550px', marginBottom: '48px', lineHeight: 1.8 }}>{t('hero_title')}</p>
+                        <h2 className="hero-subtitle">{t('motto')}</h2>
+                        <p className="hero-description">{t('hero_title')}</p>
 
-                        <div className="reveal delay-1" style={{ marginBottom: '40px' }}>
-                            <LiveFeed />
+                        <div className="reveal delay-1" style={{ marginBottom: '36px' }}>
+                            <TrustSignal />
                         </div>
 
-                        <div className="reveal delay-2" style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                        <div className="reveal delay-2 hero-primary-actions">
                             {user ? (
-                                <button className="btn-primary" style={{ padding: '18px 48px', fontSize: '1.1rem' }}
+                                <button className="btn-primary hero-cta-button"
                                     onClick={() => navigate(user.role === 'JOB_SEEKER' ? '/dashboard/seeker' : user.role === 'EMPLOYER' ? '/dashboard/employer' : '/admin')}>
-                                    {t('go_to_dashboard')} <ArrowRight size={22} />
+                                    {t('go_to_dashboard')} <ArrowRight size={20} />
                                 </button>
                             ) : (
                                 <>
-                                    <button className="btn-primary" style={{ padding: '18px 48px', fontSize: '1.1rem' }} onClick={() => navigate('/register')}>
-                                        {t('create_free_account')} <ArrowRight size={22} />
+                                    <button className="btn-primary hero-cta-button" onClick={handleBrowseEdwl}>
+                                        <Search size={18} /> {t('browse_edwl')}
                                     </button>
-                                    <button className="btn-login" style={{ padding: '18px 40px', fontSize: '1.1rem' }} onClick={() => navigate('/login')}>
-                                        <LogIn size={20} /> {t('login')}
+                                    <button className="btn-login hero-cta-button hero-secondary-cta" onClick={() => navigate('/register')}>
+                                        {t('sign_up')} <ArrowRight size={18} />
                                     </button>
                                 </>
                             )}
                         </div>
                         
-                        <div className="reveal delay-3" style={{ display: 'flex', gap: '32px', marginTop: '48px' }}>
-                            {[{ icon: Shield, textKey: 'escrow_protected' }, { icon: Award, textKey: 'academy_certified' }, { icon: Globe, textKey: 'fayda_verified' }].map(({ icon: Icon, textKey }) => (
-                                <div key={textKey} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '700' }}>
-                                    <Icon size={18} color="var(--primary)" /> {t(textKey)}
+                        <div className="reveal delay-3 hero-trust-tags">
+                            {[{ icon: ShieldCheck, textKey: 'admin_reviewed' }, { icon: Award, textKey: 'profile_privacy' }, { icon: Globe, textKey: 'clear_platform_role' }].map(({ icon: Icon, textKey }) => (
+                                <div key={textKey} className="hero-trust-tag">
+                                    <Icon size={16} color="var(--primary)" /> {t(textKey)}
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    <div className="reveal delay-1 desktop-only" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <MatchSimulator onUnlock={() => navigate('/register')} />
-                    </div>
+                    <HeroActionShowcase
+                        onBrowse={handleBrowseEdwl}
+                        onSignup={() => navigate('/register')}
+                    />
                 </div>
             </header>
 
             {/* TRUST STATS SECTION */}
-            <section style={{ padding: '60px 0', background: 'var(--white)', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)' }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '40px' }}>
+            <section id="browse-edwl" style={{ padding: '60px 0', background: 'white', borderTop: '1px solid rgba(0, 128, 128, 0.08)', borderBottom: '1px solid rgba(0, 128, 128, 0.08)', scrollMarginTop: '90px' }}>
+                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '30px' }}>
                     {[
-                        { val: '5,000+', labelKey: 'available_workers', icon: Users },
-                        { val: '1,200+', labelKey: 'active_employers', icon: Briefcase },
-                        { val: '98%', labelKey: 'match_success', icon: Heart },
-                        { val: '₿ 2.4M+', labelKey: 'etb_in_escrow', icon: Shield },
+                        { valKey: 'admin_review', labelKey: 'before_public_listing', icon: Users, color: 'var(--primary)' },
+                        { valKey: 'free_browse', labelKey: 'no_login_required', icon: Briefcase, color: 'var(--accent)' },
+                        { valKey: 'member_chat', labelKey: 'subscription_required', icon: Heart, color: '#e91e63' },
+                        { valKey: 'owner_control', labelKey: 'configurable_pricing', icon: Shield, color: 'var(--primary-light)' },
                     ].map(s => (
                         <div key={s.labelKey} style={{ textAlign: 'center', flex: 1, minWidth: '150px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-                                <s.icon size={32} color="var(--primary-light)" />
+                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+                                <s.icon size={26} color={s.color} />
                             </div>
-                            <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--navy)', marginBottom: '4px' }}>{s.val}</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>{t(s.labelKey)}</div>
+                            <div style={{ fontSize: '1.55rem', fontWeight: '900', color: 'var(--navy)', marginBottom: '2px' }}>{t(s.valKey)}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}>{t(s.labelKey)}</div>
                         </div>
                     ))}
                 </div>
             </section>
 
+            <TrustIntelligencePanel />
+
+            {/* INTERACTIVE SKILL MATCHER SECTION */}
+            <section style={{ padding: '100px 0 60px' }}>
+                <div className="container">
+                    <SkillExplorer />
+                </div>
+            </section>
+
             {/* CORE FEATURES SECTION */}
-            <section style={{ padding: '120px 0', position: 'relative' }}>
-                <div className="container" style={{ textAlign: 'center', marginBottom: '80px' }}>
-                    <h2 style={{ marginBottom: '24px' }}>{t('why_thousands_trust')}</h2>
-                    <p style={{ fontSize: '1.2rem', color: 'var(--text-light)', maxWidth: '650px', margin: '0 auto' }}>{t('platform_tagline')}</p>
+            <section style={{ padding: '100px 0', position: 'relative' }}>
+                <div className="container" style={{ textAlign: 'center', marginBottom: '60px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--accent)', letterSpacing: '2px' }}>{t('designed_for_high_trust')}</span>
+                    <h2 style={{ marginTop: '12px', marginBottom: '20px' }}>{t('why_thousands_trust')}</h2>
+                    <p style={{ fontSize: '1.1rem', color: 'var(--text-light)', maxWidth: '600px', margin: '0 auto' }}>{t('platform_tagline')}</p>
                 </div>
                 
-                <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
+                <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '30px' }}>
                     {[
                         { icon: Shield, titleKey: 'zero_trust_escrow', descKey: 'zero_trust_escrow_desc', color: 'var(--primary)' },
                         { icon: Zap, titleKey: 'ai_powered_matching', descKey: 'ai_powered_matching_desc', color: 'var(--accent)' },
                         { icon: Award, titleKey: 'edwl_academy', descKey: 'edwl_academy_desc', color: 'var(--primary-light)' },
                         { icon: Globe, titleKey: 'cross_border_hiring', descKey: 'cross_border_hiring_desc', color: 'var(--navy)' },
                     ].map(f => (
-                        <div key={f.titleKey} className="card">
-                            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '28px' }}>
-                                <f.icon size={32} color={f.color} />
+                        <div key={f.titleKey} className="card" style={{ padding: '30px', borderRadius: '20px' }}>
+                            <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'var(--secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+                                <f.icon size={26} color={f.color} />
                             </div>
-                            <h3 style={{ fontSize: '1.4rem', marginBottom: '16px' }}>{t(f.titleKey)}</h3>
-                            <p style={{ color: 'var(--text-light)', lineHeight: 1.7 }}>{t(f.descKey)}</p>
+                            <h3 style={{ fontSize: '1.25rem', marginBottom: '12px', color: 'var(--navy)' }}>{t(f.titleKey)}</h3>
+                            <p style={{ color: 'var(--text-light)', fontSize: '0.9rem', lineHeight: 1.6 }}>{t(f.descKey)}</p>
                         </div>
                     ))}
                 </div>
             </section>
 
-            {/* TESTIMONIALS SLIDER */}
-            <section style={{ padding: '120px 0', background: 'var(--navy)', color: 'white' }}>
-                <div className="container" style={{ textAlign: 'center', marginBottom: '60px' }}>
-                    <h2 style={{ color: 'white', marginBottom: '16px' }}>{t('real_people_results')}</h2>
-                    <div style={{ height: '4px', width: '80px', background: 'var(--primary)', margin: '0 auto', borderRadius: '2px' }}></div>
+            {/* STARTUP GOVERNANCE */}
+            <section style={{ padding: '100px 0', background: 'var(--navy)', color: 'white', position: 'relative', overflow: 'hidden' }}>
+                <div className="container" style={{ textAlign: 'center', marginBottom: '50px', position: 'relative', zIndex: 1 }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '800', textTransform: 'uppercase', color: 'var(--primary-light)', letterSpacing: '2px' }}>
+                        {t('startup_governance_label')}
+                    </span>
+                    <h2 style={{ color: 'white', marginTop: '12px', marginBottom: '16px' }}>{t('startup_governance_title')}</h2>
+                    <p style={{ color: '#cbd5e1', fontSize: '1.05rem', maxWidth: '680px', margin: '0 auto 22px', lineHeight: 1.7 }}>{t('startup_governance_desc')}</p>
+                    <div style={{ height: '4px', width: '60px', background: 'var(--accent)', margin: '0 auto', borderRadius: '2px' }}></div>
                 </div>
                 
-                <div className="container" style={{ maxWidth: '1000px' }}>
-                    <div className="glass" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', padding: '60px', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '32px' }}>
-                            {[...Array(5)].map((_, j) => <Star key={j} size={24} fill="var(--accent)" color="var(--accent)" />)}
-                        </div>
-                        <p style={{ fontSize: '1.8rem', fontWeight: '500', fontStyle: 'italic', marginBottom: '40px', lineHeight: 1.6 }}>
-                            "{t(TESTIMONIALS[activeTesti].textKey)}"
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-                            <div style={{ fontSize: '3rem' }}>{TESTIMONIALS[activeTesti].avatar}</div>
-                            <div style={{ textAlign: 'left' }}>
-                                <div style={{ fontSize: '1.2rem', fontWeight: '800' }}>{TESTIMONIALS[activeTesti].name}</div>
-                                <div style={{ color: 'var(--primary-light)', fontWeight: '700', fontSize: '0.9rem' }}>{t(TESTIMONIALS[activeTesti].roleKey)}</div>
+                <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', position: 'relative', zIndex: 1 }}>
+                    {GOVERNANCE_PROMISES.map(({ titleKey, descKey, icon: Icon }) => (
+                        <div key={titleKey} className="glass" style={{
+                            background: 'rgba(255,255,255,0.04)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            padding: '32px',
+                            borderRadius: '16px',
+                            minHeight: '220px'
+                        }}>
+                            <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '22px' }}>
+                                <Icon size={24} color="var(--primary-light)" />
                             </div>
+                            <h3 style={{ color: 'white', fontSize: '1.15rem', marginBottom: '12px' }}>{t(titleKey)}</h3>
+                            <p style={{ color: '#cbd5e1', lineHeight: 1.7, fontSize: '0.95rem' }}>{t(descKey)}</p>
                         </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* SHARE GROWTH PANEL */}
+            <section className="share-growth-section">
+                <div className="container share-growth-shell">
+                    <div className="share-growth-copy">
+                        <span className="section-eyebrow">{t('share_growth_label')}</span>
+                        <h2>{t('share_growth_title')}</h2>
+                        <p>{t('share_growth_desc')}</p>
+                        <div className="share-growth-actions">
+                            <ShareEdwlButton />
+                            <button type="button" className="btn-login" onClick={handleBrowseEdwl}>
+                                <Search size={18} /> {t('browse_edwl')}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="share-growth-grid">
+                        {SHARE_PROMPTS.map(({ titleKey, descKey, icon: Icon }) => (
+                            <div key={titleKey} className="share-growth-card">
+                                <div className="share-growth-icon">
+                                    <Icon size={22} />
+                                </div>
+                                <div>
+                                    <h3>{t(titleKey)}</h3>
+                                    <p>{t(descKey)}</p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </section>
 
             {/* FINAL CALL TO ACTION */}
             {!user && (
-                <section style={{ padding: '140px 0', position: 'relative', overflow: 'hidden' }}>
+                <section style={{ padding: '120px 0', position: 'relative', overflow: 'hidden' }}>
                     <div className="container" style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-                        <h2 style={{ fontSize: '3.5rem', marginBottom: '24px' }}>Ready to Scale Your Life?</h2>
-                        <p style={{ fontSize: '1.4rem', color: 'var(--text-light)', maxWidth: '600px', margin: '0 auto 50px' }}>Join the ecosystem trusted by thousands of Ethiopian families and top-tier workers.</p>
-                        <button className="btn-primary" style={{ padding: '20px 64px', fontSize: '1.2rem', boxShadow: 'var(--shadow-xl)' }} onClick={() => navigate('/register')}>
-                            Create Your Free Account <ArrowRight size={24} />
+                        <h2 style={{ fontSize: '3rem', marginBottom: '20px', color: 'var(--navy)' }}>{t('startup_pilot_cta_title')}</h2>
+                        <p style={{ fontSize: '1.2rem', color: 'var(--text-light)', maxWidth: '580px', margin: '0 auto 40px', lineHeight: 1.7 }}>
+                            {t('startup_pilot_cta_desc')}
+                        </p>
+                        <button className="btn-primary" style={{ padding: '18px 56px', fontSize: '1.1rem', borderRadius: '14px', boxShadow: '0 20px 40px -10px hsla(182, 100%, 25%, 0.3)' }} onClick={() => navigate('/register')}>
+                            {t('create_free_account')} <ArrowRight size={22} />
                         </button>
                     </div>
                 </section>

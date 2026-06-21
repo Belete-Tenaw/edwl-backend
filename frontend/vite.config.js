@@ -13,30 +13,44 @@ export default defineConfig({
                 cleanupOutdatedCaches: true,
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,json,vue,txt,woff2}']
             },
-            includeAssets: ['logo_2024.png'],
+            includeAssets: [
+                'edwl_logo.png',
+                'apple-touch-icon.png',
+                'icons/pwa/edwl-logo-192.png',
+                'icons/pwa/edwl-logo-512.png'
+            ],
             manifest: {
                 name: 'Ethio Domestic Workers Link',
                 short_name: 'EDWL',
-                description: 'Connecting Quality Help to Your Home in Ethiopia',
+                description: 'Ethio Domestic Workers Link helps Ethiopian households browse reviewed domestic worker summaries and sign up when ready.',
                 theme_color: '#008080',
                 background_color: '#ffffff',
                 display: 'standalone',
                 orientation: 'portrait',
+                id: '/',
                 scope: '/',
                 start_url: '/',
                 icons: [
                     {
-                        src: 'logo_2024.png',
+                        src: 'icons/pwa/edwl-logo-192.png',
                         sizes: '192x192',
-                        type: 'image/png'
+                        type: 'image/png',
+                        purpose: 'any'
                     },
                     {
-                        src: 'logo_2024.png',
+                        src: 'icons/pwa/edwl-logo-192.png',
+                        sizes: '192x192',
+                        type: 'image/png',
+                        purpose: 'any maskable'
+                    },
+                    {
+                        src: 'icons/pwa/edwl-logo-512.png',
                         sizes: '512x512',
-                        type: 'image/png'
+                        type: 'image/png',
+                        purpose: 'any'
                     },
                     {
-                        src: 'logo_2024.png',
+                        src: 'icons/pwa/edwl-logo-512.png',
                         sizes: '512x512',
                         type: 'image/png',
                         purpose: 'any maskable'

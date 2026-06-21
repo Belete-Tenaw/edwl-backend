@@ -53,7 +53,7 @@ async function createTestData() {
         locationWoreda: 'Bole', 
         behaviorScore: 95, 
         rating: 4.8, 
-        tier: 'FREE', 
+        tier: 'BRONZE', 
         password: 'hashedpassword',
         phone: '+251911111111',
         age: 25,
@@ -61,7 +61,11 @@ async function createTestData() {
         expectedSalary: 12000,
         profilePhoto: 'none',
         idDocument: 'none',
-        nationalIdFayda: 'none'
+        gender: 'FEMALE',
+        maritalStatus: 'SINGLE',
+        preferredLocation: 'Bole, Addis Ababa',
+        preferredArrangement: 'LIVE_IN',
+        verificationStatus: 'APPROVED'
       },
       { 
         fullName: 'Slow Walker', 
@@ -69,7 +73,7 @@ async function createTestData() {
         locationWoreda: 'Yeka', 
         behaviorScore: 60, 
         rating: 3.5, 
-        tier: 'FREE',
+        tier: 'BRONZE',
         password: 'hashedpassword',
         phone: '+251922222222',
         age: 30,
@@ -77,7 +81,11 @@ async function createTestData() {
         expectedSalary: 8000,
         profilePhoto: 'none',
         idDocument: 'none',
-        nationalIdFayda: 'none'
+        gender: 'FEMALE',
+        maritalStatus: 'SINGLE',
+        preferredLocation: 'Yeka, Addis Ababa',
+        preferredArrangement: 'LIVE_OUT',
+        verificationStatus: 'APPROVED'
       },
       { 
         fullName: 'Elite Pro Chef', 
@@ -93,7 +101,11 @@ async function createTestData() {
         expectedSalary: 25000,
         profilePhoto: 'none',
         idDocument: 'none',
-        nationalIdFayda: 'none'
+        gender: 'FEMALE',
+        maritalStatus: 'SINGLE',
+        preferredLocation: 'Bole, Addis Ababa',
+        preferredArrangement: 'LIVE_IN',
+        verificationStatus: 'APPROVED'
       }
     ];
 

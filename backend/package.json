@@ -24,6 +24,7 @@
     "bcrypt": "^6.0.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
+    "did-resolver": "^5.0.1",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
@@ -37,6 +38,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
+    "node-fetch": "^2.7.0",
     "node-telegram-bot-api": "^0.67.0",
     "nodemon": "^3.1.11",
     "pdf-lib": "^1.17.1",
@@ -45,7 +47,8 @@
     "socket.io": "^4.8.3",
     "stripe": "^22.1.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "web-did-resolver": "^2.0.32"
   },
   "devDependencies": {
     "jest": "^30.2.0",

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Check, Shield, Star, Crown, MessageSquare, Smartphone, Camera, CheckCircle, CreditCard, ExternalLink, Loader, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
 
 const Pricing = () => {
     const { t } = useTranslation();
@@ -120,6 +121,12 @@ const Pricing = () => {
     };
 
     return (
+    <>
+        <Seo
+            title={`Pricing Plans - ${BRAND_EN}`}
+            description={`Review EDWL subscription and access plans for ${BRAND_EN} (${BRAND_AM}).`}
+            path="/pricing"
+        />
         <div className="container" style={{ padding: '60px 20px' }}>
             <div style={{ textAlign: 'center', marginBottom: '50px' }}>
                 <h1 style={{ fontSize: '2.5rem', marginBottom: '15px' }}>{t('choose_plan')}</h1>
@@ -515,6 +522,7 @@ const Pricing = () => {
             </div>
         )}
     </div>
+    </>
     );
 };
 

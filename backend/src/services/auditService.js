@@ -8,13 +8,23 @@ const prisma = require('../utils/prisma');
  * @param {object} details - Additional metadata about the action
  * @param {string} ipAddress - Optional IP address of the requester
  */
-const logAction = async (action, userId, userType, details = {}, ipAddress = null) => {
+const logAction = async (action, userId, userType, details = {}, ipAddress = null, txClient = null) => {
     try {
+        let client = prisma;
+        let actualIp = typeof ipAddress === 'string' ? ipAddress : null;
+
+        // If the 5th argument is actually the Prisma transaction client
+        if (ipAddress && typeof ipAddress === 'object' && typeof ipAddress.auditLog === 'object') {
+            client = ipAddress;
+        } else if (txClient && typeof txClient === 'object' && typeof txClient.auditLog === 'object') {
+            client = txClient;
+        }
+
         const data = {
             action,
             userType,
             details: details || {},
-            ipAddress
+            ipAddress: actualIp
         };
 
         // Map userId to the correct specific field based on userType
@@ -26,7 +36,7 @@ const logAction = async (action, userId, userType, details = {}, ipAddress = nul
             data.userId = userId;
         }
 
-        const log = await prisma.auditLog.create({ data });
+        const log = await client.auditLog.create({ data });
         
     } catch (error) {
         console.error('Audit Log Error:', error);

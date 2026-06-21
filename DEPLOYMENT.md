@@ -114,7 +114,14 @@ npm run seed-admin admin admin123  # format: npm run seed-admin <username> <pass
 ```
 
 ### Production Security (CORS)
-Ensure `CORS_ORIGIN` is set in your `.env` to restricted domains (e.g., `https://edwl.com`). Use `*` only for public APIs.
+Use the short EDWL link as the official frontend URL, while keeping the old Firebase site as a temporary legacy alias until search engines and existing users have fully migrated.
+
+```bash
+CORS_ORIGIN=https://ethiodomesticworkers.web.app,https://ethiodomesticworkers.firebaseapp.com,https://edwl-ethio-domesticworkerslink.web.app,https://edwl-ethio-domesticworkerslink.firebaseapp.com
+FRONTEND_URL=https://ethiodomesticworkers.web.app
+```
+
+Do not use `*` for authenticated APIs.
 
 ### Backup Before Migration
 ```bash

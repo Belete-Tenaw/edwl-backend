@@ -7,6 +7,9 @@ import { validateAndFormatPhone } from '../utils/validation';
 import { processVideoBio } from '../utils/videoProcessor';
 import { Camera, Video, LogIn } from 'lucide-react';
 import MediaUploader from '../components/MediaUploader';
+import { OCCUPATION_CATEGORIES } from '../constants/occupations';
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
+import { getFriendlyApiError } from '../utils/apiErrors';
 
 const Register = () => {
     const { t } = useTranslation();
@@ -31,6 +34,8 @@ const Register = () => {
         age: '',
         maritalStatus: 'SINGLE',
         religion: '',
+        occupationCategory: 'HOUSEHOLD_SERVICES',
+        customOccupation: '',
         skills: [],
         customSkill: '',
         languages: [],
@@ -243,6 +248,7 @@ const Register = () => {
                     { key: 'email', label: t('email_address'), condition: !seekerData.phone },
                     { key: 'age', label: t('age') },
                     { key: 'password', label: t('password') },
+                    { key: 'occupationCategory', label: t('occupation_category', 'Occupation Category') },
                     { key: 'experienceYears', label: t('experience_years') },
                     { key: 'expectedSalary', label: t('expected_salary') },
                     { key: 'preferredLocation', label: t('preferred_location') },
@@ -267,6 +273,13 @@ const Register = () => {
 
                 if (seekerData.password.length < 6) {
                     setError("Password must be at least 6 characters long.");
+                    setLoading(false);
+                    window.scrollTo(0, 0);
+                    return;
+                }
+
+                if (seekerData.occupationCategory === 'OTHER' && !seekerData.customOccupation.trim()) {
+                    setError(t('specify_other_occupation', 'Please specify other occupation'));
                     setLoading(false);
                     window.scrollTo(0, 0);
                     return;
@@ -393,10 +406,8 @@ const Register = () => {
                 setDuplicateField(field);
                 setError('');
             } else {
-                const backendError = err.response?.data?.error || err.response?.data?.message;
-                const message = backendError || err.message || 'Registration failed.';
                 setIsDuplicate(false);
-                setError(message);
+                setError(getFriendlyApiError(err, t, 'registration_failed'));
             }
             window.scrollTo(0, 0);
         } finally {
@@ -429,6 +440,12 @@ const Register = () => {
     }
 
     return (
+        <>
+        <Seo
+            title={`Register - ${BRAND_AM} - ${BRAND_EN}`}
+            description={`Create a worker, employer, or agency account on ${BRAND_EN} (${BRAND_AM}).`}
+            path="/register"
+        />
         <div className="container" style={{ padding: '40px 20px', maxWidth: '800px' }}>
             <h2 style={{ textAlign: 'center', marginBottom: '30px', color: 'var(--primary)' }}>{t('create_account_title')}</h2>
 
@@ -596,6 +613,35 @@ const Register = () => {
                                 <label className="label">{t('religion')}</label>
                                 <input className="input" name="religion" value={seekerData.religion} onChange={handleSeekerChange} placeholder={t('optional')} />
                             </div>
+                            <div>
+                                <label className="label">{t('occupation_category', 'Occupation Category')}</label>
+                                <select
+                                    className="input"
+                                    name="occupationCategory"
+                                    value={seekerData.occupationCategory}
+                                    onChange={handleSeekerChange}
+                                    required
+                                >
+                                    {OCCUPATION_CATEGORIES.map(category => (
+                                        <option key={category.value} value={category.value}>
+                                            {t(category.labelKey, category.defaultLabel)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            {seekerData.occupationCategory === 'OTHER' && (
+                                <div>
+                                    <label className="label">{t('specify_other_occupation', 'Please specify other occupation')}</label>
+                                    <input
+                                        className="input"
+                                        name="customOccupation"
+                                        value={seekerData.customOccupation}
+                                        onChange={handleSeekerChange}
+                                        placeholder={t('occupation_other_placeholder', 'e.g. Spa assistant, gaming hall attendant')}
+                                        required
+                                    />
+                                </div>
+                            )}
                             <div style={{ gridColumn: '1 / -1' }}>
                                 <label className="label">{t('skills_select_multiple')}</label>
                                 <div style={{
@@ -948,6 +994,7 @@ const Register = () => {
                 UI Version: 1.4.0-FORM_FIX
             </div>
         </div>
+        </>
     );
 };
 

@@ -2,9 +2,10 @@ import React from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { useTranslation } from 'react-i18next';
-import { Menu, LogOut, User, MessageSquare, LogIn, LayoutDashboard, Briefcase, Sun, Moon, Database, Gift } from 'lucide-react';
+import { Menu, LogOut, User, MessageSquare, LogIn, LayoutDashboard, Briefcase, Sun, Moon, Database, Gift, CreditCard } from 'lucide-react';
 import logo from '../assets/edwl_logo.png';
 import NotificationCenter from './NotificationCenter';
+import ShareEdwlButton from './ShareEdwlButton';
 
 const Navbar = () => {
     const { t, i18n } = useTranslation();
@@ -48,28 +49,26 @@ const Navbar = () => {
 
     return (
         <nav className="navbar glass" style={{ position: 'sticky', top: 0, zIndex: 1000, padding: '10px 24px', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226, 232, 240, 0.6)', transition: 'all 0.3s ease' }}>
-            <NavLink to="/" onClick={closeMenu} className={({ isActive }) => `nav-logo-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+            <NavLink to="/" onClick={closeMenu} aria-label="ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ - Ethio Domestic Workers Link" className={({ isActive }) => `nav-logo-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
                 <img src={logo} alt="EDWL Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease', filter: 'contrast(1.2) saturate(1.3)' }} className="nav-logo" />
                 <div className="nav-logo-text" style={{ display: 'flex', flexDirection: 'column', color: 'var(--navy)', gap: '2px' }}>
-                    <span style={{ fontSize: '1.15rem', fontWeight: '900', lineHeight: 1.1, letterSpacing: '-0.2px' }}>
+                    <span className="nav-brand-am">
                         ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ
                     </span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1.1, opacity: 0.9, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="nav-brand-en">
                         Ethio Domestic Workers Link
-                        <span className="ai-pulse" style={{ fontSize: '0.65rem', marginLeft: '5px' }}>
-                            Live AI
-                        </span>
                     </span>
                 </div>
             </NavLink>
 
             {/* Mobile top-right: language toggle + hamburger */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div className="mobile-nav-controls" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <button className="mobile-only" onClick={toggleLanguage} style={{ background: 'transparent', border: '1px solid #ddd', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' }}>
                     {i18n.language === 'en' ? 'አማ' : 'En'}
                 </button>
                 <button 
                     onClick={toggleLowDataMode} 
+                    className="mobile-only mobile-data-toggle"
                     style={{ 
                         background: lowDataMode ? '#fef3c7' : 'transparent', 
                         border: '1px solid #ddd', 
@@ -87,17 +86,25 @@ const Navbar = () => {
                 >
                     <Database size={16} /> {lowDataMode ? 'LOW' : 'DATA'}
                 </button>
-                <div className="mobile-only" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                <button
+                    type="button"
+                    className="mobile-only mobile-menu-button"
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                    style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+                >
                     <Menu size={28} color="var(--primary)" style={{ cursor: 'pointer' }} />
-                </div>
+                </button>
             </div>
 
             {/* Desktop nav + mobile slide-in menu */}
             <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <NavLink to="/" onClick={closeMenu} className={getNavLinkClass}>{t('home')}</NavLink>
+                <NavLink to="/browse" onClick={closeMenu} className={getNavLinkClass}>{t('browse_edwl') || 'Browse EDWL'}</NavLink>
                 <NavLink to="/about" onClick={closeMenu} className={getNavLinkClass}>{t('about_us')}</NavLink>
                 <NavLink to="/contact" onClick={closeMenu} className={getNavLinkClass}>{t('contact_us')}</NavLink>
                 <NavLink to="/pricing" onClick={closeMenu} className={getNavLinkClass}>{t('plans')}</NavLink>
+                <ShareEdwlButton className="nav-share-button" compact />
                 {user && (
                     <>
                         <NavLink to="/rewards" onClick={closeMenu} className={getNavLinkClass}>{t('rewards') || 'Rewards'}</NavLink>
@@ -165,6 +172,7 @@ const Navbar = () => {
                 {/* Low Data Toggle */}
                 <button 
                     onClick={toggleLowDataMode}
+                    className="desktop-utility-toggle"
                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: lowDataMode ? 'var(--primary)' : 'var(--text-light)' }}
                     title={lowDataMode ? "Disable Low Data Mode" : "Enable Low Data Mode"}
                 >
@@ -175,7 +183,7 @@ const Navbar = () => {
                 <button 
                     onClick={toggleTheme}
                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    className="nav-link"
+                    className="nav-link desktop-utility-toggle"
                 >
                     {theme === 'light' ? <Moon size={20} color="var(--text-light)" /> : <Sun size={20} color="var(--primary)" />}
                 </button>

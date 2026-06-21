@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "edwl-ethio-domesticworkerslink"
+  },
+  "targets": {
+    "edwl-ethio-domesticworkerslink": {
+      "hosting": {
+        "main": [
+          "edwl-ethio-domesticworkerslink"
+        ],
+        "short": [
+          "ethiodomesticworkers"
+        ]
+      }
+    }
   }
 }

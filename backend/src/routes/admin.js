@@ -18,6 +18,8 @@ router.post('/activate-premium', auth, authorize([Roles.ADMIN]), codeController.
 router.delete('/user/:type/:id', auth, authorize([Roles.ADMIN]), adminController.deleteUser);
 router.post('/grant-superadmin', auth, authorize([Roles.ADMIN]), adminController.grantSuperAdminRole);
 router.get('/stats', auth, authorize([Roles.ADMIN]), adminController.getAdminStats);
+router.get('/owner-autopilot', auth, authorize([Roles.ADMIN]), adminController.getOwnerAutopilotBrief);
+router.post('/owner-autopilot/send', auth, authorize([Roles.ADMIN]), adminController.sendOwnerAutopilotDigest);
 router.get('/analytics', auth, authorize([Roles.ADMIN]), analyticsController.getPlatformStats);
 router.get('/insights', auth, authorize([Roles.ADMIN]), analyticsController.getMarketInsights);
 

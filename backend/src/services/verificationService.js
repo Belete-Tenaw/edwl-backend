@@ -1,3 +1,5 @@
+const prisma = require('../utils/prisma');
+const { logAction } = require('./auditService');
 const { sendTelegramAlert } = require('./notificationService');
 
 /**

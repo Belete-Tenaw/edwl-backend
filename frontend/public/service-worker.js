@@ -1,11 +1,12 @@
-const CACHE_NAME = 'edwl-v1.2.0';
+const CACHE_NAME = 'edwl-v1.3.1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/edwl_logo.png', // Main brand asset
-  '/icons/logo192.png',
-  '/icons/logo512.png',
+  '/apple-touch-icon.png',
+  '/icons/pwa/edwl-logo-192.png',
+  '/icons/pwa/edwl-logo-512.png',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap'
 ];
 
@@ -75,4 +76,3 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-

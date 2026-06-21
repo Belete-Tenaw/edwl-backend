@@ -14,6 +14,13 @@ const authService = {
             };
         }
 
+        if (type === 'admin') {
+            payload = {
+                username: credentials.identifier,
+                password: credentials.password
+            };
+        }
+
         const response = await api.post(endpoint, payload);
         if (response.data.token) {
             localStorage.setItem('token', response.data.token);
@@ -30,8 +37,31 @@ const authService = {
         }
         const response = await api.post(endpoint, data);
         if (response.data.token) {
+            const readValue = (key) => {
+                if (typeof FormData !== 'undefined' && data instanceof FormData) {
+                    return data.get(key);
+                }
+                return data?.[key];
+            };
+            const roleByType = {
+                seeker: 'JOB_SEEKER',
+                employer: 'EMPLOYER',
+                agency: 'AGENCY'
+            };
+            const fallbackUser = response.data.user || (
+                response.data.userId || response.data.agency?.id
+                    ? {
+                        id: response.data.userId || response.data.agency?.id,
+                        name: readValue('fullName') || readValue('contactName') || readValue('name') || 'EDWL User',
+                        role: roleByType[type]
+                    }
+                    : null
+            );
+
             localStorage.setItem('token', response.data.token);
-            localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (fallbackUser) {
+                localStorage.setItem('user', JSON.stringify(fallbackUser));
+            }
         }
         return response.data;
     },

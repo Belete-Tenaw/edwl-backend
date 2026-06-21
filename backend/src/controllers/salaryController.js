@@ -45,8 +45,9 @@ exports.getSalaryBenchmark = async (req, res) => {
             ? Math.round((offeredAvg + contractAvg) / 2)
             : offeredAvg;
 
-        // Fallback market floor/ceiling table (ETB, 2026 estimates)
-        const marketFloors = {
+        // Fallback market floor/ceiling table (ETB, 2022 baseline)
+        // These are multiplied by the current inflation multiplier at runtime.
+        const marketFloors2022 = {
             nanny:     { low: 2500, mid: 4500, high: 8000 },
             cook:      { low: 2000, mid: 4000, high: 7500 },
             cleaner:   { low: 1500, mid: 3000, high: 5500 },
@@ -56,8 +57,21 @@ exports.getSalaryBenchmark = async (req, res) => {
             default:   { low: 1800, mid: 3500, high: 7000 }
         };
 
+        // Apply dynamic inflation adjustment so suggestions never fall below
+        // the real-world cost of living in Ethiopia.
+        const { getInflationMultiplier, getEconomicContext } = require('../services/economicService');
+        const inflationMultiplier = getInflationMultiplier();
+        const economicContext = getEconomicContext();
+
         const key = (jobType || '').toLowerCase();
-        const market = marketFloors[key] || marketFloors.default;
+        const baseMarket = marketFloors2022[key] || marketFloors2022.default;
+
+        // Scale all market thresholds by current inflation factor
+        const market = {
+            low:  Math.round(baseMarket.low  * inflationMultiplier),
+            mid:  Math.round(baseMarket.mid  * inflationMultiplier),
+            high: Math.round(baseMarket.high * inflationMultiplier)
+        };
 
         const dataPoints = (jobAgg._count.salaryOffered || 0) + (contractAgg._count.salary || 0);
 
@@ -81,6 +95,7 @@ exports.getSalaryBenchmark = async (req, res) => {
             },
             combined:   combinedAvg,
             market,
+            economicContext,
             recommendation: {
                 fairMin,
                 fairMax,

@@ -1,0 +1,38 @@
+{
+  "short_name": "EDWL",
+  "name": "Ethio Domestic Workers Link",
+  "description": "Ethio Domestic Workers Link helps Ethiopian households browse reviewed domestic worker summaries and sign up when ready.",
+  "id": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/pwa/edwl-logo-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa/edwl-logo-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/pwa/edwl-logo-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa/edwl-logo-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#008080",
+  "display": "standalone",
+  "orientation": "portrait"
+}

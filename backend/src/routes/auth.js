@@ -7,6 +7,7 @@ const verifyToken = require('../middleware/auth');
 const {
     seekerLoginValidator,
     employerLoginValidator,
+    adminLoginValidator,
     forgotPasswordValidator,
     resetPasswordValidator,
     refreshTokenValidator
@@ -39,7 +40,8 @@ router.post('/employer/login', authRateLimiter, employerLoginValidator, authCont
 // =========================================
 // ADMIN ROUTES
 // =========================================
-router.post('/admin/login', authRateLimiter, authController.loginAdmin);
+// Admin login — protected by rate limiter + input validator
+router.post('/admin/login', authRateLimiter, adminLoginValidator, authController.loginAdmin);
 
 // =========================================
 // FIREBASE

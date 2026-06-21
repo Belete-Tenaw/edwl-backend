@@ -4,7 +4,7 @@ async function testLogin() {
     const url = 'https://edwl-backend.onrender.com/api/auth/admin/login';
     const credentials = {
         username: 'EDWL2026',
-        password: 'TwaBel2026'
+        password: process.env.TEST_ADMIN_PASSWORD || 'REPLACE_WITH_PASSWORD'
     };
 
     console.log(`Attempting login at: ${url}`);

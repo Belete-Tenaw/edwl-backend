@@ -59,8 +59,11 @@ const SeekerDashboard = () => {
                 setContracts(contractsRes.data || []);
                 setEscrows(escrowRes.data || []);
                 setLoans(loansRes.data || []);
-                // Smart Sort: Verified Employers and Jobs with higher Salary first
+                // Smart Sort: personalized score first, then verified employers and salary.
                 const sortedJobs = jobsRes.data.sort((a, b) => {
+                    const aScore = a.matchScore || a.match_score || 0;
+                    const bScore = b.matchScore || b.match_score || 0;
+                    if (bScore !== aScore) return bScore - aScore;
                     if (a.employer?.isVerified && !b.employer?.isVerified) return -1;
                     if (!a.employer?.isVerified && b.employer?.isVerified) return 1;
                     return b.salaryOffered - a.salaryOffered;
@@ -237,7 +240,7 @@ const SeekerDashboard = () => {
                         <>
                             {/* Wave 2 Features: Academy & Interview */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-                                <Link to="/academy" className="card glass-hover" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', textDecoration: 'none', background: 'linear-gradient(135deg, var(--navy) 0%, #1e293b 100%)', color: 'white' }}>
+                                <Link to="/academy/dashboard" className="card glass-hover" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px', textDecoration: 'none', background: 'linear-gradient(135deg, var(--navy) 0%, #1e293b 100%)', color: 'white' }}>
                                     <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                         <BookOpen size={30} />
                                     </div>
@@ -310,6 +313,11 @@ const SeekerDashboard = () => {
                                             <div key={job.id} className={`card reveal delay-${index % 5 + 1}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderRadius: '24px', transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s' }}>
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                                                        {(job.matchScore || job.match_score) > 0 && (
+                                                            <span title={(job.matchInsights || []).join(' | ')} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(0, 128, 128, 0.1)', color: 'var(--primary)', padding: '4px 10px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '800' }}>
+                                                                <Sparkles size={12} strokeWidth={3} /> {t('smart_match', 'Smart Match')} {job.matchScore || job.match_score}%
+                                                            </span>
+                                                        )}
                                                         {job.employer?.isVerified && (
                                                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(0, 128, 128, 0.1)', color: 'var(--primary)', padding: '4px 10px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '800' }}>
                                                                 <Shield size={12} strokeWidth={3} /> {t('verified_top_choice')}
@@ -322,13 +330,22 @@ const SeekerDashboard = () => {
                                                         )}
                                                     </div>
                                                     <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text)', marginBottom: '12px' }}>{job.title}</h3>
+                                                    {job.matchInsights?.length > 0 && (
+                                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                                                            {job.matchInsights.slice(0, 3).map(insight => (
+                                                                <span key={insight} style={{ background: '#ecfeff', border: '1px solid #cffafe', color: '#0e7490', padding: '5px 10px', borderRadius: '999px', fontSize: '0.78rem', fontWeight: '700' }}>
+                                                                    {insight}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                     <div style={{ display: 'flex', gap: '20px', color: 'var(--text-light)', fontSize: '0.95rem', marginBottom: '20px', flexWrap: 'wrap' }}>
                                                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={18} color="var(--primary)" /> {job.address}</span>
                                                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><DollarSign size={18} color="#059669" /> <strong>{job.salaryOffered} ETB</strong></span>
                                                         <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Briefcase size={18} color="#6366f1" /> {job.jobType}</span>
                                                     </div>
                                                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                                        {job.requiredSkills.map(skill => (
+                                                        {(job.requiredSkills || []).map(skill => (
                                                             <span key={skill} style={{ background: '#f8fafc', border: '1px solid #f1f5f9', padding: '6px 12px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: '600', color: '#64748b' }}>{skill}</span>
                                                         ))}
                                                     </div>

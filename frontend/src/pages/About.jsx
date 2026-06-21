@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
-import { Target, Heart, Shield, Award, ArrowRight, Globe, Zap, Users, TrendingUp, CheckCircle } from 'lucide-react';
+import Seo, { BRAND_AM, BRAND_EN } from '../components/Seo';
+import { Heart, Shield, Globe, TrendingUp } from 'lucide-react';
 
 const getTeam = (t) => [
     { name: t('team_tech_name'), role: t('team_tech_role'), emoji: '👨‍💻', desc: t('team_tech_desc') },
@@ -25,77 +25,6 @@ const getValues = (t) => [
     { icon: TrendingUp, color: '#8b5cf6', bg: '#faf5ff', label: t('value_growth_label'), desc: t('value_growth_desc') },
 ];
 
-const Contact = () => {
-    const { t } = useTranslation();
-
-    return (
-        <div style={{ background: '#020617', minHeight: '100vh', color: '#f8fafc', fontFamily: "'Outfit', sans-serif" }}>
-            <Helmet>
-                <title>Contact Concierge | EDWL Global</title>
-            </Helmet>
-
-            <style>{`
-                .glass-input {
-                    background: rgba(255,255,255,0.03);
-                    border: 1px solid rgba(255,255,255,0.1);
-                    padding: 16px;
-                    border-radius: 12px;
-                    color: white;
-                    outline: none;
-                    width: 100%;
-                    transition: border-color 0.3s;
-                }
-                .glass-input:focus { border-color: #38bdf8; }
-                .glow-btn {
-                    background: #38bdf8;
-                    color: #0f172a;
-                    padding: 16px;
-                    border-radius: 12px;
-                    border: none;
-                    font-weight: 900;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 12px;
-                    transition: all 0.3s;
-                }
-                .glow-btn:hover { background: #7dd3fc; transform: translateY(-2px); }
-            `}</style>
-
-            <header style={{ padding: '100px 0 60px', textAlign: 'center' }}>
-                <h1 style={{ fontSize: '3.5rem', fontWeight: '950', letterSpacing: '-1px' }}>Global Support Concierge</h1>
-                <p style={{ color: '#94a3b8', maxWidth: '600px', margin: '0 auto' }}>24/7 autonomous assistance for the world-class EDWL ecosystem.</p>
-            </header>
-
-            <div className="container" style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '100px' }}>
-                <div style={{ background: 'rgba(30, 41, 59, 0.4)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '32px', padding: '48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                        <div>
-                            <div style={{ color: '#38bdf8', fontWeight: '900', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px' }}>Strategic Hub</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: '900' }}>Bole, Addis Ababa, ET</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#38bdf8', fontWeight: '900', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px' }}>Global Hotline</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: '900' }}>+251 943 194 099</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#38bdf8', fontWeight: '900', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px' }}>Security Desk</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: '900' }}>security@edwl.com</div>
-                        </div>
-                    </div>
-                    <form style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                        <input className="glass-input" placeholder="Full Name" />
-                        <input className="glass-input" placeholder="Organization (Optional)" />
-                        <textarea className="glass-input" placeholder="Strategic Inquiry" rows={4}></textarea>
-                        <button className="glow-btn">Initialize Connection <ArrowRight size={20} /></button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 const About = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -104,13 +33,19 @@ const About = () => {
     const team = getTeam(t);
     const milestones = getMilestones(t);
     const values = getValues(t);
+    const tabs = [
+        { id: 'mission', label: t('mission_tab') },
+        { id: 'story', label: t('story_tab') },
+        { id: 'team', label: t('team_tab') }
+    ];
 
     return (
         <div style={{ background: '#020617', minHeight: '100vh', color: '#f8fafc', fontFamily: "'Outfit', sans-serif" }}>
-            <Helmet>
-                <title>Our Mission | EDWL Global</title>
-                <meta name="description" content="The future of domestic work ecosystem." />
-            </Helmet>
+            <Seo
+                title={`${t('about_meta_title_current')} - ${BRAND_EN}`}
+                description={`${t('about_meta_desc_current')} ${BRAND_AM} - ${BRAND_EN}.`}
+                path="/about"
+            />
 
             <style>{`
                 .glass-card {
@@ -130,14 +65,14 @@ const About = () => {
                 <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)', width: '800px', height: '400px', background: 'radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 70%)', filter: 'blur(60px)', zIndex: 0 }} />
                 <div className="container" style={{ position: 'relative', zIndex: 1 }}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '20px', padding: '8px 20px', marginBottom: '32px', fontSize: '0.85rem', fontWeight: '900', color: '#38bdf8' }}>
-                        <Globe size={16} /> GLOBAL STANDARDS. ETHIOPIAN HEART.
+                        <Globe size={16} /> {t('about_badge_current')}
                     </div>
                     <h1 style={{ fontSize: '4.5rem', fontWeight: '950', marginBottom: '24px', letterSpacing: '-2px', lineHeight: 1 }}>
-                        Architecting the Future<br />
-                        <span style={{ color: '#38bdf8' }}>of Human Connection.</span>
+                        {t('about_hero_title_line1_current')}<br />
+                        <span style={{ color: '#38bdf8' }}>{t('about_hero_title_line2_current')}</span>
                     </h1>
                     <p style={{ fontSize: '1.2rem', color: '#94a3b8', maxWidth: '700px', margin: '0 auto 48px', lineHeight: 1.7 }}>
-                        EDWL is not just a platform; it is a smart ecosystem engineered to elevate the dignity of domestic work through AI, Fintech, and uncompromising safety.
+                        {t('about_hero_desc_current')}
                     </p>
                 </div>
             </header>
@@ -145,9 +80,9 @@ const About = () => {
             <section style={{ marginBottom: '80px' }}>
                 <div className="container" style={{ textAlign: 'center' }}>
                     <div style={{ display: 'inline-flex', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '60px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        {['mission', 'story', 'team'].map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`tab-btn${activeTab === tab ? ' active' : ''}`}>
-                                {tab.toUpperCase()}
+                        {tabs.map(tab => (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`tab-btn${activeTab === tab.id ? ' active' : ''}`}>
+                                {tab.label}
                             </button>
                         ))}
                     </div>
@@ -182,7 +117,17 @@ const About = () => {
                             ))}
                         </div>
                     )}
-
+                    {activeTab === 'team' && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px' }}>
+                            {team.map((member, i) => (
+                                <div key={i} className="glass-card" style={{ textAlign: 'center' }}>
+                                    <div style={{ fontSize: '3.5rem', marginBottom: '16px' }}>{member.emoji}</div>
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: '900', color: 'white', marginBottom: '4px' }}>{member.name}</h3>
+                                    <div style={{ color: '#38bdf8', fontSize: '0.85rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '12px' }}>{member.role}</div>
+                                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.6 }}>{member.desc}</p>
+                                </div>
+                            ))}
+                        </div>
                     )}
                 </div>
             </section>
@@ -190,14 +135,14 @@ const About = () => {
             {/* BOTTOM CTA */}
             <section style={{ background: 'rgba(255,255,255,0.02)', padding: '100px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <div className="container" style={{ textAlign: 'center' }}>
-                    <h2 style={{ fontSize: '2.5rem', fontWeight: '950', color: 'white', marginBottom: '24px' }}>Ready to elevate your ecosystem?</h2>
-                    <p style={{ color: '#94a3b8', marginBottom: '48px', maxWidth: '500px', margin: '0 auto 48px', fontSize: '1.1rem' }}>Join the global movement of high-trust domestic work.</p>
+                    <h2 style={{ fontSize: '2.5rem', fontWeight: '950', color: 'white', marginBottom: '24px' }}>{t('ready_start_title')}</h2>
+                    <p style={{ color: '#94a3b8', marginBottom: '48px', maxWidth: '500px', margin: '0 auto 48px', fontSize: '1.1rem' }}>{t('ready_start_desc')}</p>
                     <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button onClick={() => navigate('/register')} style={{ padding: '18px 48px', background: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '50px', fontWeight: '900', cursor: 'pointer', fontSize: '1.1rem' }}>
-                            Initialize Membership
+                            {t('create_account')}
                         </button>
                         <button onClick={() => navigate('/contact')} style={{ padding: '18px 48px', background: 'transparent', color: 'white', border: '2px solid rgba(255,255,255,0.1)', borderRadius: '50px', fontWeight: '900', cursor: 'pointer', fontSize: '1.1rem' }}>
-                            Talk to Concierge
+                            {t('talk_to_edwl')}
                         </button>
                     </div>
                 </div>

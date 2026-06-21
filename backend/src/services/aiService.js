@@ -107,6 +107,8 @@ class AIService {
             let suggestion = "";
             let confidence = 0.60;
             let actionType = "HUMAN_REVIEW";
+            let workerPercent = 50;
+            let employerPercent = 50;
 
             // 2. Logic Tree for AI Mediation
             const salary = contract?.salary || 0;
@@ -118,19 +120,27 @@ class AIService {
                 const hasWorkProof = chatText.toLowerCase().includes('done') || chatText.toLowerCase().includes('finished') || escrow?.workerConfirmed;
                 
                 if (hasWorkProof && workerScore > 85) {
-                    suggestion = `High-trust worker with proof of completion in chat. Suggest 100% Escrow release to ${contract.jobSeeker.fullName}.`;
+                    workerPercent = 100;
+                    employerPercent = 0;
+                    suggestion = `[SPLIT: 100/0] High-trust worker with proof of completion in chat. Suggest 100% Escrow release to ${contract.jobSeeker.fullName}.`;
                     confidence = 0.94;
                 } else if (chatText.toLowerCase().includes('wait') || chatText.toLowerCase().includes('later')) {
-                    suggestion = "Employer requested delay detected in chat. Recommend partial release (40%) to Worker and 60% hold pending final confirmation.";
+                    workerPercent = 40;
+                    employerPercent = 60;
+                    suggestion = "[SPLIT: 40/60] Employer requested delay detected in chat. Recommend partial release (40%) to Worker and 60% refund/hold.";
                     confidence = 0.85;
                 } else {
-                    suggestion = "Conflicting payment claims. Recommend 50/50 split of escrowed funds to close the dispute amicably.";
+                    workerPercent = 50;
+                    employerPercent = 50;
+                    suggestion = "[SPLIT: 50/50] Conflicting payment claims. Recommend 50/50 split of escrowed funds to close the dispute amicably.";
                     confidence = 0.70;
                 }
             } 
             // Case B: Safety/Behavior (Zero Tolerance)
             else if (inputLower.includes('abuse') || inputLower.includes('harassment') || inputLower.includes('violence') || inputLower.includes('threat')) {
-                suggestion = "🚨 CRITICAL SAFETY EVENT: AI recommends immediate contract termination, permanent account suspension, and referral to security partners.";
+                workerPercent = 0;
+                employerPercent = 100;
+                suggestion = "🚨 [SPLIT: 0/100] CRITICAL SAFETY EVENT: AI recommends immediate contract termination, permanent account suspension, and 100% escrow refund.";
                 confidence = 0.99;
                 actionType = "AUTO_TERMINATE";
             }
@@ -138,15 +148,21 @@ class AIService {
             else if (inputLower.includes('late') || inputLower.includes('absence') || inputLower.includes('no show')) {
                 const employerScore = contract?.employer?.behaviorScore || 50;
                 if (employerScore > 90) {
-                    suggestion = "Reliable Employer reporting no-show. Chat shows no response from Worker. Recommend 100% refund to Employer.";
+                    workerPercent = 0;
+                    employerPercent = 100;
+                    suggestion = "[SPLIT: 0/100] Reliable Employer reporting no-show. Chat shows no response from Worker. Recommend 100% refund to Employer.";
                     confidence = 0.91;
                 } else {
-                    suggestion = "Possible attendance dispute. Recommend 10% penalty and a mediated warning.";
+                    workerPercent = 90;
+                    employerPercent = 10;
+                    suggestion = "[SPLIT: 90/10] Possible attendance dispute. Recommend 10% penalty and a mediated warning.";
                     confidence = 0.75;
                 }
             }
             else {
-                suggestion = "Ambiguous dispute. Suggest a voice-recorded statement from both parties to provide more context for human moderation.";
+                workerPercent = 50;
+                employerPercent = 50;
+                suggestion = "[SPLIT: 50/50] Ambiguous dispute. Suggest a voice-recorded statement from both parties to provide more context for human moderation.";
                 confidence = 0.45;
             }
 
@@ -166,6 +182,10 @@ class AIService {
                 confidence,
                 autoMediated: updatedDispute.autoMediated,
                 actionType,
+                recommendedSplit: {
+                    workerPercent,
+                    employerPercent
+                },
                 contextAnalyzed: {
                     messages: chatHistory.length,
                     terms: contract?.terms?.length || 0
@@ -200,6 +220,122 @@ class AIService {
             daysInactive: daysSinceLastActivity,
             action: risk === 'Critical' ? 'Automatic Phone Outreach' : risk === 'High' ? 'Send 20% Discount Coupon' : 'Recommend Featured Listing'
         };
+    }
+
+    /**
+     * AI-Powered Chat and Content Moderation Red-Flag Detector.
+     * Evaluates message content for human trafficking signals, harassment, child labor,
+     * or exploitation (such as salary suggestions below the living wage threshold).
+     */
+    async checkSafetyRedFlags(messageContent, senderId) {
+        if (!messageContent) return { isFlagged: false, flags: [] };
+
+        const text = messageContent.toLowerCase();
+        const flags = [];
+
+        // 1. Human Trafficking / Movement Restriction Signals
+        if (
+            text.includes('passport') || 
+            text.includes('lock') || 
+            text.includes('cannot leave') || 
+            text.includes('not allowed to go out') || 
+            text.includes('withhold document') || 
+            text.includes('take phone')
+        ) {
+            flags.push('POTENTIAL_TRAFFICKING_OR_COERCION');
+        }
+
+        // 2. Harassment & Abuse Signals
+        if (
+            text.includes('stupid') || 
+            text.includes('beat') || 
+            text.includes('hit') || 
+            text.includes('kick') || 
+            text.includes('abuse') || 
+            text.includes('threaten')
+        ) {
+            flags.push('VERBAL_OR_PHYSICAL_ABUSE');
+        }
+
+        // 3. Child Labor Signals
+        if (
+            text.includes('underage') || 
+            text.includes('12 years old') || 
+            text.includes('13 years old') || 
+            text.includes('child worker')
+        ) {
+            flags.push('POTENTIAL_CHILD_LABOR');
+        }
+
+        // 4. Financial Exploitation Signals (e.g. suggesting sub-standard pay)
+        if (
+            text.includes('pay 1000') || 
+            text.includes('pay 1500') || 
+            text.includes('no days off') || 
+            text.includes('work 18 hours')
+        ) {
+            flags.push('FINANCIAL_EXPLOITATION_OR_UNDERPAYMENT');
+        }
+
+        const isFlagged = flags.length > 0;
+
+        // If flagged, register high-risk system alert dynamically
+        if (isFlagged) {
+            try {
+                await prisma.auditLog.create({
+                    data: {
+                        userId: senderId || 'SYSTEM',
+                        action: 'SAFETY_RED_FLAG_DETECTED',
+                        details: `Flags: ${flags.join(', ')} | Msg: "${messageContent.substring(0, 100)}..."`,
+                        ipAddress: '127.0.0.1'
+                    }
+                });
+            } catch (err) {
+                console.error('[Safety Red Flag Logger Error]', err.message);
+            }
+        }
+
+        return {
+            isFlagged,
+            flags,
+            actionRecommended: isFlagged ? 'FLAG_FOR_HUMAN_MODERATION' : 'NONE'
+        };
+    }
+
+    /**
+     * Search and rank workers for a job post using semantic compatibility logic.
+     */
+    async rankWorkersForJob(jobId, limit = 10) {
+        const job = await prisma.jobPost.findUnique({
+            where: { id: jobId }
+        });
+        if (!job) return [];
+
+        const workers = await prisma.jobSeeker.findMany({
+            where: { isActive: true },
+            take: 50,
+            include: { userTrainings: true }
+        });
+
+        const scoredPool = [];
+        for (const worker of workers) {
+            const matchData = await this.calculatePrecisionMatch(worker.id, jobId, 'JOB_POST');
+            scoredPool.push({
+                worker: {
+                    id: worker.id,
+                    fullName: worker.fullName,
+                    skills: worker.skills,
+                    experienceYears: worker.experienceYears,
+                    tier: worker.tier
+                },
+                match: matchData
+            });
+        }
+
+        // Sort descending by AI compatibility score
+        scoredPool.sort((a, b) => b.match.score - a.match.score);
+
+        return scoredPool.slice(0, limit);
     }
 }
 

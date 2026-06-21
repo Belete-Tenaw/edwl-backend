@@ -75,7 +75,7 @@ const Footer = () => {
             </div>
 
             <div style={{ borderTop: '1px solid #34495e', paddingTop: '20px', textAlign: 'center', color: '#7f8c8d' }}>
-                &copy; {new Date().getFullYear()} Ethio Domestic Workers Link. {t('all_rights_reserved')}
+                &copy; {new Date().getFullYear()} {t('footer_brand_name')}. {t('all_rights_reserved')}
             </div>
         </footer>
     );

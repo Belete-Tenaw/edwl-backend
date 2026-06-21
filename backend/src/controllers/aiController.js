@@ -55,3 +55,32 @@ exports.getMarketTrends = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+/**
+ * Rank and score job seekers for a specific job post using compatibility index
+ */
+exports.getRankedWorkers = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        const limit = parseInt(req.query.limit) || 10;
+        const result = await aiService.rankWorkersForJob(jobId, limit);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('[GetRankedWorkers Error]', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+/**
+ * Scan chat or post text content for safety red-flags (abuse, coercion, exploitation)
+ */
+exports.checkContentSafety = async (req, res) => {
+    try {
+        const { text, userId } = req.body;
+        const result = await aiService.checkSafetyRedFlags(text, userId);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('[CheckContentSafety Error]', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};

@@ -9,11 +9,15 @@ async function updateMatchingAlgo() {
     const sqlCreate = `
 CREATE OR REPLACE FUNCTION match_seekers_for_job(p_job_id UUID)
 RETURNS TABLE (
-    seeker_id UUID,
-    full_name TEXT,
-    match_score INT,
-    tier "SeekerTier",
-    is_visible BOOLEAN
+    "seekerId" UUID,
+    "fullName" TEXT,
+    "match_score" INT,
+    "tier" "SeekerTier",
+    "is_visible" BOOLEAN,
+    "behaviorScore" FLOAT,
+    "locationWoreda" TEXT,
+    "rating" FLOAT,
+    "skills_match_count" INT
 ) AS $$
 DECLARE
     v_employer_tier "EmployerTier";
@@ -78,7 +82,21 @@ BEGIN
             (CASE WHEN js.tier = 'PLATINUM' THEN 20 
                   WHEN js.tier = 'GOLD' THEN 15 
                   WHEN js.tier = 'SILVER' THEN 10 
-                  ELSE 0 END) as score_tier_boost
+                  ELSE 0 END) as score_tier_boost,
+            
+            -- I. Skills match count (added for richer returning fields)
+            (
+                CASE WHEN array_length(v_job_skills, 1) > 0 THEN
+                    (
+                        SELECT COUNT(*)::INT
+                        FROM UNNEST(js.skills) s
+                        WHERE s = ANY(v_job_skills)
+                    )
+                ELSE 0 END
+            ) as skills_match_count,
+            js."behaviorScore" as behavior_score,
+            js."locationWoreda" as location_woreda,
+            js.rating as rating_val
         FROM "JobSeeker" js
         WHERE js."isActive" = true
     )
@@ -89,7 +107,11 @@ BEGIN
         (COALESCE(score_skills, 0) + COALESCE(score_exp, 0) + COALESCE(score_salary, 0) + COALESCE(score_loc, 0) 
          + COALESCE(score_momentum, 0) + COALESCE(score_response, 0) + COALESCE(score_quality, 0) + COALESCE(score_tier_boost, 0))::INT as s_score,
         s_tier,
-        TRUE as is_visible -- Always Return TRUE for the "Teaser" Strategy, masking happens on the frontend via access lock overlay
+        TRUE as is_visible, -- Always Return TRUE for the "Teaser" Strategy, masking happens on the frontend via access lock overlay
+        behavior_score,
+        location_woreda,
+        rating_val,
+        skills_match_count
     FROM potential_matches
     WHERE (COALESCE(score_skills, 0) + COALESCE(score_exp, 0) + COALESCE(score_salary, 0) + COALESCE(score_loc, 0)) > 0
     ORDER BY s_score DESC, s_tier DESC
