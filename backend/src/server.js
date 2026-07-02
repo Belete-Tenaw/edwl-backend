@@ -67,39 +67,46 @@ const allowedOrigins = Array.from(new Set([
 // Socket.IO uses the same allowedOrigins as the REST API (configured below)
 const http = require('http');
 const { Server } = require('socket.io');
-const server = http.createServer(app);
+let io = null;
+let server = null;
 
-// Note: allowedOrigins is defined after CORS middleware - io is re-configured there
-const io = new Server(server, {
-  cors: {
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-        callback(null, true);
-      } else {
-        callback(new Error('Socket.IO connection not allowed from: ' + origin));
-      }
-    },
-    methods: ["GET", "POST"]
-  }
-});
+if (process.env.NODE_ENV !== 'test') {
+  server = http.createServer(app);
 
-// Store io in app for access in controllers
-app.set('io', io);
-notificationService.init(io);
-
-io.on('connection', (socket) => {
-  
-
-  socket.on('join', (userId) => {
-    socket.join(userId);
-    
+  // Note: allowedOrigins is defined after CORS middleware - io is re-configured there
+  io = new Server(server, {
+    cors: {
+      origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+          callback(null, true);
+        } else {
+          callback(new Error('Socket.IO connection not allowed from: ' + origin));
+        }
+      },
+      methods: ["GET", "POST"]
+    }
   });
 
-  socket.on('disconnect', () => {
-    
+  // Store io in app for access in controllers
+  app.set('io', io);
+} else {
+  app.set('io', null);
+}
+
+if (io) {
+  notificationService.init(io);
+
+  io.on('connection', (socket) => {
+    socket.on('join', (userId) => {
+      socket.join(userId);
+    });
+
+    socket.on('disconnect', () => {
+      // Socket disconnected
+    });
   });
-});
+}
 
 // Start Keep-Alive (Zero-Cost Move)
 // if (process.env.NODE_ENV === 'production' && process.env.BASE_URL) {
