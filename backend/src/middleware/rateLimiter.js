@@ -197,9 +197,6 @@ const contactLimiter = rateLimit({
   },
 });
 
-}
-
-if (process.env.NODE_ENV !== 'test') {
   module.exports = {
     authLimiter: authRateLimiter,
     authRateLimiter: authRateLimiter,

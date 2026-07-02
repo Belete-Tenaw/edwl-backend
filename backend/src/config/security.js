@@ -264,7 +264,7 @@ function sanitizeInput(input) {
   if (typeof input !== 'string') return input;
   
   return input
-    .replace(/[<>\"']/g, '')
+    .replace(/[<>"']/g, '')
     .trim()
     .substring(0, 500);  // Limit length
 }
