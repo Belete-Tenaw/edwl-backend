@@ -1,0 +1,28 @@
+{
+  "title": {
+    "en": "TDW - Trustworthy Domestic Workers",
+    "am": "TDW - ታማኝ የሃገር ውስጥ ሠራተኞች"
+  },
+  "description": {
+    "en": "Connect with trustworthy domestic workers and employers in Ethiopia. Safe, secure, and verified matching platform.",
+    "am": "ኢትዮጵያ ውስጥ ታማኝ የቤት ሰራተኞችን እና አጼዋሪዎችን ያገናኙ። ደህንነተኛ፣ ተጠብቅ፣ እና የተረጋገጠ ማዛመድ ፕላትፎርም።"
+  },
+  "keywords": {
+    "en": "domestic workers, Ethiopia, job matching, employment, household staff, nannies, housekeepers",
+    "am": "የቤት ሰራተኞች, ኢትዮጵያ, ሥራ ማዛመድ, ቅጥ, የቤት ሰራተኛ, ለአሁቤ, ገዥ"
+  },
+  "ogImage": "https://edwl.io/og-image.png",
+  "twitterImage": "https://edwl.io/twitter-image.png",
+  "twitterHandle": "@edwl_io",
+  "socialMediaLinks": {
+    "facebook": "https://www.facebook.com/edwl",
+    "twitter": "https://twitter.com/edwl",
+    "instagram": "https://www.instagram.com/edwl",
+    "linkedin": "https://www.linkedin.com/company/edwl"
+  },
+  "contact": {
+    "email": "support@edwl.io",
+    "phone": "+251-1-234-5678",
+    "address": "Addis Ababa, Ethiopia"
+  }
+}

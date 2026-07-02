@@ -1,0 +1,44 @@
+name: Deploy Backend to Google Cloud Run
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      - name: Configure Docker authentication
+        run: | 
+          gcloud auth configure-docker --quiet
+
+      - name: Build Docker image
+        run: |
+          IMAGE="gcr.io/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME || 'edwl-backend' }}:${{ github.sha }}"
+          docker build -t "$IMAGE" backend/
+          docker push "$IMAGE"
+        env:
+          SERVICE_NAME: edwl-backend
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE="gcr.io/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME || 'edwl-backend' }}:${{ github.sha }}"
+          gcloud run deploy ${{ env.SERVICE_NAME || 'edwl-backend' }} --image "$IMAGE" --region ${{ secrets.GCP_REGION }} --platform managed --allow-unauthenticated --quiet
+        env:
+          SERVICE_NAME: edwl-backend
+
+# Secrets required:
+# - GCP_PROJECT: GCP project id
+# - GCP_REGION: region for Cloud Run (e.g. us-central1)
+# - GCP_SA_KEY: JSON service account key with permissions to deploy Cloud Run and push to Artifact Registry / GCR

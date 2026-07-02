@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/edwl_logo.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#008080" />
+  <meta name="application-name" content="TDW" />
+  <meta name="apple-mobile-web-app-title" content="TDW" />
+  <meta name="description"
+    content="Trustworthy Domestic Workers (TDW) - ታማኝ የሃገር ውስጥ ሠራተኞች. Browse reviewed domestic worker profile summaries in Ethiopia and sign up when ready." />
+  <meta name="keywords"
+    content="Trustworthy Domestic Workers, TDW, ታማኝ የሃገር ውስጥ ሠራተኞች, የሃገር ውስጥ ሰራተኛ, የቤት ሰራተኛ, domestic workers Ethiopia, housemaid Addis Ababa, nanny Ethiopia, caregiver Ethiopia" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://edwl.io/" />
+  <link rel="alternate" hreflang="en" href="https://edwl.io/" />
+  <link rel="alternate" hreflang="am" href="https://edwl.io/?lang=am" />
+  <link rel="alternate" hreflang="x-default" href="https://edwl.io/" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+  <meta name="google-site-verification" content="uZe1EwD2DZvYhRknPc54-VZxipS3l7auqNfOFqf8Z4E" />
+
+  <!-- Open Graph / Facebook / Telegram -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://edwl.io/" />
+  <meta property="og:title" content="ታማኝ የሃገር ውስጥ ሠራተኞች - Trustworthy Domestic Workers (TDW)" />
+  <meta property="og:description"
+    content="Browse reviewed domestic worker profile summaries in Ethiopia and sign up when ready. የሃገር ውስጥ ሠራተኞችን በጥንቃቄ ያግኙ።" />
+  <meta property="og:image" content="https://ethiodomesticworkers.web.app/edwl_logo.png" />
+  <meta property="og:image:alt" content="Ethio Domestic Workers Link EDWL logo" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="ታማኝ የሃገር ውስጥ ሠራተኞች - Trustworthy Domestic Workers" />
+  <meta property="twitter:description" content="Browse reviewed domestic worker profile summaries in Ethiopia with EDWL." />
+  <meta property="twitter:image" content="https://edwl.io/edwl_logo.png" />
+  <meta property="twitter:image:alt" content="Ethio Domestic Workers Link EDWL logo" />
+
+  <title>ታማኝ የሃገር ውስጥ ሠራተኞች - Trustworthy Domestic Workers | TDW</title>
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": ["Organization", "EmploymentAgency"],
+        "@id": "https://ethiodomesticworkers.web.app/#organization",
+        "name": "ታማኝ የሃገር ውስጥ ሠራተኞች - Trustworthy Domestic Workers",
+        "alternateName": [
+          "Trustworthy Domestic Workers",
+          "TDW",
+          "ታማኝ የሃገር ውስጥ ሠራተኞች",
+          "ታማኝ የቤት ሰራተኞች",
+          "የሃገር ውስጥ ሰራተኛ",
+          "የቤት ሰራተኛ"
+        ],
+        "url": "https://ethiodomesticworkers.web.app/",
+        "logo": "https://ethiodomesticworkers.web.app/edwl_logo.png",
+        "description": "A launch-stage Ethiopian platform for reviewed domestic worker profile summaries and trust-focused hiring decisions.",
+        "areaServed": ["Ethiopia", "Addis Ababa"],
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Addis Ababa",
+          "addressCountry": "ET"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+251943194099",
+          "contactType": "customer support",
+          "email": "trustworthyaddis@gmail.com",
+          "areaServed": "ET",
+          "availableLanguage": ["Amharic", "English"]
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://ethiodomesticworkers.web.app/#website",
+        "url": "https://ethiodomesticworkers.web.app/",
+        "name": "Ethio Domestic Workers Link",
+        "alternateName": ["EDWL", "ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ"],
+        "publisher": { "@id": "https://ethiodomesticworkers.web.app/#organization" },
+        "inLanguage": ["en", "am"],
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://ethiodomesticworkers.web.app/browse?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Preconnect to external resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    // Global Error Handler to show error on screen if blank
+    window.onerror = function (message, source, lineno, colno, error) {
+      const root = document.getElementById('root');
+      if (root && root.innerHTML === "") {
+        root.innerHTML = '<div style="padding: 20px; color: red; font-family: sans-serif;">' +
+          '<h3>Application Startup Error</h3>' +
+          '<p>' + (message || 'Unknown error occurred') + '</p>' +
+          '<button onclick="window.location.reload(true)">Force Reload</button>' +
+          '</div>';
+      }
+      return false;
+    };
+  </script>
+
+  <style>
+    /* Prevent FOUC (Flash of Unstyled Content) */
+    body {
+      margin: 0;
+      background-color: #f8fafc;
+    }
+
+    #root:empty {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-DN3Minoy.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/vendor-react-CJX24euC.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-ui-v7h7NkO5.js">
+  <link rel="modulepreload" crossorigin href="/assets/vendor-i18n-7nsk2Nho.js">
+  <link rel="stylesheet" crossorigin href="/assets/index-Dn_27Yl7.css">
+<link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+</html>

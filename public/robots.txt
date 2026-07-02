@@ -1,0 +1,46 @@
+# EDWL robots.txt
+# Allow all search engines to crawl public pages
+
+User-agent: *
+Allow: /
+Allow: /jobs/
+Allow: /seekers/
+Allow: /employers/
+Allow: /about/
+Allow: /contact/
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Disallow: /dashboard/
+Disallow: /*.json$
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+Disallow: /auth/
+Disallow: /settings/
+
+# Crawl delay for non-premium crawlers
+Request-rate: 1/10
+
+# Sitemaps
+Sitemap: https://edwl.io/sitemap.xml
+Sitemap: https://edwl.io/sitemap-jobs.xml
+Sitemap: https://edwl.io/sitemap-seekers.xml
+Sitemap: https://edwl.io/sitemap-employers.xml
+
+# Allow Google and Bing search index
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Block bad bots
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /

@@ -1,0 +1,18 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Trustworthy Domestic Workers",
+  "url": "https://edwl.io",
+  "logo": "https://edwl.io/logo.png",
+  "sameAs": [
+    "https://www.facebook.com/edwl",
+    "https://twitter.com/edwl",
+    "https://www.instagram.com/edwl"
+  ],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+251-1-234-5678",
+    "contactType": "Customer Service",
+    "email": "support@edwl.io"
+  }
+}

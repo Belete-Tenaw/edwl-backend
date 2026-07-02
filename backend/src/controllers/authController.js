@@ -9,6 +9,18 @@ const { normalizeEmail, normalizePhone } = require('../utils/validation');
 const crypto = require('crypto');
 
 // =============================
+// ENHANCED SECURITY (v2.0)
+// =============================
+const { 
+  validatePassword, 
+  hashPassword, 
+  JWT_CONFIG,
+  sanitizeInput,
+  encryptPII
+} = require('../config/security');
+const { logAuth, logError } = require('../utils/logger');
+
+// =============================
 // HELPERS
 // =============================
 // Removed local calculateSeekerTier as it's now handled by calculateWorkerRank in utils
@@ -57,8 +69,13 @@ exports.registerJobSeeker = async (req, res, next) => {
             referralCodeUsed
         } = req.body;
 
-        if (!password || password.length < 6) {
-            return res.status(400).json({ error: "Password must be at least 6 characters long." });
+        // ENHANCED: Strong password validation (NIST 800-63B)
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.valid) {
+            return res.status(400).json({ 
+                error: 'Password does not meet security requirements',
+                requirements: passwordValidation.errors 
+            });
         }
 
         let formattedPhone = normalizePhone(phone);
@@ -101,6 +118,11 @@ exports.registerJobSeeker = async (req, res, next) => {
             }
         }
 
+        const encryptedPhonePayload = formattedPhone ? encryptPII(formattedPhone) : null;
+        const encryptedEmailPayload = normalizedEmail ? encryptPII(normalizedEmail) : null;
+        const encryptedSecurityAnswerPayload = securityAnswer ? encryptPII(String(securityAnswer)) : null;
+        const encryptedGuarantorPhonePayload = guarantorPhone ? encryptPII(String(guarantorPhone)) : null;
+
         let photo, idDoc, natId, guarId, policeClr, healthCert, videoBioPath;
 
         try {
@@ -136,6 +158,10 @@ exports.registerJobSeeker = async (req, res, next) => {
                 fullName,
                 email: normalizedEmail,
                 phone: formattedPhone,
+                encryptedPhone: encryptedPhonePayload ? JSON.stringify(encryptedPhonePayload) : null,
+                encryptedEmail: encryptedEmailPayload ? JSON.stringify(encryptedEmailPayload) : null,
+                encryptedSecurityAnswer: encryptedSecurityAnswerPayload ? JSON.stringify(encryptedSecurityAnswerPayload) : null,
+                encryptedGuarantorPhone: encryptedGuarantorPhonePayload ? JSON.stringify(encryptedGuarantorPhonePayload) : null,
                 password: hashedPassword,
                 passwordHint,
                 securityQuestion,
@@ -181,13 +207,14 @@ exports.registerJobSeeker = async (req, res, next) => {
         const token = jwt.sign(
             { id: newSeeker.id, role: 'JOB_SEEKER' },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: JWT_CONFIG.accessTokenExpiry, issuer: JWT_CONFIG.issuer }
         );
 
         res.status(201).json({ 
             message: "Job Seeker registered successfully", 
             userId: newSeeker.id,
             token,
+            expiresIn: 900,  // 15 minutes in seconds
             user: {
                 id: newSeeker.id,
                 name: newSeeker.fullName,
@@ -257,11 +284,12 @@ exports.loginJobSeeker = async (req, res) => {
         const token = jwt.sign(
             { id: seeker.id, role: 'JOB_SEEKER' },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: JWT_CONFIG.accessTokenExpiry, issuer: JWT_CONFIG.issuer }
         );
 
         res.status(200).json({
             token,
+            expiresIn: 900,  // 15 minutes in seconds
             user: { id: seeker.id, name: seeker.fullName, role: 'JOB_SEEKER', referralCode: seeker.referralCode, referralCount: seeker.referralCount }
         });
 
@@ -281,8 +309,13 @@ exports.registerEmployer = async (req, res, next) => {
     try {
         const { contactName, email, password, phone, employerType, address, passwordHint, securityQuestion, securityAnswer, referralCodeUsed } = req.body;
 
-        if (!password || password.length < 6) {
-            return res.status(400).json({ error: "Password must be at least 6 characters long." });
+        // ENHANCED: Strong password validation (NIST 800-63B)
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.valid) {
+            return res.status(400).json({ 
+                error: 'Password does not meet security requirements',
+                requirements: passwordValidation.errors 
+            });
         }
 
         let formattedPhone = normalizePhone(phone);
@@ -311,6 +344,10 @@ exports.registerEmployer = async (req, res, next) => {
             }
         }
 
+        const encryptedPhonePayload = formattedPhone ? encryptPII(formattedPhone) : null;
+        const encryptedEmailPayload = normalizedEmail ? encryptPII(normalizedEmail) : null;
+        const encryptedSecurityAnswerPayload = securityAnswer ? encryptPII(String(securityAnswer)) : null;
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const myReferralCode = await referralController.generateReferralCode(contactName);
 
@@ -319,6 +356,9 @@ exports.registerEmployer = async (req, res, next) => {
                 contactName,
                 email: normalizedEmail,
                 phone: formattedPhone,
+                encryptedPhone: encryptedPhonePayload ? JSON.stringify(encryptedPhonePayload) : null,
+                encryptedEmail: encryptedEmailPayload ? JSON.stringify(encryptedEmailPayload) : null,
+                encryptedSecurityAnswer: encryptedSecurityAnswerPayload ? JSON.stringify(encryptedSecurityAnswerPayload) : null,
                 password: hashedPassword,
                 passwordHint,
                 securityQuestion,
@@ -337,13 +377,14 @@ exports.registerEmployer = async (req, res, next) => {
         const token = jwt.sign(
             { id: newEmployer.id, role: 'EMPLOYER' },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: JWT_CONFIG.accessTokenExpiry, issuer: JWT_CONFIG.issuer }
         );
 
         res.status(201).json({
             message: "Employer registered successfully",
             userId: newEmployer.id,
             token,
+            expiresIn: 900,  // 15 minutes in seconds
             user: {
                 id: newEmployer.id,
                 name: newEmployer.contactName,
@@ -413,11 +454,12 @@ exports.loginEmployer = async (req, res) => {
         const token = jwt.sign(
             { id: employer.id, role: 'EMPLOYER' },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: JWT_CONFIG.accessTokenExpiry, issuer: JWT_CONFIG.issuer }
         );
 
         res.status(200).json({
             token,
+            expiresIn: 900,  // 15 minutes in seconds
             user: { id: employer.id, name: employer.contactName, role: 'EMPLOYER', referralCode: employer.referralCode, referralCount: employer.referralCount }
         });
 
@@ -456,11 +498,12 @@ exports.loginAdmin = async (req, res) => {
         const token = jwt.sign(
             { id: admin.id, role: 'ADMIN', adminRole: admin.role },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: JWT_CONFIG.accessTokenExpiry, issuer: JWT_CONFIG.issuer }
         );
 
         res.status(200).json({
             token,
+            expiresIn: 900,  // 15 minutes in seconds
             user: { id: admin.id, name: admin.username, role: 'ADMIN', adminRole: admin.role }
         });
 
@@ -665,14 +708,29 @@ exports.refreshToken = async (req, res) => {
     try {
         const { refreshToken } = req.body;
         if (!refreshToken) return res.status(400).json({ error: "Refresh token required" });
-        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+        
+        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET, {
+            issuer: JWT_CONFIG.issuer,
+            audience: JWT_CONFIG.audience,
+        });
+        
         const newToken = jwt.sign(
             { id: decoded.id, role: decoded.role },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: JWT_CONFIG.accessTokenExpiry, issuer: JWT_CONFIG.issuer }
         );
-        res.json({ token: newToken });
+        
+        res.json({ 
+            token: newToken,
+            expiresIn: 900  // 15 minutes in seconds
+        });
     } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ 
+                error: "Session expired. Please login again.",
+                code: 'SESSION_EXPIRED'
+            });
+        }
         res.status(401).json({ error: "Invalid session" });
     }
 };

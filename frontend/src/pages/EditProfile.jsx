@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { API_BASE_URL } from '../services/api';
 import authService from '../services/authService';
 import { Save, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -474,7 +475,7 @@ const EditProfile = () => {
                                 <label className="label">{t('video_bio')} (Max 15s, 3MB) {t('optional')}</label>
                                 <input type="file" className="input" name="videoBio" accept="video/*" onChange={handleVideoChange} />
                                 {(formData.videoBioPreview || formData.videoBio) && (
-                                    <video src={formData.videoBioPreview || (formData.videoBio?.startsWith('http') ? formData.videoBio : `https://edwl-backend.onrender.com${formData.videoBio}`)} controls style={{ width: '100%', maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
+                                    <video src={formData.videoBioPreview || (formData.videoBio?.startsWith('http') ? formData.videoBio : `${API_BASE_URL}${formData.videoBio}`)} controls style={{ width: '100%', maxWidth: '300px', marginTop: '10px', borderRadius: '8px' }} />
                                 )}
                             </div>
 

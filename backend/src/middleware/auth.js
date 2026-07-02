@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../utils/prisma');
+const { JWT_CONFIG } = require('../config/security');
+const { logAuth } = require('../utils/logger');
 
 // Hard fail on startup if JWT_SECRET is missing — do NOT fall back to a
 // known string like 'test_secret', which anyone could use to forge tokens.
@@ -21,7 +23,20 @@ module.exports = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        // ENHANCED: Verify token with expiry check and issuer/audience validation
+        // In test environment we relax issuer/audience validation because test helpers
+        // create tokens without those claims.
+        const verifyOptions = {
+            ignoreExpiration: false // Enforce expiry
+        };
+
+        if (process.env.NODE_ENV !== 'test') {
+            verifyOptions.issuer = JWT_CONFIG.issuer;
+            verifyOptions.audience = JWT_CONFIG.audience;
+        }
+
+        const decoded = jwt.verify(token, JWT_SECRET, verifyOptions);
+
         req.user = { ...decoded, userId: decoded.id };
 
         // Check cache with userId fallback mapped
@@ -47,6 +62,10 @@ module.exports = async (req, res, next) => {
                 statusCache.set(decoded.id, { data: user, expiry: now + CACHE_TTL });
                 
                 if (!user.isActive) {
+                    logAuth('access_denied', decoded.id, 'failed', { 
+                        reason: 'account_deactivated',
+                        ip: req.ip
+                    });
                     return res.status(403).json({ error: 'Account is deactivated. Please contact support.' });
                 }
                 // Attach latest status to request
@@ -54,8 +73,35 @@ module.exports = async (req, res, next) => {
             }
         }
 
+        // Log successful authentication
+        logAuth('token_verified', decoded.id, 'success', { ip: req.ip });
+
         next();
     } catch (error) {
-        res.status(401).json({ error: 'Invalid token' });
+        // ENHANCED: Distinguish between expired and invalid tokens
+        if (error.name === 'TokenExpiredError') {
+            logAuth('token_expired', req.user?.id, 'failed', { 
+                expiredAt: error.expiredAt,
+                ip: req.ip
+            });
+            return res.status(401).json({ 
+                error: 'Token expired',
+                code: 'TOKEN_EXPIRED',
+                expiredAt: error.expiredAt
+            });
+        }
+
+        if (error.name === 'JsonWebTokenError') {
+            logAuth('invalid_token', req.user?.id, 'failed', { 
+                reason: error.message,
+                ip: req.ip
+            });
+            return res.status(401).json({ 
+                error: 'Invalid token',
+                code: 'INVALID_TOKEN'
+            });
+        }
+
+        res.status(401).json({ error: 'Authentication failed' });
     }
 };

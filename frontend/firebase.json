@@ -1,6 +1,6 @@
 {
     "hosting": {
-        "target": "short",
+        "target": "tdw",
         "public": "dist",
         "ignore": [
             "firebase.json",
@@ -10,6 +10,18 @@
         "cleanUrls": true,
         "trailingSlash": false,
         "rewrites": [
+            {
+                "source": "/api/**",
+                "function": "api"
+            },
+            {
+                "source": "/health",
+                "function": "api"
+            },
+            {
+                "source": "/uploads/**",
+                "function": "api"
+            },
             {
                 "source": "**",
                 "destination": "/index.html"

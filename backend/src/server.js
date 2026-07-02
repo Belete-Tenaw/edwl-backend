@@ -58,13 +58,8 @@ const allowedOrigins = Array.from(new Set([
 ]));
 
 // --- WORLD-CLASS AUTH BRUTE FORCE PROTECTION ---
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 login/register requests per window
-  message: { error: 'Too many login attempts. Please try again after 15 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// NOTE: `authLimiter` is defined in ./middleware/rateLimiter and imported later.
+// The duplicate local declaration was removed to avoid redeclaration errors during tests.
 
 // ================================
 // 🔌 SOCKET.IO SETUP
@@ -208,6 +203,29 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// ENHANCED: Import new security middleware
+const { csrfTokenGenerator, csrfTokenValidator } = require('./middleware/csrf');
+const { 
+  authLimiter,
+  registerRateLimiter,
+  apiLimiter,
+  uploadLimiter,
+  messageLimiter,
+  searchLimiter,
+  passwordResetLimiter,
+  contactLimiter
+} = require('./middleware/rateLimiter');
+const { createRequestLogger } = require('./utils/logger');
+
+// Apply global CSRF protection
+app.use(csrfTokenGenerator);   // Generate CSRF tokens on all requests
+app.use(csrfTokenValidator);   // Validate CSRF tokens on state-changing operations
+
+// Apply request logging middleware
+app.use(createRequestLogger());
+
+// Apply general API rate limiter
 app.use(limiter);
 
 // ================================
@@ -247,30 +265,50 @@ app.get('/health', (req, res) => {
 });
 
 // ================================
-// 📌 ROUTES
+// 📌 ROUTES (with ENHANCED rate limiting by endpoint)
 // ================================
+
+// Authentication routes - STRICT rate limiting (10 auth attempts/hr, 5 registrations/hr)
 app.use('/api/auth', authLimiter, require('./routes/auth'));
-app.use('/api/seekers', require('./routes/seekers'));
-app.use('/api/employers', require('./routes/employers'));
-app.use('/api/jobs', require('./routes/jobs'));
+app.post('/api/auth/register', registerRateLimiter);
+app.post('/api/auth/password-reset', passwordResetLimiter);
+
+// General API routes - TIERED by user role
+app.use('/api/seekers', apiLimiter, require('./routes/seekers'));
+app.use('/api/employers', apiLimiter, require('./routes/employers'));
+app.use('/api/jobs', apiLimiter, require('./routes/jobs'));
+
+// Upload routes - STRICT (0-50 uploads/hr depending on tier)
+app.use('/api/upload', uploadLimiter, require('./routes/upload'));
+app.use('/api/documents', uploadLimiter, require('./routes/documents'));
+
+// Messaging routes - STRICT (2-100 msgs/hr depending on tier)
+app.use('/api/messages', messageLimiter, require('./routes/messages'));
+
+// Search routes - MODERATE (30-300 searches/min depending on tier)
+app.use('/api/search', searchLimiter);
+
+// Admin routes - PROTECTED (no rate limit, only for admin role)
 app.use('/api/admin', require('./routes/admin'));
-app.use('/api/hiring', require('./routes/hiringRoutes'));
-app.use('/api/messages', require('./routes/messages'));
-app.use('/api/report', require('./routes/report'));
-app.use('/api/documents', require('./routes/documents'));
-app.use('/api/payments', require('./routes/payment'));
-app.use('/api/reviews', require('./routes/reviews'));
-app.use('/api/safety', require('./routes/safety'));
-app.use('/api/training', require('./routes/trainingRoutes'));
-app.use('/api/contracts', require('./routes/contracts'));
-app.use('/api/escrow', require('./routes/escrow'));
-app.use('/api/upload', require('./routes/upload'));
-app.use('/api/seeker', require('./routes/academy'));
-app.use('/api/did', require('./routes/didRoutes'));
-app.use('/api/agencies', require('./routes/agencyRoutes'));
-app.use('/api/ai', require('./routes/aiRoutes'));
-app.use('/api/mediation', require('./routes/mediationRoutes'));
-app.use('/api/loans', require('./routes/loanRoutes'));
+
+// Contact/Support routes - MODERATE (3 submissions/hr)
+app.use('/api/contact', contactLimiter);
+
+// Other routes - inherit general API limiter
+app.use('/api/hiring', apiLimiter, require('./routes/hiringRoutes'));
+app.use('/api/report', apiLimiter, require('./routes/report'));
+app.use('/api/payments', apiLimiter, require('./routes/payment'));
+app.use('/api/reviews', apiLimiter, require('./routes/reviews'));
+app.use('/api/safety', apiLimiter, require('./routes/safety'));
+app.use('/api/training', apiLimiter, require('./routes/trainingRoutes'));
+app.use('/api/contracts', apiLimiter, require('./routes/contracts'));
+app.use('/api/escrow', apiLimiter, require('./routes/escrow'));
+app.use('/api/seeker', apiLimiter, require('./routes/academy'));
+app.use('/api/did', apiLimiter, require('./routes/didRoutes'));
+app.use('/api/agencies', apiLimiter, require('./routes/agencyRoutes'));
+app.use('/api/ai', apiLimiter, require('./routes/aiRoutes'));
+app.use('/api/mediation', apiLimiter, require('./routes/mediationRoutes'));
+app.use('/api/loans', apiLimiter, require('./routes/loanRoutes'));
 
 // ================================
 // 🌐 PHASE 2: OMNICHANNEL WEBHOOK

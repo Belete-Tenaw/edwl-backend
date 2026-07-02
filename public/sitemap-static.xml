@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://edwl.io</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io?lang=am"/>
+  </url>
+  <url>
+    <loc>https://edwl.io/about</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io/about?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io/about?lang=am"/>
+  </url>
+  <url>
+    <loc>https://edwl.io/contact</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io/contact?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io/contact?lang=am"/>
+  </url>
+  <url>
+    <loc>https://edwl.io/jobs</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io/jobs?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io/jobs?lang=am"/>
+  </url>
+  <url>
+    <loc>https://edwl.io/seekers</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io/seekers?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io/seekers?lang=am"/>
+  </url>
+  <url>
+    <loc>https://edwl.io/employers</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io/employers?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io/employers?lang=am"/>
+  </url>
+  <url>
+    <loc>https://edwl.io/privacy</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io/privacy?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io/privacy?lang=am"/>
+  </url>
+  <url>
+    <loc>https://edwl.io/terms</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io/terms?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io/terms?lang=am"/>
+  </url>
+  <url>
+    <loc>https://edwl.io/blog</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://edwl.io/blog?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="am" href="https://edwl.io/blog?lang=am"/>
+  </url>
+</urlset>

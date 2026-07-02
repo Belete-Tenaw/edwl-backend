@@ -94,7 +94,7 @@ const Loading = () => (
                 fontWeight: '900',
                 color: 'var(--primary)',
                 letterSpacing: '1px'
-            }}>EDWL</div>
+            }}>TDW</div>
         </div>
         <p style={{ marginTop: '24px', fontWeight: '700', color: '#1e293b', fontSize: '1rem', letterSpacing: '0.05em' }}>
             SMART CONNECTING...

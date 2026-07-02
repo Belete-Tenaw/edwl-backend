@@ -49,14 +49,14 @@ const Navbar = () => {
 
     return (
         <nav className="navbar glass" style={{ position: 'sticky', top: 0, zIndex: 1000, padding: '10px 24px', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226, 232, 240, 0.6)', transition: 'all 0.3s ease' }}>
-            <NavLink to="/" onClick={closeMenu} aria-label="ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ - Ethio Domestic Workers Link" className={({ isActive }) => `nav-logo-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                <img src={logo} alt="EDWL Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease', filter: 'contrast(1.2) saturate(1.3)' }} className="nav-logo" />
+            <NavLink to="/" onClick={closeMenu} aria-label="ታማኝ የሃገር ውስጥ ሠራተኞች - Trustworthy Domestic Workers (TDW)" className={({ isActive }) => `nav-logo-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+                <img src={logo} alt="TDW Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease', filter: 'contrast(1.2) saturate(1.3)' }} className="nav-logo" />
                 <div className="nav-logo-text" style={{ display: 'flex', flexDirection: 'column', color: 'var(--navy)', gap: '2px' }}>
                     <span className="nav-brand-am">
-                        ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ
+                        ታማኝ የሃገር ውስጥ ሠራተኞች
                     </span>
                     <span className="nav-brand-en">
-                        Ethio Domestic Workers Link
+                        Trustworthy Domestic Workers
                     </span>
                 </div>
             </NavLink>

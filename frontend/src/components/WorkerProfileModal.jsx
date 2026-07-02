@@ -9,6 +9,7 @@ import UpgradeModal from './UpgradeModal';
 import TrustScorecard from './TrustScorecard';
 import ContractCreateModal from './ContractCreateModal';
 import { OCCUPATION_CATEGORIES } from '../constants/occupations';
+import { API_BASE_URL } from '../services/api';
 
 const WorkerProfileModal = ({ worker, onClose }) => {
     const { t } = useTranslation();
@@ -54,9 +55,6 @@ const WorkerProfileModal = ({ worker, onClose }) => {
             setLoadingReviews(false);
         }
     };
-
-    // Constant for your backend URL to ensure images load from Render, not Firebase
-    const BACKEND_URL = 'https://edwl-backend.onrender.com';
 
     const handleContact = () => {
         navigate('/messages', {
@@ -124,7 +122,7 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                             {/* FIXED IMAGE LOGIC: Prepend Backend URL and check for 'undefined' string */}
                             {worker.profilePhoto && worker.profilePhoto !== 'undefined' ? (
                                 <img
-                                    src={worker.profilePhoto.startsWith('http') ? worker.profilePhoto : `${BACKEND_URL}${worker.profilePhoto}`}
+                                    src={worker.profilePhoto.startsWith('http') ? worker.profilePhoto : `${API_BASE_URL}${worker.profilePhoto}`}
                                     alt={worker.fullName}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
@@ -348,7 +346,7 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                             </h3>
                             <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', background: 'black' }}>
                                 <video 
-                                    src={worker.videoBio.startsWith('http') ? worker.videoBio : `${BACKEND_URL}${worker.videoBio}`} 
+                                    src={worker.videoBio.startsWith('http') ? worker.videoBio : `${API_BASE_URL}${worker.videoBio}`} 
                                     controls 
                                     style={{ width: '100%', display: 'block' }} 
                                 />
@@ -400,7 +398,7 @@ const WorkerProfileModal = ({ worker, onClose }) => {
                                             <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#eee', overflow: 'hidden' }}>
                                                 {(review.reviewerEmp?.profilePhoto || review.reviewerJS?.profilePhoto) ? (
                                                     <img
-                                                        src={`${BACKEND_URL}${review.reviewerEmp?.profilePhoto || review.reviewerJS?.profilePhoto}`}
+                                                        src={`${API_BASE_URL}${review.reviewerEmp?.profilePhoto || review.reviewerJS?.profilePhoto}`}
                                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                     />
                                                 ) : <User size={16} />}

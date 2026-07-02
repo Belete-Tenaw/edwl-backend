@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './api';
+import { API_HEALTH_URL } from './api';
 
 const HEALTH_TIMEOUT_MS = 4500;
 
@@ -11,7 +11,7 @@ export const checkPlatformHealth = async () => {
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/health`, {
+        const response = await fetch(API_HEALTH_URL, {
             method: 'GET',
             cache: 'no-store',
             signal: controller.signal,

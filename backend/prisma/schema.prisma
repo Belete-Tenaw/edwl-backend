@@ -18,6 +18,10 @@ model JobSeeker {
   maritalStatus        MaritalStatus
   phone                String?               @unique
   email                String?               @unique
+  encryptedPhone       String?
+  encryptedEmail       String?
+  encryptedSecurityAnswer String?
+  encryptedGuarantorPhone String?
   password             String
   bio                  String?
   skills               String[]
@@ -121,6 +125,9 @@ model Employer {
   contactName          String
   phone                String?               @unique
   email                String?               @unique
+  encryptedPhone       String?
+  encryptedEmail       String?
+  encryptedSecurityAnswer String?
   password             String
   address              String
   familySize           Int?

@@ -1,0 +1,42 @@
+name: Build and Deploy Frontend to Firebase Hosting
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build with API base
+        env:
+          VITE_API_BASE_URL: ${{ secrets.FRONTEND_API_BASE_URL }}
+        run: |
+          cd frontend
+          echo "Using VITE_API_BASE_URL=$VITE_API_BASE_URL"
+          npm run build
+
+      - name: Deploy to Firebase Hosting
+        uses: w9jds/firebase-action@v1.5.0
+        with:
+          args: deploy --only hosting:tdw
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+# Secrets required:
+# - FRONTEND_API_BASE_URL: e.g. https://edwl-backend-...a.run.app (no trailing slash)
+# - FIREBASE_TOKEN: a Firebase CI token generated with `firebase login:ci`

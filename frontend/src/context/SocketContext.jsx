@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import authService from '../services/authService';
-import { API_BASE_URL } from '../services/api';
+import { SOCKET_BASE_URL } from '../services/api';
 import { useToast } from '../components/Toast';
 
 const SocketContext = createContext();
@@ -12,8 +12,8 @@ export const SocketProvider = ({ children }) => {
     const currentUser = authService.getCurrentUser();
 
     useEffect(() => {
-        if (currentUser) {
-            const newSocket = io(API_BASE_URL, {
+        if (currentUser && SOCKET_BASE_URL) {
+            const newSocket = io(SOCKET_BASE_URL, {
                 transports: ['websocket'],
                 upgrade: false
             });

@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { AlertCircle, Zap } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
 
 const PanicButton = ({ contractId }) => {
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
-
-    const BACKEND_URL = process.env.REACT_APP_API_URL || 'https://edwl-backend.onrender.com';
 
     const handlePanic = async () => {
         if (!window.confirm("⚠️ EMERGENCY: This will alert EDWL administration that you need immediate assistance. Continue?")) {
@@ -15,7 +13,6 @@ const PanicButton = ({ contractId }) => {
 
         setLoading(true);
         try {
-            const token = localStorage.getItem('token');
             // Try to get geolocation if possible
             let location = 'Unknown';
             try {
@@ -27,11 +24,9 @@ const PanicButton = ({ contractId }) => {
                 console.warn("Location access denied or timeout");
             }
 
-            await axios.post(`${BACKEND_URL}/api/safety/panic`, {
+            await api.post('/safety/panic', {
                 location,
                 contractId
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
 
             setSent(true);

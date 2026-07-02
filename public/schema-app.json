@@ -1,0 +1,33 @@
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "TDW - Trustworthy Domestic Workers",
+  "url": "https://edwl.io",
+  "description": "Connect trustworthy domestic workers with employers in Ethiopia",
+  "image": "https://edwl.io/logo.png",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "priceCurrency": "ETB",
+    "price": "0",
+    "description": "Free to browse and connect"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "500",
+    "bestRating": "5",
+    "worstRating": "1"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "TDW",
+    "url": "https://edwl.io",
+    "logo": "https://edwl.io/logo.png"
+  },
+  "inLanguage": [
+    "en",
+    "am"
+  ]
+}

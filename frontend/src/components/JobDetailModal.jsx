@@ -4,6 +4,7 @@ import { X, MapPin, DollarSign, Briefcase, Clock, CheckCircle, MessageSquare, St
 import { useTranslation } from 'react-i18next';
 import reviewService from '../services/reviewService';
 import ReviewForm from './ReviewForm';
+import { API_BASE_URL } from '../services/api';
 
 const JobDetailModal = ({ job, onClose }) => {
     const { t } = useTranslation();
@@ -11,9 +12,6 @@ const JobDetailModal = ({ job, onClose }) => {
     const [reviews, setReviews] = React.useState([]);
     const [loadingReviews, setLoadingReviews] = React.useState(false);
     const [showReviewForm, setShowReviewForm] = React.useState(false);
-
-    // Constant for your backend URL to ensure images load from Render
-    const BACKEND_URL = 'https://edwl-backend.onrender.com';
 
     React.useEffect(() => {
         if (job?.employerId) {
@@ -135,7 +133,7 @@ const JobDetailModal = ({ job, onClose }) => {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#eee', overflow: 'hidden' }}>
                                                 {review.reviewerJS?.profilePhoto ? (
-                                                    <img src={`${BACKEND_URL}${review.reviewerJS?.profilePhoto}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <img src={`${API_BASE_URL}${review.reviewerJS?.profilePhoto}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 ) : <User size={12} />}
                                             </div>
                                             <span style={{ fontWeight: '600', fontSize: '0.85rem' }}>{review.reviewerJS?.fullName || 'Anonymous Worker'}</span>

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Legend } from 'recharts';
 import { Map, TrendingUp, Zap, Users, AlertCircle } from 'lucide-react';
+import api from '../../services/api';
 
 const AdminInsights = () => {
     const [insights, setInsights] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    const BACKEND_URL = process.env.REACT_APP_API_URL || 'https://edwl-backend.onrender.com';
 
     useEffect(() => {
         fetchInsights();
@@ -16,10 +14,7 @@ const AdminInsights = () => {
 
     const fetchInsights = async () => {
         try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${BACKEND_URL}/api/admin/insights`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/admin/insights');
             setInsights(response.data);
         } catch (err) {
             console.error("Error fetching insights:", err);

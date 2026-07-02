@@ -5,8 +5,8 @@
   "targets": {
     "edwl-ethio-domesticworkerslink": {
       "hosting": {
-        "short": [
-          "ethiodomesticworkers"
+        "tdw": [
+          "tdw"
         ]
       }
     }

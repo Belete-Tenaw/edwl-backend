@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview --host",
     "test": "vitest",
-    "deploy": "npx firebase-tools deploy --only hosting"
+    "deploy": "npx firebase-tools deploy --only hosting:tdw"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.2",
