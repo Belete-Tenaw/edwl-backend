@@ -12,7 +12,7 @@ if (!token) {
     /**
      * Listener for the /start command.
      * Expected format: /start [userId]
-     * This allows users to link their EDWL account with their Telegram chat.
+     * This allows users to link their TDW account with their Telegram chat.
      */
     bot.onText(/\/start (.+)/, async (msg, match) => {
         const chatId = msg.chat.id.toString();
@@ -28,15 +28,15 @@ if (!token) {
                     where: { id: userId },
                     data: { telegramChatId: chatId }
                 });
-                bot.sendMessage(chatId, `🎉 <b>Welcome ${seeker.fullName}!</b>\n\nYour EDWL account is now linked to Telegram. You will receive real-time alerts for tier upgrades and subscriptions.`, { parse_mode: 'HTML' });
+                bot.sendMessage(chatId, `🎉 <b>Welcome ${seeker.fullName}!</b>\n\nYour TDW account is now linked to Telegram. You will receive real-time alerts for tier upgrades and subscriptions.`, { parse_mode: 'HTML' });
             } else if (employer) {
                 await prisma.employer.update({
                     where: { id: userId },
                     data: { telegramChatId: chatId }
                 });
-                bot.sendMessage(chatId, `🎉 <b>Welcome ${employer.contactName}!</b>\n\nYour EDWL account is now linked to Telegram. You will receive real-role alerts.`, { parse_mode: 'HTML' });
+                bot.sendMessage(chatId, `🎉 <b>Welcome ${employer.contactName}!</b>\n\nYour TDW account is now linked to Telegram. You will receive real-time alerts.`, { parse_mode: 'HTML' });
             } else {
-                bot.sendMessage(chatId, '❌ User not found. Please ensure you clicked the link from the EDWL platform.');
+                bot.sendMessage(chatId, '❌ User not found. Please ensure you clicked the link from the TDW platform.');
             }
 
         } catch (error) {
@@ -47,7 +47,7 @@ if (!token) {
 
     // Generic welcome if no user ID provided
     bot.onText(/\/start$/, (msg) => {
-        bot.sendMessage(msg.chat.id, "👋 Welcome to <b>Ethio Domestic Workers Link (EDWL)</b>.\n\nPlease link your account from the dashboard to receive notifications.", { parse_mode: 'HTML' });
+        bot.sendMessage(msg.chat.id, "👋 Welcome to <b>Trustworthy Domestic Workers (TDW)</b>.\n\nPlease link your account from the dashboard to receive notifications.", { parse_mode: 'HTML' });
     });
 
     // ================================
@@ -119,14 +119,14 @@ if (!token) {
             if (linkedUser) {
                 await bot.sendMessage(
                     targetChatId,
-                    `✅ <b>Payment confirmed!</b>\n\nYour activation code: <code>${code}</code>\n\nEnter this code in the EDWL app under "Activate Premium" to complete your subscription.`,
+                    `✅ <b>Payment confirmed!</b>\n\nYour activation code: <code>${code}</code>\n\nEnter this code in the TDW app under "Activate Premium" to complete your subscription.`,
                     { parse_mode: 'HTML' }
                 );
                 bot.sendMessage(adminChatId, `✅ Code <code>${code}</code> generated and delivered to the user.`, { parse_mode: 'HTML' });
             } else {
                 bot.sendMessage(
                     adminChatId,
-                    `⚠️ Code <code>${code}</code> generated, but chat ID <code>${targetChatId}</code> isn't linked to any EDWL account yet. Share the code with them manually.`,
+                    `⚠️ Code <code>${code}</code> generated, but chat ID <code>${targetChatId}</code> isn't linked to any TDW account yet. Share the code with them manually.`,
                     { parse_mode: 'HTML' }
                 );
             }
