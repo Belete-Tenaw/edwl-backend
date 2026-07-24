@@ -170,6 +170,11 @@ exports.updateProfile = async (req, res) => {
         // Recalculate Tier using unified logic
         updateData.tier = calculateWorkerRank(mergedData);
 
+        const updated = await prisma.jobSeeker.update({
+            where: { id },
+            data: updateData
+        });
+
         // Flush cache on update
         cacheService.del('all_seekers');
 
