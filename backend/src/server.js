@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 // Initialize Telegram Bot Listener (Non-blocking) - Only outside tests
 if (process.env.NODE_ENV !== 'test') {
@@ -215,6 +214,10 @@ if (process.env.NODE_ENV === 'production' && process.env.BASE_URL) {
 // 🩺 HEALTH CHECK ROUTE (NEW)
 // ================================
 app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
