@@ -49,13 +49,13 @@ const Navbar = () => {
     return (
         <nav className="navbar glass" style={{ position: 'sticky', top: 0, zIndex: 1000, padding: '10px 24px', background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(226, 232, 240, 0.6)', transition: 'all 0.3s ease' }}>
             <NavLink to="/" onClick={closeMenu} className={({ isActive }) => `nav-logo-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
-                <img src={logo} alt="EDWL Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease' }} className="nav-logo" />
+                <img src={logo} alt="TDW Logo" style={{ height: '55px', width: 'auto', objectFit: 'contain', transition: 'transform 0.3s ease' }} className="nav-logo" />
                 <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column', color: 'var(--navy)' }}>
                     <span style={{ fontSize: '1.2rem', fontWeight: '900', lineHeight: 1, letterSpacing: '-0.2px' }}>
-                        ኢትዮ ሃገር ውስጥ ሠራተኞች አገናኝ
+                        ታማኝ የሃገር ውስጥ ሠራተኞች
                     </span>
                     <span style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--primary)', lineHeight: 1, marginTop: '5px' }}>
-                        Ethio Domestic Workers Link
+                        Trustworthy Domestic Workers
                     </span>
                 </div>
             </NavLink>

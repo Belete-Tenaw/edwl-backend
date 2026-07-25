@@ -21,8 +21,8 @@ const TermsAndConditions = () => {
                         </div>
                         <h1 style={{ color: 'var(--primary)', marginBottom: '10px' }}>{t('terms_title')}</h1>
                         <p style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#333' }}>
-                            Ethio Domestic Workers Link<br />
-                            ኢትዮ የሃገር ውስጥ ሠራተኞች አገናኝ
+                            Trustworthy Domestic Workers<br />
+                            ታማኝ የሃገር ውስጥ ሠራተኞች
                         </p>
                         <p style={{ color: '#666', marginTop: '10px' }}>{t('terms_effective_date')}</p>
                         <p style={{ color: '#666' }}>{t('terms_last_updated')}</p>
@@ -43,7 +43,7 @@ const TermsAndConditions = () => {
                     </div>
 
                     <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #eee', textAlign: 'center', fontSize: '0.9rem', color: '#888' }}>
-                        <p>Trustworthy Addis - Ethio Domestic Workers Link</p>
+                        <p>Trustworthy Addis - Trustworthy Domestic Workers</p>
                     </div>
                 </div>
             </div>

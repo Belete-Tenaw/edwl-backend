@@ -12,9 +12,9 @@ const Footer = () => {
             <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', marginBottom: '40px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <img src={logo} alt="EDWL Logo" style={{ height: '50px', width: 'auto' }} />
+                        <img src={logo} alt="TDW Logo" style={{ height: '50px', width: 'auto' }} />
                         <h3 style={{ fontSize: '1.1rem', fontWeight: '900', color: 'white', letterSpacing: '0.5px' }}>
-                            ETHIO DOMESTIC<br/>WORKERS LINK
+                            TRUSTWORTHY DOMESTIC<br/>WORKERS
                         </h3>
                     </div>
                     <p style={{ color: '#bdc3c7', lineHeight: '1.6' }}>
@@ -75,7 +75,7 @@ const Footer = () => {
             </div>
 
             <div style={{ borderTop: '1px solid #34495e', paddingTop: '20px', textAlign: 'center', color: '#7f8c8d' }}>
-                &copy; {new Date().getFullYear()} Ethio Domestic Workers Link. {t('all_rights_reserved')}
+                &copy; {new Date().getFullYear()} Trustworthy Domestic Workers. {t('all_rights_reserved')}
             </div>
         </footer>
     );
