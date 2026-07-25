@@ -36,6 +36,8 @@ const io = new Server(server, {
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
       const socketAllowed = [
+        'https://trustworthydomesticworkers.web.app',
+        'https://trustworthydomesticworkers.firebaseapp.com',
         'https://edwl-ethio-domesticworkerslink.web.app',
         'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
         'http://localhost:3000',
@@ -129,6 +131,8 @@ app.use(helmet({
         "'self'",
         "https://*.firebaseio.com",
         "https://*.googleapis.com",
+        "https://trustworthydomesticworkers.web.app",
+        "https://trustworthydomesticworkers.firebaseapp.com",
         "https://edwl-ethio-domesticworkerslink.web.app",
         "https://edwl-ethio-domesticworkerslink.firebaseapp.com"
       ],
@@ -149,6 +153,8 @@ app.use(express.json({ limit: '10mb' }));
 // ================================
 const envOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
 const allowedOrigins = [
+  'https://trustworthydomesticworkers.web.app',
+  'https://trustworthydomesticworkers.firebaseapp.com',
   'https://edwl-ethio-domesticworkerslink.web.app',
   'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
   'http://localhost:3000',
@@ -197,7 +203,7 @@ app.use('/uploads', express.static(uploadsPath, {
 // 🏠 ROOT ROUTE (Redirect to Frontend)
 // ================================
 app.get('/', (req, res) => {
-  const frontendUrl = 'https://edwl-ethio-domesticworkerslink.web.app';
+  const frontendUrl = 'https://trustworthydomesticworkers.web.app';
   if (process.env.NODE_ENV === 'production') {
     return res.redirect(frontendUrl);
   }
