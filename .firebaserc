@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "edwl-ethio-domesticworkerslink"
-  }
+  },
+  "targets": {
+    "edwl-ethio-domesticworkerslink": {
+      "hosting": {
+        "tdw-live": [
+          "trustworthydomesticworkers"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
