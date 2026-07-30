@@ -147,7 +147,7 @@ exports.sendMessage = async (req, res) => {
 
             if (receiver && receiver.telegramChatId) {
                 const senderName = senderRole === 'JOB_SEEKER' ? message.senderJS.fullName : message.senderEmp.contactName;
-                const telegramText = `📩 <b>New Message from ${senderName}</b>\n\n"${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"\n\nReply here: https://edwl-ethio-domesticworkerslink.web.app/messages`;
+                const telegramText = `📩 <b>New Message from ${senderName}</b>\n\n"${content.substring(0, 100)}${content.length > 100 ? '...' : ''}"\n\nReply here: https://trustworthydomesticworkersl.web.app/messages`;
                 await telegramService.sendMessage(receiver.telegramChatId, telegramText);
             }
         } catch (alertError) {

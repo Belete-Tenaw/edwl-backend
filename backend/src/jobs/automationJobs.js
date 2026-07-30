@@ -25,7 +25,7 @@ if (process.env.NODE_ENV !== 'test') {
                     if (matches && matches.length > 0) {
                         const topMatch = matches[0];
                         if (topMatch.s_score > 70 && topMatch.s_tier === 'PLATINUM') {
-                            const message = `🎯 <b>Great News!</b>\n\nWe found a highly-rated <b>${topMatch.s_score}% Match</b> for your "${job.title}" post today. This worker is <b>PLATINUM Verified</b> (Police & Medically Cleared).\n\n🔒 Upgrade your Trust Access to view their contact info and hire them securely!\n\nVisit: https://edwl-ethio-domesticworkerslink.web.app`;
+                            const message = `🎯 <b>Great News!</b>\n\nWe found a highly-rated <b>${topMatch.s_score}% Match</b> for your "${job.title}" post today. This worker is <b>PLATINUM Verified</b> (Police & Medically Cleared).\n\n🔒 Upgrade your Trust Access to view their contact info and hire them securely!\n\nVisit: https://trustworthydomesticworkersl.web.app`;
 
                             // Send Telegram Message if linked
                             if (employer.telegramChatId) {
@@ -64,7 +64,7 @@ if (process.env.NODE_ENV !== 'test') {
             });
 
             for (const employer of expiringEmployers) {
-                const message = `⚠️ <b>Subscription Alert</b>\n\nYour EDWL Time Access expires in exactly <b>3 days</b>. \n\nPlease renew your subscription to maintain access to worker profiles and messaging.\n\nVisit: https://edwl-ethio-domesticworkerslink.web.app`;
+                const message = `⚠️ <b>Subscription Alert</b>\n\nYour EDWL Time Access expires in exactly <b>3 days</b>. \n\nPlease renew your subscription to maintain access to worker profiles and messaging.\n\nVisit: https://trustworthydomesticworkersl.web.app`;
 
                 if (employer.telegramChatId) {
                     await telegramService.sendMessage(employer.telegramChatId, message);
@@ -119,7 +119,7 @@ if (process.env.NODE_ENV !== 'test') {
                 });
 
                 // Blast the localized, urgency-driven marketing message
-                const message = `✨ <b>Exclusive EDWL Offer!</b>\n\nHi ${employer.contactName}, we noticed you haven't hired your ideal domestic worker yet. \n\nWe just added 50+ AI-Vetted workers in your area! Use code <b>${promoCode}</b> within the next 72 hours to get a FREE 30-Day Silver Trust Upgrade.\n\nClaim here: https://edwl-ethio-domesticworkerslink.web.app`;
+                const message = `✨ <b>Exclusive EDWL Offer!</b>\n\nHi ${employer.contactName}, we noticed you haven't hired your ideal domestic worker yet. \n\nWe just added 50+ AI-Vetted workers in your area! Use code <b>${promoCode}</b> within the next 72 hours to get a FREE 30-Day Silver Trust Upgrade.\n\nClaim here: https://trustworthydomesticworkersl.web.app`;
 
                 if (employer.telegramChatId) {
                     await telegramService.sendMessage(employer.telegramChatId, message);

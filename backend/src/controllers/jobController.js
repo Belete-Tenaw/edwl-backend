@@ -84,7 +84,7 @@ exports.createJobPost = async (req, res) => {
 
                         // 2. Telegram Alert
                         if (seeker.telegramChatId) {
-                            const message = `🔔 <b>Perfect Match!</b>\n\nHello ${seeker.fullName},\n\nWe found a job matching your skills: <b>"${job.title}"</b>.\n\n💰 Salary: ${job.salaryOffered} ETB\n📍 Location: ${job.locationWoreda || job.locationRegion || 'Near You'}\n\nApply now: https://edwl-ethio-domesticworkerslink.web.app/jobs/${job.id}`;
+                            const message = `🔔 <b>Perfect Match!</b>\n\nHello ${seeker.fullName},\n\nWe found a job matching your skills: <b>"${job.title}"</b>.\n\n💰 Salary: ${job.salaryOffered} ETB\n📍 Location: ${job.locationWoreda || job.locationRegion || 'Near You'}\n\nApply now: https://trustworthydomesticworkersl.web.app/jobs/${job.id}`;
                             await telegramService.sendMessage(seeker.telegramChatId, message);
                         }
                     }
@@ -179,6 +179,15 @@ exports.getMatchesForJob = async (req, res) => {
         const { id } = req.params;
         if (req.user.role !== 'EMPLOYER') {
             return res.status(403).json({ error: 'Only employers can see matches' });
+        }
+
+        const job = await prisma.jobPost.findUnique({
+            where: { id },
+            select: { salaryOffered: true }
+        });
+        
+        if (!job) {
+            return res.status(404).json({ error: 'Job not found' });
         }
 
         // Use raw query to call the weighted matching function

@@ -38,8 +38,6 @@ const io = new Server(server, {
       const socketAllowed = [
         'https://trustworthydomesticworkers.web.app',
         'https://trustworthydomesticworkers.firebaseapp.com',
-        'https://edwl-ethio-domesticworkerslink.web.app',
-        'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
         'http://localhost:3000',
         ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [])
       ];
@@ -132,9 +130,7 @@ app.use(helmet({
         "https://*.firebaseio.com",
         "https://*.googleapis.com",
         "https://trustworthydomesticworkers.web.app",
-        "https://trustworthydomesticworkers.firebaseapp.com",
-        "https://edwl-ethio-domesticworkerslink.web.app",
-        "https://edwl-ethio-domesticworkerslink.firebaseapp.com"
+        "https://trustworthydomesticworkers.firebaseapp.com"
       ],
     },
   },
@@ -155,8 +151,6 @@ const envOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') 
 const allowedOrigins = [
   'https://trustworthydomesticworkers.web.app',
   'https://trustworthydomesticworkers.firebaseapp.com',
-  'https://edwl-ethio-domesticworkerslink.web.app',
-  'https://edwl-ethio-domesticworkerslink.firebaseapp.com',
   'http://localhost:3000',
   'http://localhost:3001',
   ...envOrigins
@@ -255,11 +249,39 @@ app.use('/api/temp-admin-reset', require('./routes/tempAdminReset'));
 app.use(require('./middleware/errorHandler'));
 
 // ================================
+// 🔑 AUTO-SEED SUPERADMIN ON STARTUP
+// Ensures the superadmin exists in the live database (e.g. Supabase on Render).
+// Uses upsert so it is safe to run on every deploy.
+// ================================
+async function seedSuperAdmin() {
+  try {
+    const prisma = require('./utils/prisma');
+    const bcrypt = require('bcrypt');
+
+    const username = process.env.ADMIN_USERNAME || 'EDWL2026';
+    const password = process.env.ADMIN_PASSWORD || 'TdwBel291965';
+    const hashed  = await bcrypt.hash(password, 10);
+
+    await prisma.admin.upsert({
+      where:  { username },
+      update: { password: hashed },
+      create: { username, password: hashed, role: 'SUPERADMIN' },
+    });
+
+    console.log(`[Startup] Superadmin "${username}" is ready.`);
+  } catch (err) {
+    // Non-fatal: log but don't crash the server
+    console.error('[Startup] Could not seed superadmin:', err.message);
+  }
+}
+
+// ================================
 // 🚀 SERVER START
 // ================================
 if (process.env.NODE_ENV !== 'test') {
-  server.listen(PORT, '0.0.0.0', () => {
+  server.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    await seedSuperAdmin();
   });
 }
 

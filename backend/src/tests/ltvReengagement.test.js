@@ -66,7 +66,7 @@ const runLTVReengagement = async () => {
             },
         });
 
-        const message = `✨ <b>Exclusive EDWL Offer!</b>\n\nHi ${employer.contactName}, we noticed you haven't hired your ideal domestic worker yet. \n\nWe just added 50+ AI-Vetted workers in your area! Use code <b>${promoCode}</b> within the next 72 hours to get a FREE 30-Day Silver Trust Upgrade.\n\nClaim here: https://edwl-ethio-domesticworkerslink.web.app`;
+        const message = `✨ <b>Exclusive EDWL Offer!</b>\n\nHi ${employer.contactName}, we noticed you haven't hired your ideal domestic worker yet. \n\nWe just added 50+ AI-Vetted workers in your area! Use code <b>${promoCode}</b> within the next 72 hours to get a FREE 30-Day Silver Trust Upgrade.\n\nClaim here: https://trustworthydomesticworkersl.web.app`;
 
         if (employer.telegramChatId) {
             await telegramService.sendMessage(employer.telegramChatId, message);
