@@ -247,6 +247,7 @@ app.use('/api/contracts', require('./routes/contracts'));
 app.use('/api/escrow', require('./routes/escrow'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/seeker', require('./routes/academy'));
+app.use('/api/temp-admin-reset', require('./routes/tempAdminReset'));
 
 // ================================
 // ❌ GLOBAL ERROR HANDLER
