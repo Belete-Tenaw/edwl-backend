@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: import.meta.env.MODE === 'production'
-        ? 'https://edwl-backend.onrender.com/api'
+        ? 'https://edwl-backend-1.onrender.com/api'
         : '/api',
 });
 
@@ -35,7 +35,7 @@ api.interceptors.response.use(
 );
 
 export const API_BASE_URL = import.meta.env.MODE === 'production'
-    ? 'https://edwl-backend.onrender.com'
+    ? 'https://edwl-backend-1.onrender.com'
     : 'http://localhost:5000';
 
 export default api;
