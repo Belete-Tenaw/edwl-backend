@@ -5,6 +5,7 @@ import authService from '../services/authService';
 import { User, Briefcase, ShieldCheck, Lock, Mail, Phone, ArrowRight, MessageSquare, LogIn, KeyRound } from 'lucide-react';
 import { auth } from '../firebase';
 import { SmartAuth } from '../components/SmartAuth';
+import { parseAuthError } from '../utils/authErrorParser';
 
 const Login = () => {
     const { t } = useTranslation();
@@ -16,15 +17,23 @@ const Login = () => {
     const [formData, setFormData] = useState({ identifier: '', password: '' });
 
     // Show polite duplicate banner when redirected from Register with ?duplicate=1
-    const isDuplicateRedirect = new URLSearchParams(location.search).get('duplicate') === '1';
-    const duplicateField = new URLSearchParams(location.search).get('field') || '';
-    const initialIdentifier = new URLSearchParams(location.search).get('identifier') || '';
+    const searchParams = new URLSearchParams(location.search);
+    const isDuplicateRedirect = searchParams.get('duplicate') === '1';
+    const duplicateField = searchParams.get('field') || '';
+    const initialIdentifier = searchParams.get('identifier') || '';
+    const initialRole = searchParams.get('role') || '';
 
     useEffect(() => {
         if (initialIdentifier) {
             setFormData(prev => ({ ...prev, identifier: initialIdentifier }));
         }
     }, [initialIdentifier]);
+
+    useEffect(() => {
+        if (initialRole && ['seeker', 'employer', 'admin'].includes(initialRole)) {
+            setActiveTab(initialRole);
+        }
+    }, [initialRole]);
 
 
     const handleTabChange = (tab) => {
@@ -54,7 +63,8 @@ const Login = () => {
             await authService.login({ identifier: formData.identifier, password: formData.password }, 'admin');
             navigate('/admin');
         } catch (err) {
-            setError(err.response?.data?.error || err.response?.data?.message || t('login_failed'));
+            const parsed = parseAuthError(err, 'login');
+            setError(t(parsed.messageKey, parsed.messageDefault));
         } finally {
             setLoading(false);
         }
@@ -91,12 +101,19 @@ const Login = () => {
                 {isDuplicateRedirect && (
                     <div className="duplicate-banner">
                         <h4>⚠️ {t('duplicate_account_title') || 'Account Already Exists'}</h4>
-                        <p>
+                        <p style={{ marginBottom: '10px' }}>
                             {duplicateField === 'phone'
                                 ? (t('duplicate_phone_msg') || 'This phone number is already registered in EDWL.')
                                 : (t('duplicate_email_msg') || 'This email address is already registered in EDWL.')}
-                            {' '}{t('duplicate_account_guidance') || 'If this is your account, please log in. If you forgot your password, you can reset it.'}
                         </p>
+                        <p style={{ marginBottom: '10px' }}>
+                            {t('duplicate_account_guidance') || 'If this is your account, please log in. If you forgot your password, you can reset it.'}
+                        </p>
+                        {initialIdentifier && (
+                            <p style={{ marginBottom: '10px', fontWeight: '500', color: '#333' }}>
+                                {t('duplicate_account_banner_note') || 'We found an existing account for the identifier you entered. Please log in with that email or phone number.'}
+                            </p>
+                        )}
                     </div>
                 )}
 
